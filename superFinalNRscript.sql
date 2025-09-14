@@ -61,6 +61,17 @@ CREATE TABLE categories (
     description TEXT
 );
 
+-- ++ 5.1) Добавлена таблица картинок товаров
+CREATE TABLE product_images (
+    id BIGSERIAL PRIMARY KEY,
+    product_variant_id INT NOT NULL REFERENCES product_variants(id) 
+    image_url TEXT NOT NULL, -- ссылка на изображения в minio s3
+    alt_text VARCHAR(255), -- текст для seo и доступности
+    sort_order INT DEFAULT 0, -- порядок отображения для картинок где 0 - начало
+    is_primary BOOLEAN DEFAULT FALSE, -- флаг главного фото/нужен чисто для превьюшки
+    uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+);
+
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
     sku VARCHAR(100) NOT NULL UNIQUE,
@@ -185,9 +196,11 @@ CREATE INDEX IF NOT EXISTS idx_products_name_ft ON products USING gin (to_tsvect
 CREATE INDEX IF NOT EXISTS idx_inventory_variant ON inventory(product_variant_id);
 CREATE INDEX IF NOT EXISTS idx_order_user ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_product ON reviews(product_id);
+-- ++ добавлен индекс для быстрого поиска
+CREATE INDEX IF NOT EXISTS idx_product_images_variant ON product_images(product_variant_id);
 
 -- ========== ТРИГГЕРЫ для АУДИТА ==========
---  ТРИГГЕР АУДИТА
+--  ТРИГГЕР АУДИТА (обновлен для minio)
 CREATE OR REPLACE FUNCTION fn_audit_trigger() RETURNS trigger AS $$
 DECLARE
     v_changed_by INT;
@@ -229,7 +242,8 @@ DO $$
 DECLARE
     t TEXT;
     tables TEXT[] := ARRAY[
-      'users','customers','addresses','products','product_variants','inventory','orders','order_items','payments','reviews','inventory_movements'
+      'users','customers','addresses','products','product_variants','product_images', -- +++ minio
+      'inventory','orders','order_items','payments','reviews','inventory_movements'
     ];
 BEGIN
   FOREACH t IN ARRAY tables LOOP
@@ -240,7 +254,6 @@ END;
 $$;
 
 -- ========== ВАЛИДАЦИЯ ==========
-
 -- Проверка цены
 CREATE OR REPLACE FUNCTION fn_check_variant() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
@@ -564,63 +577,86 @@ CREATE OR REPLACE FUNCTION export_audit(p_from TIMESTAMPTZ, p_to TIMESTAMPTZ) RE
 $$;
 
 -- ========== РАНДоМНЫЕ ТЕСТОВЫЕ ДАННЫЕ ==========
-
--- Пользователи
+-- заполнение пользователей
 INSERT INTO users (username, email, password_hash, first_name, last_name, middle_name, phone, role_id)
 VALUES
-('admin', 'admin@example.com', 'HASH_PLACEHOLDER', 'Admin', 'User', NULL, '+49123450001', 1)
+('admin', 'admin@example.com', 'HASH_PLACEHOLDER', 'Андрей', 'Иванов', 'Петрович', '+79161234567', 1)
 ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO users (username, email, password_hash, first_name, last_name, middle_name, phone, role_id)
 VALUES
-('customer1', 'cust1@example.com', 'HASH_PLACEHOLDER', 'Ivan', 'Petrov', 'Sergeevich', '+49123450002', 3)
+('customer1', 'cust1@example.com', 'HASH_PLACEHOLDER', 'Иван', 'Петров', 'Сергеевич', '+79161234568', 3)
 ON CONFLICT (username) DO NOTHING;
 
--- Адрес
-INSERT INTO addresses (user_id, label, country, city, street, house, apartment, postcode, phone)
-SELECT u.id, 'Home', 'Germany', 'Berlin', 'Main St', '1', '10', '10115', u.phone
+--адрес покупателя
+INSERT INTO addresses (user_id, label, country, region, city, street, house, apartment, postcode, phone)
+SELECT u.id, 'Дом', 'Россия', 'Московская область', 'Москва', 'Ленинский проспект', '42', '15', '119334', u.phone
 FROM users u WHERE u.username = 'customer1'
 ON CONFLICT DO NOTHING;
 
 -- Покупатель
 INSERT INTO customers (user_id, shipping_address_id, billing_address_id, loyalty_points)
-SELECT u.id, a.id, a.id, 0
+SELECT u.id, a.id, a.id, 100
 FROM users u
 JOIN addresses a ON a.user_id = u.id
 WHERE u.username = 'customer1'
 ON CONFLICT (user_id) DO NOTHING;
-
 -- Категории и товары
 INSERT INTO categories (name) VALUES ('iPhone') ON CONFLICT (name) DO NOTHING;
 INSERT INTO categories (name) VALUES ('MacBook') ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO products (sku, name, category_id, description)
 VALUES
-('IP14', 'iPhone 14', (SELECT id FROM categories WHERE name='iPhone'), 'Latest iPhone')
+('IP16', 'iPhone 16', (SELECT id FROM categories WHERE name='iPhone'), 'Самый последний крутой Айфон')
 ON CONFLICT (sku) DO NOTHING;
 
 INSERT INTO products (sku, name, category_id, description)
 VALUES
-('MBP16', 'MacBook Pro 16', (SELECT id FROM categories WHERE name='MacBook'), 'Powerful MacBook')
+('MRW13', 'MacBook Pro 16 M3 Pro', (SELECT id FROM categories WHERE name='MacBook'), 'Мощный ноутбук для профессиональной работы')
 ON CONFLICT (sku) DO NOTHING;
 
 INSERT INTO product_variants (product_id, variant_code, price, color, storage_gb)
 VALUES
-( (SELECT id FROM products WHERE sku='IP14'), 'IPH14-BLK-128', 999.99, 'Black', 128 )
+( (SELECT id FROM products WHERE sku='IP16'), 'IPH16-BLK-128', 79999.99, 'Чёрный', 128 )
 ON CONFLICT (product_id, variant_code) DO NOTHING;
 
 INSERT INTO product_variants (product_id, variant_code, price, color, storage_gb)
 VALUES
-( (SELECT id FROM products WHERE sku='IP14'), 'IPH14-WHT-256', 1199.99, 'White', 256 )
+( (SELECT id FROM products WHERE sku='IP16'), 'IPH16-WHT-256', 89999.99, 'Белый', 256 )
 ON CONFLICT (product_id, variant_code) DO NOTHING;
 
 INSERT INTO product_variants (product_id, variant_code, price, color, storage_gb)
 VALUES
-( (SELECT id FROM products WHERE sku='MBP16'), 'MBP16-SIL-512', 2499.00, 'Silver', 512 )
+( (SELECT id FROM products WHERE sku='MBP16'), 'MBP16-SIL-512', 199999.00, 'Серебристый', 512 )
 ON CONFLICT (product_id, variant_code) DO NOTHING;
+
+--настрокйки пользователкей
+INSERT INTO user_settings (user_id, theme, items_per_page, date_format, number_format)
+SELECT id, 'light', 20, 'DD.MM.YYYY', 'ru_RU'
+FROM users WHERE username = 'customer1'
+ON CONFLICT (user_id) DO NOTHING;
+
+INSERT INTO product_images (product_variant_id, image_url, alt_text, sort_order, is_primary)
+VALUES
+(
+    1,
+    'https://minio.com/images/iphone-16-black-128gb-1.jpg', -- условная ссылка на bucket
+    'iPhone 16 Black 128GB - вид спереди',
+    0,
+    TRUE
+),
+(
+    1, 
+    'https://minio.com/images/iphone-16-black-128gb-2.jpg', -- условная ссылка на bucket
+    'iPhone 16 Black 128GB - вид сзади',
+    1,
+    FALSE
+)
+ON CONFLICT DO NOTTHING;
+--
 
 -- НАПОЛНЯЕМ СКЛАД
-CALL sp_restock(1, '[{"variant_id":1,"warehouse":"default","qty":10}, {"variant_id":2,"warehouse":"default","qty":5}, {"variant_id":3,"warehouse":"default","qty":3}]'::jsonb);
+CALL sp_restock(1, '[{"variant_id":1,"warehouse":"москва","qty":25}, {"variant_id":2,"warehouse":"москва","qty":15}, {"variant_id":3,"warehouse":"спб","qty":8}]'::jsonb);
 
 --проверка наличия через представление
 SELECT * FROM vw_product_stock ORDER BY variant_id;
@@ -643,7 +679,7 @@ END $$;
 --оставляем отзыв
 INSERT INTO reviews (product_id, user_id, rating, comment)
 VALUES (
-    (SELECT id FROM products WHERE sku='IP14'),
+    (SELECT id FROM products WHERE sku='IP16'),
     (SELECT id FROM users WHERE username='customer1'),
     5,
     'Отличный телефон, рекомендую!'
@@ -651,9 +687,9 @@ VALUES (
 ON CONFLICT DO NOTHING;
 
 --проверка рейтинга
-SELECT name, avg_rating, reviews_count FROM products WHERE sku = 'IP14';
+SELECT name, avg_rating, reviews_count FROM products WHERE sku = 'IP16';
 
--- ========== ТЕСТ: НОВЫЙ ПОКУПАТЕЛЬ + ЗАКАЗ + ЗАВЕРШЕНИЕ ЗАКАЗА + ОТЗЫВ ==========
+-- ========== ТЕСТ: НОВЫЙ ПОКУПАТЕЛЬ ==========
 
 DO $$
 DECLARE
@@ -664,38 +700,41 @@ DECLARE
 BEGIN
     PERFORM set_config('app.current_user_id', (SELECT id::text FROM users WHERE username = 'admin'), true);
 
-    INSERT INTO users (username, email, password_hash, first_name, last_name, phone, role_id)
-    VALUES ('customer2', 'customer2@example.com', 'HASH_PLACEHOLDER', 'Anna', 'Smith', '+49123450003', 3)
+    INSERT INTO users (username, email, password_hash, first_name, last_name, middle_name, phone, role_id)
+    VALUES ('customer_ru', 'customer_ru@example.com', 'HASH_PLACEHOLDER', 'Мария', 'Сидорова', 'Ивановна', '+79161234569', 3)
     ON CONFLICT (username) DO NOTHING
     RETURNING id INTO v_new_user_id;
 
     IF v_new_user_id IS NULL THEN
-        SELECT id INTO v_new_user_id FROM users WHERE username = 'customer2';
+        SELECT id INTO v_new_user_id FROM users WHERE username = 'customer_ru';
     END IF;
 
     PERFORM set_config('app.current_user_id', v_new_user_id::text, true);
 
-    INSERT INTO addresses (user_id, label, country, city, street, house, postcode, phone)
-    VALUES (v_new_user_id, 'Home', 'Germany', 'Munich', 'Bavarian Str.', '5', '80331', '+49123450003')
+    -- спб
+    INSERT INTO addresses (user_id, label, country, region, city, street, house, apartment, postcode, phone)
+    VALUES (v_new_user_id, 'Квартира', 'Россия', 'Ленинградская область', 'Санкт-Петербург', 'Невский проспект', '25', '7', '191186', '+79161234569')
     RETURNING id INTO v_new_address_id;
 
-
-    INSERT INTO customers (user_id, shipping_address_id, billing_address_id, loyalty_points)
-    VALUES (v_new_user_id, v_new_address_id, v_new_address_id, 0)
+    -- новые настройки
+    INSERT INTO user_settings (user_id, theme, items_per_page, date_format, number_format)
+    VALUES (v_new_user_id, 'dark', 30, 'DD.MM.YYYY', 'ru_RU')
     ON CONFLICT (user_id) DO NOTHING;
 
-    SELECT id INTO v_product_id FROM products WHERE sku = 'IP14';
+    INSERT INTO customers (user_id, shipping_address_id, billing_address_id, loyalty_points)
+    VALUES (v_new_user_id, v_new_address_id, v_new_address_id, 50)
+    ON CONFLICT (user_id) DO NOTHING;
 
-    CALL sp_create_order(v_new_user_id, '[{"variant_id": 1, "quantity": 1}]'::jsonb, v_order_id);
+    SELECT id INTO v_product_id FROM products WHERE sku = 'MBP16-RU';
+
+    CALL sp_create_order(v_new_user_id, '[{"variant_id": 3, "quantity": 1}]'::jsonb, v_order_id);
 
     UPDATE orders SET status = 'shipped' WHERE id = v_order_id;
     CALL sp_complete_order(v_new_user_id, v_order_id);
 
     INSERT INTO reviews (product_id, user_id, rating, comment)
-    VALUES (v_product_id, v_new_user_id, 4, 'Хороший телефон, но дорогой')
+    VALUES (v_product_id, v_new_user_id, 5, 'Прекрасный ноутбук! Быстрый, экран отличный. Идеален для работы и творчества.')
     ON CONFLICT DO NOTHING;
-
-    RAISE NOTICE '✅ Тест пройден: отзыв оставлен после завершения заказа';
 END $$;
 
 -- Финальная проверка
@@ -704,5 +743,18 @@ FROM reviews r
 JOIN users u ON u.id = r.user_id
 JOIN order_items oi ON oi.product_variant_id IN (SELECT id FROM product_variants WHERE product_id = r.product_id)
 JOIN orders o ON o.id = oi.order_id AND o.user_id = r.user_id
-WHERE r.product_id = (SELECT id FROM products WHERE sku = 'IP14')
+WHERE r.product_id = (SELECT id FROM products WHERE sku = 'IP16')
 ORDER BY r.created_at DESC;
+
+-- доп проверка
+SELECT 
+    u.first_name,
+    u.last_name,
+    a.country,
+    a.city,
+    a.street,
+    a.house,
+    a.apartment
+FROM addresses a
+JOIN users u ON u.id = a.user_id
+WHERE a.country = 'Россия';
