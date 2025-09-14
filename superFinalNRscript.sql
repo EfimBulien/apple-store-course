@@ -61,17 +61,6 @@ CREATE TABLE categories (
     description TEXT
 );
 
--- ++ 5.1) Добавлена таблица картинок товаров
-CREATE TABLE product_images (
-    id BIGSERIAL PRIMARY KEY,
-    product_variant_id INT NOT NULL REFERENCES product_variants(id) 
-    image_url TEXT NOT NULL, -- ссылка на изображения в minio s3
-    alt_text VARCHAR(255), -- текст для seo и доступности
-    sort_order INT DEFAULT 0, -- порядок отображения для картинок где 0 - начало
-    is_primary BOOLEAN DEFAULT FALSE, -- флаг главного фото/нужен чисто для превьюшки
-    uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
-);
-
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
     sku VARCHAR(100) NOT NULL UNIQUE,
@@ -93,6 +82,17 @@ CREATE TABLE product_variants (
     storage_gb INT CHECK (storage_gb >= 0),
     imei VARCHAR(50),
     UNIQUE(product_id, variant_code)
+);
+
+-- ++ Добавлена таблица картинок товаров
+CREATE TABLE product_images (
+    id BIGSERIAL PRIMARY KEY,
+    product_variant_id INT NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
+    image_url TEXT NOT NULL, -- ссылка на изображения в minio s3
+    alt_text VARCHAR(255), -- текст для seo и доступности
+    sort_order INT DEFAULT 0, -- порядок отображения для картинок где 0 - начало
+    is_primary BOOLEAN DEFAULT FALSE, -- флаг главного фото/нужен чисто для превьюшки
+    uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
 -- 6) Склад и движения
@@ -612,7 +612,7 @@ ON CONFLICT (sku) DO NOTHING;
 
 INSERT INTO products (sku, name, category_id, description)
 VALUES
-('MRW13', 'MacBook Pro 16 M3 Pro', (SELECT id FROM categories WHERE name='MacBook'), 'Мощный ноутбук для профессиональной работы')
+('MBP16', 'MacBook Pro 16 M3 Pro', (SELECT id FROM categories WHERE name='MacBook'), 'Мощный ноутбук для профессиональной работы')
 ON CONFLICT (sku) DO NOTHING;
 
 INSERT INTO product_variants (product_id, variant_code, price, color, storage_gb)
@@ -652,7 +652,7 @@ VALUES
     1,
     FALSE
 )
-ON CONFLICT DO NOTTHING;
+ON CONFLICT DO NOTHING;
 --
 
 -- НАПОЛНЯЕМ СКЛАД
