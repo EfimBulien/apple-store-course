@@ -1,5 +1,5 @@
--- 1) Роли (RBAC)
-CREATE TABLE IF NOT EXISTS roles (
+
+CREATE TABLE roles (
     id SMALLINT PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE
 );
@@ -12,7 +12,7 @@ INSERT INTO roles (id, name) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- 2) Пользователи (только аутентификация)
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- 3) Адреса 3нф
-CREATE TABLE IF NOT EXISTS addresses (
+CREATE TABLE addresses (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     label TEXT,
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS addresses (
 );
 
 -- 4) Покупатели
-CREATE TABLE IF NOT EXISTS customers (
+CREATE TABLE customers (
     user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     shipping_address_id BIGINT REFERENCES addresses(id) ON DELETE SET NULL,
     billing_address_id  BIGINT REFERENCES addresses(id) ON DELETE SET NULL,
@@ -52,14 +52,14 @@ CREATE TABLE IF NOT EXISTS customers (
 );
 
 -- 5) Категории
-CREATE TABLE IF NOT EXISTS categories (
+CREATE TABLE categories (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     parent_id INT REFERENCES categories(id) ON DELETE SET NULL,
     description TEXT
 );
 
-CREATE TABLE IF NOT EXISTS products (
+CREATE TABLE products (
     id SERIAL PRIMARY KEY,
     sku VARCHAR(100) NOT NULL UNIQUE,
     name VARCHAR(255) NOT NULL,
@@ -71,20 +71,19 @@ CREATE TABLE IF NOT EXISTS products (
     reviews_count INT DEFAULT 0
 );
 
--- imei заменил на ram
-CREATE TABLE IF NOT EXISTS product_variants (
+CREATE TABLE product_variants (
     id SERIAL PRIMARY KEY,
     product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     variant_code VARCHAR(100) NOT NULL,
     price NUMERIC(12,2) NOT NULL CHECK (price >= 0),
     color VARCHAR(50),
     storage_gb INT CHECK (storage_gb >= 0),
-    ram_gb INT CHECK (ram_gb >= 0),
+    ram INT CHECK (ram >= 0),
     UNIQUE(product_id, variant_code)
 );
 
 -- ++ Добавлена таблица картинок товаров
-CREATE TABLE IF NOT EXISTS product_images (
+CREATE TABLE product_images (
     id BIGSERIAL PRIMARY KEY,
     product_variant_id INT NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
     image_url TEXT NOT NULL, -- ссылка на изображения в minio s3
@@ -92,11 +91,10 @@ CREATE TABLE IF NOT EXISTS product_images (
     sort_order INT DEFAULT 0, -- порядок отображения для картинок где 0 - начало
     is_primary BOOLEAN DEFAULT FALSE, -- флаг главного фото/нужен чисто для превьюшки
     uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
-    UNIQUE (product_variant_id, image_url)
 );
 
 -- 6) Склад и движения
-CREATE TABLE IF NOT EXISTS inventory (
+CREATE TABLE inventory (
     id SERIAL PRIMARY KEY,
     product_variant_id INT NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
     warehouse VARCHAR(100) NOT NULL,
@@ -105,7 +103,7 @@ CREATE TABLE IF NOT EXISTS inventory (
     UNIQUE(product_variant_id, warehouse)
 );
 
-CREATE TABLE IF NOT EXISTS inventory_movements (
+CREATE TABLE inventory_movements (
     id BIGSERIAL PRIMARY KEY,
     product_variant_id INT NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
     warehouse VARCHAR(100) NOT NULL,
@@ -116,7 +114,7 @@ CREATE TABLE IF NOT EXISTS inventory_movements (
 );
 
 -- 7) Заказы, позиции, платежи
-CREATE TABLE IF NOT EXISTS orders (
+CREATE TABLE orders (
     id BIGSERIAL PRIMARY KEY,
     order_number TEXT NOT NULL UNIQUE,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
@@ -126,7 +124,7 @@ CREATE TABLE IF NOT EXISTS orders (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS order_items (
+CREATE TABLE order_items (
     id BIGSERIAL PRIMARY KEY,
     order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     product_variant_id INT NOT NULL REFERENCES product_variants(id) ON DELETE RESTRICT,
@@ -134,7 +132,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     unit_price NUMERIC(12,2) NOT NULL CHECK (unit_price >= 0)
 );
 
-CREATE TABLE IF NOT EXISTS payments (
+CREATE TABLE payments (
     id BIGSERIAL PRIMARY KEY,
     order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     provider VARCHAR(50) NOT NULL,
@@ -144,8 +142,8 @@ CREATE TABLE IF NOT EXISTS payments (
     transaction_ref VARCHAR(255)
 );
 
--- 8) Отзывы (с уникальностью product_id + user_id)
-CREATE TABLE IF NOT EXISTS reviews (
+-- 8) Отзывы (без тегов!)
+CREATE TABLE reviews (
     id BIGSERIAL PRIMARY KEY,
     product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
@@ -158,7 +156,7 @@ CREATE TABLE IF NOT EXISTS reviews (
 );
 
 -- 9) Журнал аудита
-CREATE TABLE IF NOT EXISTS audit_log (
+CREATE TABLE audit_log (
     id BIGSERIAL PRIMARY KEY,
     table_name TEXT NOT NULL,
     operation CHAR(1) NOT NULL CHECK (operation IN ('I','U','D')),
@@ -170,7 +168,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
 );
 
 -- 10) Настройки пользователя
-CREATE TABLE IF NOT EXISTS user_settings (
+CREATE TABLE user_settings (
     user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     theme VARCHAR(20) DEFAULT 'light' CHECK (theme IN ('light','dark')),
     items_per_page INT DEFAULT 20 CHECK (items_per_page > 0 AND items_per_page <= 200),
@@ -182,7 +180,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
 );
 
 -- 11) Бэкапы
-CREATE TABLE IF NOT EXISTS backups (
+CREATE TABLE backups (
     id BIGSERIAL PRIMARY KEY,
     created_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
@@ -196,13 +194,16 @@ CREATE INDEX IF NOT EXISTS idx_products_name_ft ON products USING gin (to_tsvect
 CREATE INDEX IF NOT EXISTS idx_inventory_variant ON inventory(product_variant_id);
 CREATE INDEX IF NOT EXISTS idx_order_user ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_product ON reviews(product_id);
+-- ++ добавлен индекс для быстрого поиска
 CREATE INDEX IF NOT EXISTS idx_product_images_variant ON product_images(product_variant_id);
 
 -- ========== ТРИГГЕРЫ для АУДИТА ==========
+--  ТРИГГЕР АУДИТА (обновлен для minio)
 CREATE OR REPLACE FUNCTION fn_audit_trigger() RETURNS trigger AS $$
 DECLARE
     v_changed_by INT;
 BEGIN
+    --юезопасное получение ID пользователя из контекста
     BEGIN
         v_changed_by := NULLIF(current_setting('app.current_user_id', true), '')::int;
     EXCEPTION
@@ -212,32 +213,34 @@ BEGIN
             v_changed_by := NULL;
     END;
 
+    -- проверка существования пользователя
     IF v_changed_by IS NOT NULL AND NOT EXISTS(SELECT 1 FROM users WHERE id = v_changed_by) THEN
         v_changed_by := NULL;
     END IF;
 
     IF (TG_OP = 'DELETE') THEN
         INSERT INTO audit_log(table_name, operation, record_id, changed_by, changed_at, old_row)
-        VALUES (TG_TABLE_NAME, 'D', COALESCE(OLD.id::text, NULL), v_changed_by, now(), row_to_json(OLD));
+        VALUES (TG_TABLE_NAME, 'D', NULL, v_changed_by, now(), row_to_json(OLD));
         RETURN OLD;
     ELSIF (TG_OP = 'UPDATE') THEN
         INSERT INTO audit_log(table_name, operation, record_id, changed_by, changed_at, old_row, new_row)
-        VALUES (TG_TABLE_NAME, 'U', COALESCE(NEW.id::text, NULL), v_changed_by, now(), row_to_json(OLD), row_to_json(NEW));
+        VALUES (TG_TABLE_NAME, 'U', NULL, v_changed_by, now(), row_to_json(OLD), row_to_json(NEW));
         RETURN NEW;
     ELSIF (TG_OP = 'INSERT') THEN
         INSERT INTO audit_log(table_name, operation, record_id, changed_by, changed_at, new_row)
-        VALUES (TG_TABLE_NAME, 'I', COALESCE(NEW.id::text, NULL), v_changed_by, now(), row_to_json(NEW));
+        VALUES (TG_TABLE_NAME, 'I', NULL, v_changed_by, now(), row_to_json(NEW));
         RETURN NEW;
     END IF;
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
+--НУЖНАЯ ШТУКА ДЛЯ ИЗБЕЖАНИЯ ОШИБОК
 DO $$
 DECLARE
     t TEXT;
     tables TEXT[] := ARRAY[
-      'users','customers','addresses','products','product_variants','product_images',
+      'users','customers','addresses','products','product_variants','product_images', -- +++ minio
       'inventory','orders','order_items','payments','reviews','inventory_movements'
     ];
 BEGIN
@@ -249,6 +252,7 @@ END;
 $$;
 
 -- ========== ВАЛИДАЦИЯ ==========
+-- Проверка цены
 CREATE OR REPLACE FUNCTION fn_check_variant() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
     IF NEW.price < 0 THEN
@@ -257,25 +261,22 @@ BEGIN
     RETURN NEW;
 END;
 $$;
-DROP TRIGGER IF EXISTS trg_check_variant ON product_variants;
 CREATE TRIGGER trg_check_variant BEFORE INSERT OR UPDATE ON product_variants
 FOR EACH ROW EXECUTE FUNCTION fn_check_variant();
 
+-- Запрет удаления товара с заказами
 CREATE OR REPLACE FUNCTION fn_prevent_product_delete() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-    IF EXISTS (
-        SELECT 1 FROM order_items oi
-        WHERE oi.product_variant_id IN (SELECT id FROM product_variants pv WHERE pv.product_id = OLD.id)
-    ) THEN
+    IF (SELECT 1 FROM order_items WHERE product_variant_id IN (SELECT id FROM product_variants WHERE product_id = OLD.id) LIMIT 1) IS NOT NULL THEN
         RAISE EXCEPTION 'Cannot delete product % because it has order items', OLD.id;
     END IF;
     RETURN OLD;
 END;
 $$;
-DROP TRIGGER IF EXISTS trg_prevent_product_delete ON products;
 CREATE TRIGGER trg_prevent_product_delete BEFORE DELETE ON products
 FOR EACH ROW EXECUTE FUNCTION fn_prevent_product_delete();
 
+--ТРИГГЕР ПРОВЕРКА ОТЗЫВА ТОЛЬКО ПОСЛЕ completed
 CREATE OR REPLACE FUNCTION fn_check_review_allowed() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE
     v_order_exists BOOLEAN;
@@ -298,11 +299,13 @@ BEGIN
     RETURN NEW;
 END;
 $$;
+
 DROP TRIGGER IF EXISTS trg_check_review_allowed ON reviews;
 CREATE TRIGGER trg_check_review_allowed BEFORE INSERT ON reviews
 FOR EACH ROW EXECUTE FUNCTION fn_check_review_allowed();
 
 -- ========== VIEWS ПРЕДСТАВЛЕНИЯ ==========
+
 CREATE OR REPLACE VIEW vw_orders_summary AS
 SELECT
     o.id AS order_id,
@@ -348,7 +351,7 @@ BEGIN
 END;
 $$;
 
--- 2) sp_create_order - создание заказа и резервирование
+-- 2)sp_create_order - Для создагия заказа т загесегя хаказа в рехерв
 CREATE OR REPLACE PROCEDURE sp_create_order(p_user_id BIGINT, p_items JSONB, OUT p_order_id BIGINT)
 LANGUAGE plpgsql
 AS $$
@@ -359,9 +362,8 @@ DECLARE
     v_qty INT;
     v_price NUMERIC(12,2);
     v_order_number TEXT;
+    v_warehouse_id INT;
     v_available INT;
-    v_warehouse_row_id INT;
-    v_to_reserve INT;
 BEGIN
     PERFORM set_config('app.current_user_id', p_user_id::text, true);
 
@@ -369,7 +371,7 @@ BEGIN
         RAISE EXCEPTION 'Cart empty';
     END IF;
 
-    -- проверка доступности и подсчёт суммы
+    -- прверка доступности и подсчёт суммы
     FOR v_item IN SELECT * FROM jsonb_to_recordset(p_items) AS (variant_id int, quantity int) LOOP
         v_variant_id := v_item.variant_id;
         v_qty := v_item.quantity;
@@ -379,8 +381,15 @@ BEGIN
             RAISE EXCEPTION 'Variant % not found', v_variant_id;
         END IF;
 
-        SELECT COALESCE(SUM(quantity - reserve),0) INTO v_available FROM inventory WHERE product_variant_id = v_variant_id;
-        IF v_available < v_qty THEN
+		-- проверка доступного колчиества с учтеом резерва
+        SELECT SUM(quantity - reserve), MIN(id)
+        INTO v_available, v_warehouse_id
+        FROM inventory
+        WHERE product_variant_id = v_variant_id
+        GROUP BY product_variant_id
+        HAVING SUM(quantity - reserve) >= v_qty;
+
+        IF v_available IS NULL THEN
             RAISE EXCEPTION 'Not enough stock for variant %', v_variant_id;
         END IF;
 
@@ -393,7 +402,7 @@ BEGIN
     VALUES (v_order_number, p_user_id, 'new', v_total)
     RETURNING id INTO p_order_id;
 
-    -- создание позиций + резервирование товара по складам (с логированием для каждой партии)
+    -- создание позиций + резервирование товара
     FOR v_item IN SELECT * FROM jsonb_to_recordset(p_items) AS (variant_id int, quantity int) LOOP
         v_variant_id := v_item.variant_id;
         v_qty := v_item.quantity;
@@ -402,46 +411,53 @@ BEGIN
         INSERT INTO order_items (order_id, product_variant_id, quantity, unit_price)
         VALUES (p_order_id, v_variant_id, v_qty, v_price);
 
-        -- Резервируем по партиям со складов
+        -- ЗАРЕЗЕРВИРУЕМ ТОВАР НА СКЛАДАХЪ
         WHILE v_qty > 0 LOOP
-            SELECT id, (quantity - reserve) INTO v_warehouse_row_id, v_available
-            FROM inventory
-            WHERE product_variant_id = v_variant_id AND (quantity - reserve) > 0
-            ORDER BY quantity DESC
-            LIMIT 1
-            FOR UPDATE SKIP LOCKED;
+            UPDATE inventory
+            SET reserve = reserve + LEAST(v_qty, quantity - reserve)
+            WHERE id = (
+                SELECT id FROM inventory
+                WHERE product_variant_id = v_variant_id
+                  AND (quantity - reserve) > 0
+                ORDER BY quantity DESC
+                LIMIT 1
+                FOR UPDATE SKIP LOCKED
+            )
+            RETURNING (quantity - reserve) INTO v_available;
 
             IF NOT FOUND THEN
                 RAISE EXCEPTION 'Concurrent stock conflict for variant %', v_variant_id;
             END IF;
 
-            v_to_reserve := LEAST(v_qty, v_available);
-            UPDATE inventory SET reserve = reserve + v_to_reserve WHERE id = v_warehouse_row_id;
-
-            INSERT INTO inventory_movements (product_variant_id, warehouse, change_qty, reason, created_by)
-            SELECT v_variant_id, warehouse, -v_to_reserve, 'reserved for order #' || p_order_id, p_user_id
-            FROM inventory WHERE id = v_warehouse_row_id;
-
-            v_qty := v_qty - v_to_reserve;
+            v_qty := v_qty - LEAST(v_qty, v_available);
         END LOOP;
+
+        -- логирование резервирования в запись в таблице
+        INSERT INTO inventory_movements (product_variant_id, warehouse, change_qty, reason, created_by)
+        SELECT
+            v_variant_id,
+            warehouse,
+            -v_item.quantity,  -- отрицательное изменение = в резерв
+            'reserved for order #' || p_order_id,
+            p_user_id
+        FROM inventory
+        WHERE product_variant_id = v_variant_id
+          AND reserve > 0
+        LIMIT 1;
     END LOOP;
 
-    -- создаём запись о платеже в ожидании
+    -- Платёж
     INSERT INTO payments (order_id, provider, amount, status)
     VALUES (p_order_id, 'placeholder', v_total, 'pending');
 END;
 $$;
 
--- 3) sp_cancel_order — освобождение резерва и пометка заказа как cancelled
+-- 3)sp_cancel_order — функция для очистки.освобождения резерва резерва
 CREATE OR REPLACE PROCEDURE sp_cancel_order(p_user_id BIGINT, p_order_id BIGINT)
 LANGUAGE plpgsql
 AS $$
 DECLARE
     r RECORD;
-    v_remaining INT;
-    v_inv_id INT;
-    v_reserve_available INT;
-    v_to_release INT;
 BEGIN
     PERFORM set_config('app.current_user_id', p_user_id::text, true);
 
@@ -451,46 +467,36 @@ BEGIN
 
     UPDATE orders SET status = 'cancelled', updated_at = now() WHERE id = p_order_id;
 
-    -- освобождение зарезервированного товара по складам
+    -- освобождение зарезервированного товара
     FOR r IN SELECT product_variant_id, quantity FROM order_items WHERE order_id = p_order_id LOOP
-        v_remaining := r.quantity;
-        WHILE v_remaining > 0 LOOP
-            SELECT id, reserve INTO v_inv_id, v_reserve_available
-            FROM inventory
-            WHERE product_variant_id = r.product_variant_id AND reserve > 0
-            ORDER BY reserve DESC
-            LIMIT 1
-            FOR UPDATE SKIP LOCKED;
+        UPDATE inventory
+        SET reserve = reserve - LEAST(reserve, r.quantity)
+        WHERE product_variant_id = r.product_id
+        AND reserve > 0;
 
-            IF NOT FOUND THEN
-                EXIT; -- ничего не осталось снять
-            END IF;
-
-            v_to_release := LEAST(v_remaining, v_reserve_available);
-            UPDATE inventory SET reserve = reserve - v_to_release WHERE id = v_inv_id;
-
-            INSERT INTO inventory_movements (product_variant_id, warehouse, change_qty, reason, created_by)
-            SELECT r.product_variant_id, warehouse, v_to_release, 'reserve released after cancel #' || p_order_id, p_user_id
-            FROM inventory WHERE id = v_inv_id;
-
-            v_remaining := v_remaining - v_to_release;
-        END LOOP;
+        INSERT INTO inventory_movements (product_variant_id, warehouse, change_qty, reason, created_by)
+        SELECT
+            r.product_variant_id,
+            warehouse,
+            r.quantity,
+            'reserve released after cancel #' || p_order_id,
+            p_user_id
+        FROM inventory
+        WHERE product_variant_id = r.product_variant_id
+          AND reserve >= 0
+        LIMIT 1;
     END LOOP;
 
     UPDATE payments SET status = 'refunded' WHERE order_id = p_order_id;
 END;
 $$;
 
--- 4) sp_complete_order — списание зарезервированного товара (по складам)
+-- 4)sp_complete_order — обновил списание зарезервированного товара
 CREATE OR REPLACE PROCEDURE sp_complete_order(p_user_id BIGINT, p_order_id BIGINT)
 LANGUAGE plpgsql
 AS $$
 DECLARE
     r RECORD;
-    v_remaining INT;
-    v_inv_id INT;
-    v_reserve_available INT;
-    v_to_deduct INT;
 BEGIN
     PERFORM set_config('app.current_user_id', p_user_id::text, true);
 
@@ -498,35 +504,25 @@ BEGIN
         RAISE EXCEPTION 'Order must be in "shipped" status to complete';
     END IF;
 
-    -- Списание зарезервированного товара по складам
+    --Списание зарезервированного товар
     FOR r IN SELECT product_variant_id, quantity FROM order_items WHERE order_id = p_order_id LOOP
-        v_remaining := r.quantity;
-        WHILE v_remaining > 0 LOOP
-            SELECT id, reserve INTO v_inv_id, v_reserve_available
-            FROM inventory
-            WHERE product_variant_id = r.product_variant_id AND reserve > 0
-            ORDER BY reserve DESC
-            LIMIT 1
-            FOR UPDATE SKIP LOCKED;
+        UPDATE inventory
+        SET
+            quantity = quantity - LEAST(quantity, r.quantity),
+            reserve = reserve - LEAST(reserve, r.quantity)
+        WHERE product_variant_id = r.product_variant_id
+        AND reserve >= r.quantity;
 
-            IF NOT FOUND THEN
-                RAISE EXCEPTION 'Cannot complete order %, insufficient reserved stock for variant %', p_order_id, r.product_variant_id;
-            END IF;
-
-            v_to_deduct := LEAST(v_remaining, v_reserve_available);
-
-            UPDATE inventory
-            SET
-                quantity = quantity - v_to_deduct,
-                reserve = reserve - LEAST(reserve, v_to_deduct)
-            WHERE id = v_inv_id;
-
-            INSERT INTO inventory_movements (product_variant_id, warehouse, change_qty, reason, created_by)
-            SELECT r.product_variant_id, warehouse, -v_to_deduct, 'deducted after completion #' || p_order_id, p_user_id
-            FROM inventory WHERE id = v_inv_id;
-
-            v_remaining := v_remaining - v_to_deduct;
-        END LOOP;
+        INSERT INTO inventory_movements (product_variant_id, warehouse, change_qty, reason, created_by)
+        SELECT
+            r.product_variant_id,
+            warehouse,
+            -r.quantity,
+            'deducted after completion #' || p_order_id,
+            p_user_id
+        FROM inventory
+        WHERE product_variant_id = r.product_variant_id
+        LIMIT 1;
     END LOOP;
 
     UPDATE orders SET status = 'completed', updated_at = now() WHERE id = p_order_id;
@@ -544,13 +540,14 @@ BEGIN
 END;
 $$;
 
--- Триггер на пересчёт рейтинга
+-- Триггер на отзывы (уже добавил на completed выше)
 CREATE OR REPLACE FUNCTION trg_reviews_after() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   PERFORM recalc_product_rating(COALESCE(NEW.product_id, OLD.product_id));
   RETURN NEW;
 END;
 $$;
+
 DROP TRIGGER IF EXISTS trg_reviews_after ON reviews;
 CREATE TRIGGER trg_reviews_after AFTER INSERT OR UPDATE OR DELETE ON reviews FOR EACH ROW EXECUTE FUNCTION trg_reviews_after();
 
@@ -577,7 +574,8 @@ CREATE OR REPLACE FUNCTION export_audit(p_from TIMESTAMPTZ, p_to TIMESTAMPTZ) RE
   SELECT coalesce(jsonb_agg(row_to_json(a)), '[]'::jsonb) FROM (SELECT * FROM audit_log WHERE changed_at BETWEEN p_from AND p_to ORDER BY changed_at) a;
 $$;
 
--- ========== РАНДОМНЫЕ ТЕСТОВЫЕ ДАННЫЕ ==========
+-- ========== РАНДоМНЫЕ ТЕСТОВЫЕ ДАННЫЕ ==========
+-- заполнение пользователей
 INSERT INTO users (username, email, password_hash, first_name, last_name, middle_name, phone, role_id)
 VALUES
 ('admin', 'admin@example.com', 'HASH_PLACEHOLDER', 'Андрей', 'Иванов', 'Петрович', '+79161234567', 1)
@@ -588,10 +586,11 @@ VALUES
 ('customer1', 'cust1@example.com', 'HASH_PLACEHOLDER', 'Иван', 'Петров', 'Сергеевич', '+79161234568', 3)
 ON CONFLICT (username) DO NOTHING;
 
---адрес покупателя (вставляем напрямую; уникальность не задана)
+--адрес покупателя
 INSERT INTO addresses (user_id, label, country, region, city, street, house, apartment, postcode, phone)
 SELECT u.id, 'Дом', 'Россия', 'Московская область', 'Москва', 'Ленинский проспект', '42', '15', '119334', u.phone
-FROM users u WHERE u.username = 'customer1';
+FROM users u WHERE u.username = 'customer1'
+ON CONFLICT DO NOTHING;
 
 -- Покупатель
 INSERT INTO customers (user_id, shipping_address_id, billing_address_id, loyalty_points)
@@ -600,7 +599,6 @@ FROM users u
 JOIN addresses a ON a.user_id = u.id
 WHERE u.username = 'customer1'
 ON CONFLICT (user_id) DO NOTHING;
-
 -- Категории и товары
 INSERT INTO categories (name) VALUES ('iPhone') ON CONFLICT (name) DO NOTHING;
 INSERT INTO categories (name) VALUES ('MacBook') ON CONFLICT (name) DO NOTHING;
@@ -615,57 +613,56 @@ VALUES
 ('MBP16', 'MacBook Pro 16 M3 Pro', (SELECT id FROM categories WHERE name='MacBook'), 'Мощный ноутбук для профессиональной работы')
 ON CONFLICT (sku) DO NOTHING;
 
--- product_variants: добавили ram_gb в вставки
-INSERT INTO product_variants (product_id, variant_code, price, color, storage_gb, ram_gb)
+INSERT INTO product_variants (product_id, variant_code, price, color, storage_gb)
 VALUES
-( (SELECT id FROM products WHERE sku='IP16'), 'IPH16-BLK-128', 79999.99, 'Чёрный', 128, 8 )
+( (SELECT id FROM products WHERE sku='IP16'), 'IPH16-BLK-128', 79999.99, 'Чёрный', 128 )
 ON CONFLICT (product_id, variant_code) DO NOTHING;
 
-INSERT INTO product_variants (product_id, variant_code, price, color, storage_gb, ram_gb)
+INSERT INTO product_variants (product_id, variant_code, price, color, storage_gb)
 VALUES
-( (SELECT id FROM products WHERE sku='IP16'), 'IPH16-WHT-256', 89999.99, 'Белый', 256, 8 )
+( (SELECT id FROM products WHERE sku='IP16'), 'IPH16-WHT-256', 89999.99, 'Белый', 256 )
 ON CONFLICT (product_id, variant_code) DO NOTHING;
 
-INSERT INTO product_variants (product_id, variant_code, price, color, storage_gb, ram_gb)
+INSERT INTO product_variants (product_id, variant_code, price, color, storage_gb)
 VALUES
-( (SELECT id FROM products WHERE sku='MBP16'), 'MBP16-SIL-512', 199999.00, 'Серебристый', 512, 18 )
+( (SELECT id FROM products WHERE sku='MBP16'), 'MBP16-SIL-512', 199999.00, 'Серебристый', 512 )
 ON CONFLICT (product_id, variant_code) DO NOTHING;
 
---настройки пользователей
+--настрокйки пользователкей
 INSERT INTO user_settings (user_id, theme, items_per_page, date_format, number_format)
 SELECT id, 'light', 20, 'DD.MM.YYYY', 'ru_RU'
 FROM users WHERE username = 'customer1'
 ON CONFLICT (user_id) DO NOTHING;
 
--- product_images (ON CONFLICT по (product_variant_id, image_url))
 INSERT INTO product_images (product_variant_id, image_url, alt_text, sort_order, is_primary)
 VALUES
 (
     1,
-    'https://minio.com/images/iphone-16-black-128gb-1.jpg',
+    'https://minio.com/images/iphone-16-black-128gb-1.jpg', -- условная ссылка на bucket
     'iPhone 16 Black 128GB - вид спереди',
     0,
     TRUE
 ),
 (
     1, 
-    'https://minio.com/images/iphone-16-black-128gb-2.jpg',
+    'https://minio.com/images/iphone-16-black-128gb-2.jpg', -- условная ссылка на bucket
     'iPhone 16 Black 128GB - вид сзади',
     1,
     FALSE
 )
-ON CONFLICT (product_variant_id, image_url) DO NOTHING;
+ON CONFLICT DO NOTHING;
+--
 
 -- НАПОЛНЯЕМ СКЛАД
 CALL sp_restock(1, '[{"variant_id":1,"warehouse":"москва","qty":25}, {"variant_id":2,"warehouse":"москва","qty":15}, {"variant_id":3,"warehouse":"спб","qty":8}]'::jsonb);
 
--- проверка наличия через представление
+--проверка наличия через представление
 SELECT * FROM vw_product_stock ORDER BY variant_id;
 
--- создание заказа (пример)
+-- создание заказа
 CALL sp_create_order(2, '[{"variant_id": 1, "quantity": 1}]'::jsonb, NULL);
 
--- пример завершения заказа (чтобы можно было оставить отзыв)
+-- завершение заказа (чтобы можно было оставить отзыв) в будущем
 DO $$
 DECLARE
     v_order_id BIGINT;
@@ -677,7 +674,7 @@ BEGIN
     END IF;
 END $$;
 
--- оставляем отзыв (с явным указанием, чтобы ON CONFLICT знало какие поля уникальны)
+--оставляем отзыв
 INSERT INTO reviews (product_id, user_id, rating, comment)
 VALUES (
     (SELECT id FROM products WHERE sku='IP16'),
@@ -685,12 +682,13 @@ VALUES (
     5,
     'Отличный телефон, рекомендую!'
 )
-ON CONFLICT (product_id, user_id) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
--- проверка рейтинга
+--проверка рейтинга
 SELECT name, avg_rating, reviews_count FROM products WHERE sku = 'IP16';
 
 -- ========== ТЕСТ: НОВЫЙ ПОКУПАТЕЛЬ ==========
+
 DO $$
 DECLARE
     v_new_user_id BIGINT;
@@ -725,7 +723,6 @@ BEGIN
     VALUES (v_new_user_id, v_new_address_id, v_new_address_id, 50)
     ON CONFLICT (user_id) DO NOTHING;
 
-    -- поправил опечатку: MBP16-RU -> MBP16
     SELECT id INTO v_product_id FROM products WHERE sku = 'MBP16';
 
     CALL sp_create_order(v_new_user_id, '[{"variant_id": 3, "quantity": 1}]'::jsonb, v_order_id);
@@ -735,7 +732,7 @@ BEGIN
 
     INSERT INTO reviews (product_id, user_id, rating, comment)
     VALUES (v_product_id, v_new_user_id, 5, 'Прекрасный ноутбук! Быстрый, экран отличный. Идеален для работы и творчества.')
-    ON CONFLICT (product_id, user_id) DO NOTHING;
+    ON CONFLICT DO NOTHING;
 END $$;
 
 -- Финальная проверка
