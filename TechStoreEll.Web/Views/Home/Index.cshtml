@@ -1,0 +1,30 @@
+﻿@* @{ *@
+@*     ViewData["Title"] = "Home Page"; *@
+@* } *@
+@* *@
+@* <div class="text-center"> *@
+@*     <h1 class="display-4">Welcome</h1> *@
+@*     <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p> *@
+@* </div> *@
+@model List<TechStoreEll.Web.Controllers.ProductDto>
+
+<h2>Список товаров</h2>
+
+@if (ViewBag.Error != null)
+{
+    <div style="color: red;">@ViewBag.Error</div>
+}
+
+@if (Model?.Any() == true)
+{
+    <ul>
+        @foreach (var product in Model)
+        {
+            <li>@product.Name - @product.Price руб.</li>
+        }
+    </ul>
+}
+else
+{
+    <p>Товары не найдены.</p>
+}
