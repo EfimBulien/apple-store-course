@@ -1,11 +1,10 @@
-using TechStoreEll.Api.Models;
-
-namespace TechStoreEll.Api;
-
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using TechStoreEll.Api.Models;
+
+namespace TechStoreEll.Api.Services;
 
 public class JwtService
 {
