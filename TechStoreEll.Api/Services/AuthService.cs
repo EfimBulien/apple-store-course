@@ -5,46 +5,43 @@ using TechStoreEll.Api.Models;
 
 namespace TechStoreEll.Api.Services;
 
-
-
-    public class AuthService
+public class AuthService(AppDbContext context, PasswordHasherService passwordHasherService)
+{
+    public async Task<bool> Register(RegisterDto registerDto)
     {
-        private readonly AppDbContext _context;
+        var existingUser = await context.Users
+            .FirstOrDefaultAsync(u => u.Username == registerDto.Username || u.Email == registerDto.Email);
 
-        public AuthService(AppDbContext context)
+        if (existingUser != null)
+            return false;
+        
+        var hashedPassword = passwordHasherService.HashPassword(registerDto.Password);
+
+        var user = new User
         {
-            _context = context;
-        }
+            Username = registerDto.Username,
+            Email = registerDto.Email,
+            PasswordHash = hashedPassword,
+            FirstName = registerDto.FirstName,
+            LastName = registerDto.LastName,
+            MiddleName = registerDto.MiddleName,
+            IsActive = true,
+            RoleId = 3
+        };
 
-        public async Task<bool> Register(RegisterDto registerDto)
-        {
-            // Проверяем, существует ли пользователь
-            var existingUser = await _context.Users
-                .FirstOrDefaultAsync(u => u.Username == registerDto.Username || u.Email == registerDto.Email);
-
-            if (existingUser != null)
-                return false;
-
-            // Создаем нового пользователя (в реальном приложении нужно хэшировать пароль!)
-            var user = new User
-            {
-                Username = registerDto.Username,
-                Email = registerDto.Email,
-                PasswordHash = registerDto.Password, //потом перейти на BCrypt
-                FirstName = registerDto.FirstName,
-                LastName = registerDto.LastName,
-                MiddleName = registerDto.MiddleName,
-                IsActive = true,
-                RoleId = 3
-            };
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<User?> Authenticate(LoginDto loginDto)
-        {
-            return await _context.Users.FirstOrDefaultAsync(u => u.Username == loginDto.Username && u.PasswordHash == loginDto.Password);
-        }
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+        return true;
     }
+
+    public async Task<User?> Authenticate(LoginDto loginDto)
+    {
+        var user = await context.Users
+            .FirstOrDefaultAsync(u => u.Username == loginDto.Username);
+        
+        if (user == null)
+            return null;
+        
+        return !passwordHasherService.VerifyPassword(loginDto.Password, user.PasswordHash) ? null : user;
+    }
+}

@@ -31,7 +31,7 @@ public class ProductsController(AppDbContext context) : ControllerBase
     public async Task<IActionResult> SearchProducts([FromQuery] string name)
     {
         if (string.IsNullOrEmpty(name))
-            return BadRequest("Product name is required");
+            return BadRequest("Название товара обязательно для поиска");
 
         var products = await context.Products
             .Where(p => p.Name.Contains(name))

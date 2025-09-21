@@ -1,4 +1,5 @@
 .DS_Store
+.idea
 TechStoreEll.Api/bin
 TechStoreEll.Api/obj
 TechStoreEll.Api/*.json

@@ -6,38 +6,28 @@ namespace TechStoreEll.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController(AuthService authService, JwtService jwtService) : ControllerBase
 {
-    private readonly AuthService _authService;
-    private readonly JwtService _jwtService;
-
-    public AuthController(AuthService authService, JwtService jwtService)
-    {
-        _authService = authService;
-        _jwtService = jwtService;
-    }
-
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
     {
-        var result = await _authService.Register(registerDto);
+        var result = await authService.Register(registerDto);
             
         if (!result)
-            return BadRequest("User already exists");
+            return BadRequest("Такой пользователь уже существует");
 
-        return Ok("User registered successfully");
+        return Ok("Регистрация прошла успешно");
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
-        var user = await _authService.Authenticate(loginDto);
+        var user = await authService.Authenticate(loginDto);
             
         if (user == null)
-            return Unauthorized("Invalid credentials");
-        Console.WriteLine("Login Success");
-        Console.WriteLine(user.Username);
-        var token = _jwtService.GenerateToken(user);
+            return Unauthorized("Неверные данные");
+        
+        var token = jwtService.GenerateToken(user);
         return Ok(new { Token = $"Bearer {token}" });
     }
 }
