@@ -1,37 +1,17 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace TechStoreEll.Web.Controllers;
-
-public class HomeController(IHttpClientFactory httpClientFactory) : Controller
+namespace TechStoreEll.Web.Controllers
 {
-    public async Task<IActionResult> Index()
+    public class HomeController : Controller
     {
-        var client = httpClientFactory.CreateClient("ApiClient");
-
-        try
+        public IActionResult Index()
         {
-            var products = await client.GetFromJsonAsync<List<ProductDto>>("api/products");
-
-            if (products == null || products.Count == 0)
-            {
-                ViewBag.Error = "Нет товаров или не удалось получить ответ от API.";
-                return View(new List<ProductDto>());
-            }
-
-            return View(products);
+            return View();
         }
-        catch (Exception ex)
+
+        public IActionResult Privacy()
         {
-            ViewBag.Error = "Ошибка при загрузке: " + ex.Message;
-            return View(new List<ProductDto>());
+            return View();
         }
     }
-
-}
-
-public class ProductDto
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = "";
-    public decimal Price { get; set; }
 }
