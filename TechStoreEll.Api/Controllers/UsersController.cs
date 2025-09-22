@@ -3,4 +3,6 @@ using TechStoreEll.Api.Models;
 
 namespace TechStoreEll.Api.Controllers;
 
-public class UsersController(AppDbContext context) : EntityController<User>(context);
+public class UsersController(AppDbContext context) : EntityController<User>(context)
+{
+}

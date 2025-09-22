@@ -3,6 +3,6 @@ using TechStoreEll.Api.Models;
 
 namespace TechStoreEll.Api.Controllers;
 
-public class RolesController(AppDbContext context) : EntityController<Role>(context)
+public class PaymentsController(AppDbContext context) : EntityController<Payment>(context)
 {
 }
