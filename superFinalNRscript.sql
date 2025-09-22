@@ -1,13 +1,13 @@
 
 CREATE TABLE roles (
-    id SMALLINT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE
 );
 
---потом удалить менеджера при надобности или добавить складовика
+
 INSERT INTO roles (id, name) VALUES
   (1, 'admin'),
-  (2, 'manager'),
+  --(2, 'manager'),
   (3, 'customer')
 ON CONFLICT (id) DO NOTHING;
 
