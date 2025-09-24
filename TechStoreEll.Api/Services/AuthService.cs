@@ -5,7 +5,7 @@ using TechStoreEll.Api.Models;
 
 namespace TechStoreEll.Api.Services;
 
-public class AuthService(AppDbContext context, PasswordHasherService passwordHasherService)
+public class AuthService(AppDbContext context)
 {
     public async Task<bool> Register(RegisterDto registerDto)
     {
@@ -15,7 +15,7 @@ public class AuthService(AppDbContext context, PasswordHasherService passwordHas
         if (existingUser != null)
             return false;
         
-        var hashedPassword = passwordHasherService.HashPassword(registerDto.Password);
+        var hashedPassword = PasswordHasherService.HashPassword(registerDto.Password);
 
         var user = new User
         {
@@ -37,11 +37,14 @@ public class AuthService(AppDbContext context, PasswordHasherService passwordHas
     public async Task<User?> Authenticate(LoginDto loginDto)
     {
         var user = await context.Users
+            .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Username == loginDto.Username);
         
         if (user == null)
+        {
             return null;
+        }
         
-        return !passwordHasherService.VerifyPassword(loginDto.Password, user.PasswordHash) ? null : user;
+        return !PasswordHasherService.VerifyPassword(loginDto.Password, user.PasswordHash) ? null : user;
     }
 }

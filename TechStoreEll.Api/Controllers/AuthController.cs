@@ -23,7 +23,7 @@ public class AuthController(AuthService authService, JwtService jwtService) : Co
     public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
         var user = await authService.Authenticate(loginDto);
-            
+        
         if (user == null)
             return Unauthorized("Неверные данные");
         

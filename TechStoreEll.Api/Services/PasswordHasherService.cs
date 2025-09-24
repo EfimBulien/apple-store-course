@@ -1,4 +1,3 @@
-
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 
@@ -10,7 +9,7 @@ public class PasswordHasherService
     private const int HashSize = 32;
     private const int Iterations = 10000;
 
-    public string HashPassword(string password)
+    public static string HashPassword(string password)
     {
         byte[] salt = new byte[SaltSize];
         using (var rng = RandomNumberGenerator.Create())
@@ -32,7 +31,7 @@ public class PasswordHasherService
         return Convert.ToBase64String(hashBytes);
     }
 
-    public bool VerifyPassword(string password, string hashedPassword)
+    public static bool VerifyPassword(string password, string hashedPassword)
     {
         byte[] hashBytes = Convert.FromBase64String(hashedPassword);
         byte[] salt = new byte[SaltSize];

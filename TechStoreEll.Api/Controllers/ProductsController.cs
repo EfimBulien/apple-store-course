@@ -1,13 +1,17 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TechStoreEll.Api.Attributes;
+using TechStoreEll.Api.Data;
+using TechStoreEll.Api.DTOs;
 using TechStoreEll.Api.Services;
 
 namespace TechStoreEll.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
-public class ProductsController(ProductService productService) : ControllerBase
+// [Authorize]
+public class ProductsController(ProductService productService, AppDbContext context) : ControllerBase
 {
     [HttpGet("search")]
     public async Task<IActionResult> SearchProducts([FromQuery] string name)
@@ -29,6 +33,7 @@ public class ProductsController(ProductService productService) : ControllerBase
     }
 
     [HttpGet]
+    [AuthorizeRole("Admin")] // админ
     public async Task<IActionResult> GetAllProducts()
     {
         try
@@ -47,6 +52,7 @@ public class ProductsController(ProductService productService) : ControllerBase
     }
     
     [HttpGet("{id:int}")]
+    [Authorize] // требует авторизации
     public async Task<IActionResult> GetProductById(int id)
     {
         try
@@ -65,6 +71,7 @@ public class ProductsController(ProductService productService) : ControllerBase
     }
     
     [HttpGet("category/{categoryId:int}")]
+    [AuthorizeRole("Admin", "Customer")] // админ (1) и покупатель (3)
     public async Task<IActionResult> GetProductsByCategory(int categoryId)
     {
         try
@@ -74,9 +81,77 @@ public class ProductsController(ProductService productService) : ControllerBase
                 .ToList();
                 
             if (filteredProducts.Count == 0)
+            {
                 return NotFound($"Не найдено товаров с ID категории {categoryId}");
+            }
 
             return Ok(filteredProducts);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Ошибка сервера: {ex.Message}");
+        }
+    }
+    
+    [HttpGet("filter")]
+    public async Task<IActionResult> FilterProducts(
+        [FromQuery] string? search,
+        [FromQuery] int? categoryId,
+        [FromQuery] decimal? minPrice,
+        [FromQuery] decimal? maxPrice,
+        [FromQuery] int? ram,
+        [FromQuery] int? storage)
+    {
+        try 
+        {
+            var query = context.ProductVariants
+                .Include(v => v.Product)
+                .Where(v => v.Product.Active);
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(v =>
+                    EF.Functions.ToTsVector("russian", 
+                            v.Product.Name + " " + v.Product.Description + " " + v.Product.Sku + " " + v.VariantCode + " " + v.Color)
+                        .Matches(EF.Functions.WebSearchToTsQuery("russian", search))
+                );
+            }
+
+            if (categoryId.HasValue)
+                query = query.Where(v => v.Product.CategoryId == categoryId);
+
+            if (minPrice.HasValue)
+                query = query.Where(v => v.Price >= minPrice);
+
+            if (maxPrice.HasValue)
+                query = query.Where(v => v.Price <= maxPrice);
+
+            if (ram.HasValue)
+                query = query.Where(v => v.Ram == ram);
+
+            if (storage.HasValue)
+                query = query.Where(v => v.StorageGb == storage);
+
+            var result = await query.Select(v => new ProductFullDto()
+            {
+                Id = v.Id,
+                ProductId = v.ProductId,
+                VariantCode = v.VariantCode,
+                Price = v.Price,
+                Color = v.Color,
+                StorageGb = v.StorageGb,
+                Ram = v.Ram,
+                ProductSku = v.Product.Sku,
+                ProductName = v.Product.Name,
+                CategoryId = v.Product.CategoryId,
+                ProductDescription = v.Product.Description,
+                ProductActive = v.Product.Active,
+                ProductCreatedAt = v.Product.CreatedAt,
+                ProductAvgRating = v.Product.AvgRating,
+                ProductReviewsCount = v.Product.ReviewsCount
+            }).ToListAsync();
+
+            return Ok(result);
         }
         catch (Exception ex)
         {

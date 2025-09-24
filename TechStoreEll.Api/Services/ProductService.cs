@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using TechStoreEll.Api.Data;
 using TechStoreEll.Api.DTOs;
+using Microsoft.EntityFrameworkCore;
+using NpgsqlTypes;
 
 namespace TechStoreEll.Api.Services;
 
@@ -180,5 +182,40 @@ public class ProductService(AppDbContext context)
                 Ram = v.Ram
             }).ToList()
         }).ToList();
+    }
+    
+    public async Task<List<ProductFullDto>> FullTextSearchAsync(string searchTerm)
+    {
+        var query = context.ProductVariants
+            .Include(v => v.Product)
+            .Where(v => v.Product.Active);
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(v =>
+                EF.Functions.ToTsVector("russian", v.Product.Name + " " + v.Product.Description + " " 
+                                                   + v.Product.Sku + " " + v.VariantCode + " " + v.Color)
+                    .Matches(EF.Functions.WebSearchToTsQuery("russian", searchTerm))
+            );
+        }
+
+        return await query.Select(v => new ProductFullDto
+        {
+            Id = v.Id,
+            ProductId = v.ProductId,
+            VariantCode = v.VariantCode,
+            Price = v.Price,
+            Color = v.Color,
+            StorageGb = v.StorageGb,
+            Ram = v.Ram,
+            ProductSku = v.Product.Sku,
+            ProductName = v.Product.Name,
+            CategoryId = v.Product.CategoryId,
+            ProductDescription = v.Product.Description,
+            ProductActive = v.Product.Active,
+            ProductCreatedAt = v.Product.CreatedAt,
+            ProductAvgRating = v.Product.AvgRating,
+            ProductReviewsCount = v.Product.ReviewsCount
+        }).ToListAsync();
     }
 }
