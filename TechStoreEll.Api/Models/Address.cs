@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace TechStoreEll.Api.Models;
+﻿namespace TechStoreEll.Api.Models;
 
 public partial class Address
 {

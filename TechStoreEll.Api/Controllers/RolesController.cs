@@ -1,8 +1,9 @@
-using TechStoreEll.Api.Data;
+using TechStoreEll.Api.Attributes;
+using TechStoreEll.Api.Infrastructure.Data;
 using TechStoreEll.Api.Models;
 
 namespace TechStoreEll.Api.Controllers;
 
-public class RolesController(AppDbContext context) : EntityController<Role>(context)
-{
-}
+[AuthorizeRole("Admin")] // админ
+public class RolesController(AppDbContext context, ILogger<EntityController<Role>> logger) : 
+    EntityController<Role>(context, logger);

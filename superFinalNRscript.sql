@@ -256,7 +256,7 @@ $$;
 CREATE OR REPLACE FUNCTION fn_check_variant() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
     IF NEW.price < 0 THEN
-        RAISE EXCEPTION 'Price cannot be negative';
+        RAISE EXCEPTION 'Цена не может быть отрицательной';
     END IF;
     RETURN NEW;
 END;
@@ -268,7 +268,7 @@ FOR EACH ROW EXECUTE FUNCTION fn_check_variant();
 CREATE OR REPLACE FUNCTION fn_prevent_product_delete() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
     IF (SELECT 1 FROM order_items WHERE product_variant_id IN (SELECT id FROM product_variants WHERE product_id = OLD.id) LIMIT 1) IS NOT NULL THEN
-        RAISE EXCEPTION 'Cannot delete product % because it has order items', OLD.id;
+        RAISE EXCEPTION 'Невозможно удалить товар %, так как на него есть заказы', OLD.id;
     END IF;
     RETURN OLD;
 END;
@@ -293,7 +293,7 @@ BEGIN
     ) INTO v_order_exists;
 
     IF NOT v_order_exists THEN
-        RAISE EXCEPTION 'Review can only be left after completing an order for this product';
+        RAISE EXCEPTION 'Отзыв можно оставить только после оформления заказа на этот товар';
     END IF;
 
     RETURN NEW;
@@ -368,7 +368,7 @@ BEGIN
     PERFORM set_config('app.current_user_id', p_user_id::text, true);
 
     IF p_items IS NULL OR jsonb_array_length(p_items) = 0 THEN
-        RAISE EXCEPTION 'Cart empty';
+        RAISE EXCEPTION 'Корзина пуста';
     END IF;
 
     -- прверка доступности и подсчёт суммы
@@ -378,7 +378,7 @@ BEGIN
 
         SELECT price INTO v_price FROM product_variants WHERE id = v_variant_id;
         IF v_price IS NULL THEN
-            RAISE EXCEPTION 'Variant % not found', v_variant_id;
+            RAISE EXCEPTION 'Такой товар % не найден', v_variant_id;
         END IF;
 
 		-- проверка доступного колчиества с учтеом резерва
@@ -390,7 +390,7 @@ BEGIN
         HAVING SUM(quantity - reserve) >= v_qty;
 
         IF v_available IS NULL THEN
-            RAISE EXCEPTION 'Not enough stock for variant %', v_variant_id;
+            RAISE EXCEPTION 'Недостаточно количества товара на складе %', v_variant_id;
         END IF;
 
         v_total := v_total + v_price * v_qty;
@@ -426,7 +426,7 @@ BEGIN
             RETURNING (quantity - reserve) INTO v_available;
 
             IF NOT FOUND THEN
-                RAISE EXCEPTION 'Concurrent stock conflict for variant %', v_variant_id;
+                RAISE EXCEPTION 'Конфликт одновременных запасов для варианта %', v_variant_id;
             END IF;
 
             v_qty := v_qty - LEAST(v_qty, v_available);
@@ -438,7 +438,7 @@ BEGIN
             v_variant_id,
             warehouse,
             -v_item.quantity,  -- отрицательное изменение = в резерв
-            'reserved for order #' || p_order_id,
+            'зарезервировано для заказа #' || p_order_id,
             p_user_id
         FROM inventory
         WHERE product_variant_id = v_variant_id
@@ -462,7 +462,7 @@ BEGIN
     PERFORM set_config('app.current_user_id', p_user_id::text, true);
 
     IF NOT EXISTS (SELECT 1 FROM orders WHERE id = p_order_id) THEN
-        RAISE EXCEPTION 'Order % not found', p_order_id;
+        RAISE EXCEPTION 'Заказ % не найден', p_order_id;
     END IF;
 
     UPDATE orders SET status = 'cancelled', updated_at = now() WHERE id = p_order_id;
@@ -479,7 +479,7 @@ BEGIN
             r.product_variant_id,
             warehouse,
             r.quantity,
-            'reserve released after cancel #' || p_order_id,
+            'резерв освобождается после отмены #' || p_order_id,
             p_user_id
         FROM inventory
         WHERE product_variant_id = r.product_variant_id
@@ -501,7 +501,7 @@ BEGIN
     PERFORM set_config('app.current_user_id', p_user_id::text, true);
 
     IF NOT EXISTS (SELECT 1 FROM orders WHERE id = p_order_id AND status = 'shipped') THEN
-        RAISE EXCEPTION 'Order must be in "shipped" status to complete';
+        RAISE EXCEPTION 'Для завершения заказа он должен иметь статус "shipped"';
     END IF;
 
     --Списание зарезервированного товар
@@ -518,7 +518,7 @@ BEGIN
             r.product_variant_id,
             warehouse,
             -r.quantity,
-            'deducted after completion #' || p_order_id,
+            'вычитается после завершения заказа #' || p_order_id,
             p_user_id
         FROM inventory
         WHERE product_variant_id = r.product_variant_id
@@ -756,3 +756,18 @@ SELECT
 FROM addresses a
 JOIN users u ON u.id = a.user_id
 WHERE a.country = 'Россия';
+
+
+-- добавил колонку для полнотекстового индекса
+ALTER TABLE "products"
+    ADD COLUMN search_vector tsvector;
+
+-- search_vector
+UPDATE "products"
+SET search_vector = 
+    setweight(to_tsvector('russian', coalesce("name", '')), 'A') ||
+    setweight(to_tsvector('russian', coalesce("description", '')), 'B') ||
+    setweight(to_tsvector('simple', coalesce("sku", '')), 'C');
+
+-- индексы
+CREATE INDEX idx_products_search ON "products" USING GIN (search_vector);

@@ -1,8 +1,7 @@
-using TechStoreEll.Api.Data;
+using TechStoreEll.Api.Infrastructure.Data;
 using TechStoreEll.Api.Models;
 
 namespace TechStoreEll.Api.Controllers;
 
-public class PaymentsController(AppDbContext context) : EntityController<Payment>(context)
-{
-}
+public class PaymentsController(AppDbContext context, ILogger<EntityController<Payment>> logger) : 
+    EntityController<Payment>(context, logger);

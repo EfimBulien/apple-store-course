@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using TechStoreEll.Api.Data;
 using TechStoreEll.Api.DTOs;
 using Microsoft.EntityFrameworkCore;
 using NpgsqlTypes;
+using TechStoreEll.Api.Infrastructure.Data;
 
 namespace TechStoreEll.Api.Services;
 

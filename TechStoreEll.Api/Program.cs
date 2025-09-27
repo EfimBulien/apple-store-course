@@ -3,16 +3,19 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using TechStoreEll.Api;
-using TechStoreEll.Api.Data;
+using TechStoreEll.Api.Infrastructure.Data;
 using TechStoreEll.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddLogging(logging =>
+{
+    logging.AddConsole(); // Логи в консоль
+    logging.AddDebug();   // Логи для отладки
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-
-
 
 builder.Services.AddSwaggerGen(c =>
 {

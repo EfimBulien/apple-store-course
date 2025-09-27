@@ -15,6 +15,19 @@
             <a asp-controller="Home" asp-action="Privacy" class="text-gray-700 hover:text-blue-600">Privacy</a>
         </nav>
     </div>
+    <body class="container mt-4">
+    <header>
+        <nav>
+            <a asp-controller="Home" asp-action="Index">Главная</a> |
+            <a asp-controller="Account" asp-action="Profile">Профиль</a> |
+            <a asp-controller="Account" asp-action="AdminPanel">Админка</a>
+        </nav>
+    </header>
+    <hr />
+    <main>
+        @RenderBody()
+    </main>
+    </body>
 </header>
 
 <main class="flex-1 max-w-7xl mx-auto px-4 py-8">
