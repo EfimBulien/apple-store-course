@@ -15,7 +15,7 @@ public partial class ProductImage
 
     public int? SortOrder { get; set; }
 
-    public bool? IsPrimary { get; set; }
+    public bool IsPrimary { get; set; }
 
     public DateTime UploadedAt { get; set; }
 

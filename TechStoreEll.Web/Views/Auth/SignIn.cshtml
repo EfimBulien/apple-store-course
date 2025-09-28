@@ -1,25 +1,25 @@
 @model TechStoreEll.Api.DTOs.LoginDto
 
 @{
-    ViewData["Title"] = "Login";
+    ViewData["Title"] = "Войти";
 }
 
-<h2>Login</h2>
+<h2>Войти</h2>
 
 <form asp-action="SignIn" asp-controller="Auth" method="post">
     <div>
-        <label asp-for="Username"></label>
+        <label asp-for="Username">Введите логин</label>
         <input asp-for="Username" class="form-control" />
         <span asp-validation-for="Username"></span>
     </div>
 
     <div>
-        <label asp-for="Password"></label>
+        <label asp-for="Password">Введите пароль</label>
         <input asp-for="Password" type="password" class="form-control" />
         <span asp-validation-for="Password"></span>
     </div>
 
-    <button type="submit" class="btn btn-primary">Login</button>
+    <button type="submit" class="btn btn-primary ms-0 m-3">Войти</button>
 </form>
 
 <p>

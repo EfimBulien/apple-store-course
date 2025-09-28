@@ -1,14 +1,14 @@
 @model TechStoreEll.Api.DTOs.RegisterDto
 
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Регистрация";
 }
 
-<h2>Register</h2>
+<h2>Регистрация</h2>
 
 <form asp-action="Register" method="post">
     <div>
-        <label asp-for="Username"></label>
+        <label asp-for="Username">Логин</label>
         <input asp-for="Username" class="form-control" />
         <span asp-validation-for="Username"></span>
     </div>
@@ -18,26 +18,37 @@
         <input asp-for="Email" class="form-control" />
         <span asp-validation-for="Email"></span>
     </div>
+    
+    <div>
+        <label asp-for="Phone">Номер телефона</label>
+        <input asp-for="Phone" class="form-control" />
+        <span asp-validation-for="Phone"></span>
+    </div>
 
     <div>
-        <label asp-for="Password"></label>
+        <label asp-for="Password">Пароль</label>
         <input asp-for="Password" type="password" class="form-control" />
         <span asp-validation-for="Password"></span>
     </div>
 
     <div>
-        <label asp-for="FirstName"></label>
+        <label asp-for="FirstName">Имя</label>
         <input asp-for="FirstName" class="form-control" />
         <span asp-validation-for="FirstName"></span>
     </div>
 
     <div>
-        <label asp-for="LastName"></label>
+        <label asp-for="LastName">Фамилия</label>
         <input asp-for="LastName" class="form-control" />
         <span asp-validation-for="LastName"></span>
     </div>
 
-    <button type="submit" class="btn btn-success">Register</button>
+    <div>
+        <label asp-for="MiddleName">Отчество</label>
+        <input asp-for="MiddleName" class="form-control" />
+        <span asp-validation-for="MiddleName"></span>
+    </div>
+    <button type="submit" class="btn btn-success ms-0 m-3">Зарегистрироваться</button>
 </form>
 
 <p>

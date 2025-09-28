@@ -29,8 +29,6 @@ public class AuthController(AuthService authService, JwtService jwtService) : Co
             Secure = false,
             Expires = DateTime.UtcNow.AddHours(1)
         });
-        
-        //Console.WriteLine("Авторизация прошла успешно" + token + user.Username + user.Id);
 
         return RedirectToAction("Index", "Home");
     }

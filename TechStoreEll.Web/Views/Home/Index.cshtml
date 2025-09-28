@@ -1,14 +1,105 @@
-﻿@{
-    ViewData["Title"] = "Home";
+﻿@model IEnumerable<TechStoreEll.Web.ViewModels.ProductViewModel>
+@{
+    ViewData["Title"] = "Главная";
+    var currentSort = ViewData["CurrentSort"]?.ToString();
 }
-<div class="text-center">
-    <h1 class="text-4xl font-bold text-gray-900">Welcome — Tailwind + ASP.NET</h1>
-    <p class="mt-4 text-lg text-gray-600">If you see this styled text, Tailwind works.</p>
-    <h2>TechStoreEll</h2>
 
-    <p>Это стартовая страница магазина.</p>
-    <p>
-        <a asp-controller="Auth" asp-action="SignIn">Войти</a> |
-        <a asp-controller="Auth" asp-action="Register">Регистрация</a>
-    </p>
+<section class="py-5 text-center container">
+    <div class="row py-lg-5">
+        <div class="col-lg-6 col-md-8 mx-auto">
+            <h1 class="fw-bold display-4">TechStoreEll</h1>
+            <p class="lead text-body-secondary">
+                Ваш надёжный магазин техники и электроники.
+                Качество, удобство, быстрая доставка.
+            </p>
+            <p>
+                <a href="/Auth/SignIn" class="btn btn-primary btn-lg px-4 me-2">Войти</a>
+                <a href="/Auth/Register" class="btn btn-outline-secondary btn-lg px-4">Регистрация</a>
+            </p>
+        </div>
+    </div>
+</section>
+
+<div class="album py-5 bg-body-tertiary">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0">Товары</h2>
+            <div class="d-flex gap-2 align-items-center">
+                <label for="sortSelect" class="form-label mb-0 me-2">Сортировать:</label>
+                <select id="sortSelect" class="form-select form-select-sm" style="width: auto;"
+                        onchange="location.href='?sort=' + this.value">
+                    <option value="date-desc" selected="@(currentSort == "date-desc")">
+                        Новинки (сначала новые)
+                    </option>
+                    <option value="date-asc" selected="@(currentSort == "date-asc")">
+                        Новинки (сначала старые)
+                    </option>
+                    <option value="price-asc" selected="@(currentSort == "price-asc")">
+                        Цена (по возрастанию)
+                    </option>
+                    <option value="price-desc" selected="@(currentSort == "price-desc")">
+                        Цена (по убыванию)
+                    </option>
+                    <option value="rating-asc" selected="@(currentSort == "rating-asc")">
+                        Рейтинг (по возрастанию)
+                    </option>
+                    <option value="rating-desc" selected="@(currentSort == "rating-desc")">
+                        Рейтинг (по убыванию)
+                    </option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            @foreach (var product in Model)
+            {
+                <div class="col">
+                    <div class="card shadow-sm h-100">
+                        @if (!string.IsNullOrEmpty(product.PrimaryImageUrl))
+                        {
+                            <img src="@product.PrimaryImageUrl" class="card-img-top bg-dark" 
+                                 alt="@product.PrimaryImageAltText" 
+                                 style="height: 200px; object-fit: contain; padding: 10px;">
+                        }
+                        else
+                        {
+                            <div class="d-flex justify-content-center align-items-center bg-dark text-white" 
+                                 style="height: 200px;">
+                                <span>Нет изображения</span>
+                            </div>
+                        }
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate">@product.Name</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-primary">@product.CategoryName</span>
+                                <span class="fw-bold">@(product.Price.HasValue ? $"{product.Price:C}" : "Н/Д")</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-body-secondary">
+                                    Артикул: @product.Sku
+                                </small>
+                                <div class="text-warning">
+                                    @if (product.AvgRating.HasValue)
+                                    {
+                                        <span>@string.Join("", Enumerable.Range(0, (int)
+                                                  Math.Round(product.AvgRating.Value)).Select(_ => "⭐"))</span>
+                                        <span>@string.Join("", Enumerable.Range(0, 5 - (int)
+                                                  Math.Round(product.AvgRating.Value)).Select(_ => "⭐"))</span>
+                                        <small class="ms-1">(@product.ReviewsCount)</small>
+                                    }
+                                    else
+                                    {
+                                        <span>Нет рейтинга</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <a href="/products/@product.Id" class="btn btn-sm btn-outline-primary w-100">Подробнее</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
 </div>

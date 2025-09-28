@@ -21,7 +21,7 @@ public partial class Product
 
     public decimal? AvgRating { get; set; }
 
-    public int? ReviewsCount { get; set; }
+    public int ReviewsCount { get; set; }
 
     public virtual Category? Category { get; set; }
 
