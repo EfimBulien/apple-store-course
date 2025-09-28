@@ -1,4 +1,4 @@
-namespace TechStoreEll.Web.ViewModels;
+namespace TechStoreEll.Web.Models;
 
 public class ProductViewModel
 {
@@ -12,5 +12,5 @@ public class ProductViewModel
     public decimal? AvgRating { get; set; }
     public int ReviewsCount { get; set; }
     
-    public DateTime CreatedAt { get; set; } // Добавлено свойство для сорти
+    public DateTime CreatedAt { get; set; }
 }

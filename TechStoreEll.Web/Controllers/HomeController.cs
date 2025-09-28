@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TechStoreEll.Api.Infrastructure.Data;
-using TechStoreEll.Web.ViewModels;
+using TechStoreEll.Web.Models;
 
 namespace TechStoreEll.Web.Controllers;
 
@@ -78,5 +78,43 @@ public class HomeController(AppDbContext context, ILogger<HomeController> logger
             logger.LogError(ex, "Ошибка при получении ролей");
             throw;
         }
+    }
+    
+    public async Task<IActionResult> Product(int id)
+    {
+        var variant = await context.ProductVariants
+            .Include(v => v.Product)
+            .ThenInclude(p => p.Category)
+            .Include(v => v.ProductImages)
+            .FirstOrDefaultAsync(v => v.Id == id);
+    
+        if (variant == null)
+            return NotFound();
+    
+        var vm = new ProductDetailViewModel
+        {
+            Id = variant.Id,
+            Sku = variant.VariantCode,
+            Name = variant.Product.Name,
+            CategoryName = variant.Product.Category?.Name ?? "Без категории",
+            Description = variant.Product.Description,
+            Price = variant.Price,
+            AvgRating = variant.Product.AvgRating,
+            ReviewsCount = variant.Product.ReviewsCount,
+            Color = variant.Color,
+            StorageGb = variant.StorageGb,
+            Ram = variant.Ram,
+            Images = variant.ProductImages
+                .OrderBy(i => i.SortOrder)
+                .Select(i => new ProductImageViewModel
+                {
+                    ImageUrl = i.ImageUrl,
+                    AltText = i.AltText,
+                    SortOrder = i.SortOrder
+                })
+                .ToList()
+        };
+    
+        return View(vm);
     }
 }

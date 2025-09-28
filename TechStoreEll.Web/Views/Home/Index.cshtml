@@ -1,4 +1,4 @@
-﻿@model IEnumerable<TechStoreEll.Web.ViewModels.ProductViewModel>
+﻿@model IEnumerable<ProductViewModel>
 @{
     ViewData["Title"] = "Главная";
     var currentSort = ViewData["CurrentSort"]?.ToString();
@@ -57,7 +57,7 @@
                     <div class="card shadow-sm h-100">
                         @if (!string.IsNullOrEmpty(product.PrimaryImageUrl))
                         {
-                            <img src="@product.PrimaryImageUrl" class="card-img-top bg-dark" 
+                            <img src="@product.PrimaryImageUrl" class="card-img-top bg-white" 
                                  alt="@product.PrimaryImageAltText" 
                                  style="height: 200px; object-fit: contain; padding: 10px;">
                         }
@@ -94,9 +94,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="card-footer bg-transparent border-top-0">
-                            <a href="/products/@product.Id" class="btn btn-sm btn-outline-primary w-100">Подробнее</a>
-                        </div>
+                        <a asp-controller="Home" asp-action="Product" asp-route-id="@product.Id"
+                           class="btn btn-sm btn-outline-primary w-100">
+                            Подробнее
+                        </a>
                     </div>
                 </div>
             }

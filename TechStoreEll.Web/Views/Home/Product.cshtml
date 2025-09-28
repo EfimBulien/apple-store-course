@@ -1,0 +1,117 @@
+@model TechStoreEll.Web.Models.ProductDetailViewModel
+
+<div class="container py-5">
+    <!-- хлебные крошки -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Главная</a></li>
+            <li class="breadcrumb-item"><a href="/">@Model.CategoryName</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Name</li>
+        </ol>
+    </nav>
+
+    <div class="row g-5">
+        <div class="col-lg-6">
+            @if (Model.Images.Any())
+            {
+                <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        @for (var i = 0; i < Model.Images.Count; i++)
+                        {
+                            var img = Model.Images[i];
+                            <div class="carousel-item @(i == 0 ? "active" : "")">
+                                <img src="@img.ImageUrl"
+                                     class="d-block w-100 rounded"
+                                     alt="@img.AltText"
+                                     style="max-height: 500px; object-fit: contain;">
+                            </div>
+                        }
+                    </div>
+                    <button class="carousel-control-prev" type="button" 
+                            data-bs-target="#productCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon"></span>
+                        <span class="visually-hidden">Предыдущее</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" 
+                            data-bs-target="#productCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon"></span>
+                        <span class="visually-hidden">Следующее</span>
+                    </button>
+                    
+                    <div class="d-flex justify-content-center mt-3 gap-2">
+                        @for (var i = 0; i < Model.Images.Count; i++)
+                        {
+                            var img = Model.Images[i];
+                            <img src="@img.ImageUrl" class="img-thumbnail" 
+                                 style="width: 80px; height: 80px; object-fit: cover; cursor: pointer;" 
+                                 data-bs-target="#productCarousel" data-bs-slide-to="@i" 
+                                 aria-current="@(i == 0 ? "true" : "false")" aria-label="Слайд @(i + 1)" 
+                                 alt="@img.AltText">
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 400px;">
+                    <span class="text-muted">Нет изображения</span>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-6">
+            <h1 class="h2 mb-3">@Model.Name</h1>
+            <p class="text-muted">Артикул: @Model.Sku</p>
+            <div class="h3 text-primary mb-4">@Model.Price.ToString("C")</div>
+
+            <ul class="list-unstyled mb-4">
+                @if (!string.IsNullOrEmpty(Model.Color))
+                {
+                    <li><strong>Цвет:</strong> @Model.Color</li>
+                }
+                @if (Model.StorageGb.HasValue)
+                {
+                    <li><strong>Память:</strong> @Model.StorageGb GB</li>
+                }
+                @if (Model.Ram.HasValue)
+                {
+                    <li><strong>RAM:</strong> @Model.Ram GB</li>
+                }
+            </ul>
+
+            <div class="mb-4">
+                <span class="text-warning">
+                    @for (var i = 1; i <= 5; i++)
+                    {
+                        if (Model.AvgRating.HasValue && Model.AvgRating.Value >= i)
+                        {
+                            <i class="bi bi-star-fill"></i>
+                        }
+                        else if (Model.AvgRating.HasValue && Model.AvgRating.Value >= i - 0.5m)
+                        {
+                            <i class="bi bi-star-half"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-star"></i>
+                        }
+                    }
+                </span>
+                <span class="ms-2">@Model.AvgRating?.ToString("F1") / 5</span>
+                <span class="text-muted ms-2">(@Model.ReviewsCount отзывов)</span>
+            </div>
+
+            
+            <div class="d-grid mb-4">
+                <button class="btn btn-primary btn-lg">
+                    <i class="bi bi-cart-plus me-2"></i> Добавить в корзину
+                </button>
+            </div>
+            
+            <div>
+                <h4 class="mb-3">Описание</h4>
+                <p class="text-body">@Model.Description</p>
+            </div>
+        </div>
+    </div>
+</div>
