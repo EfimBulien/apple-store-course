@@ -7,7 +7,7 @@ using TechStoreEll.Web.Models;
 
 namespace TechStoreEll.Web.Controllers;
 
-public class AccountController(UserService userService) : Controller
+public class AccountController(UserService userService, AuditLogService auditService) : Controller
 {
     [AuthorizeRole("Customer", "Admin")]
     public async Task<IActionResult> Profile()
@@ -113,8 +113,13 @@ public class AccountController(UserService userService) : Controller
     }
 
     [AuthorizeRole("Admin")]
-    public IActionResult AdminPanel()
+    public async Task<IActionResult> AdminPanel()
     {
-        return View();
+        var logs = await auditService.GetAuditLogsAsync(100);
+        var model = new AdminPanelViewModel
+        {
+            AuditLogs = logs
+        };
+        return View(model);
     } 
 }

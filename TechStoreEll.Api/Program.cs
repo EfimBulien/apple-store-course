@@ -86,6 +86,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<PasswordHasherService>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<AuditLogService>();
 
 var app = builder.Build();
 

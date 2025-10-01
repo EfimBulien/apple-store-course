@@ -1,12 +1,102 @@
+@model TechStoreEll.Web.Models.AdminPanelViewModel
+
 @{
-    ViewData["Title"] = "Admin Panel";
+    ViewData["Title"] = "Админ-панель";
 }
 
 <h2>Админ-панель</h2>
 
 <p>Только для админов 🎩</p>
-<ul>
-    <li><a href="#">Управление пользователями</a></li>
-    <li><a href="#">Журналы аудита</a></li>
-    <li><a href="#">Резервные копии</a></li>
-</ul>
+
+<h2>Журнал аудита</h2>
+
+<div class="table-responsive">
+    <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Дата и время</th>
+                <th>Пользователь</th>
+                <th>Таблица</th>
+                <th>Операция</th>
+                <th>ID записи</th>
+                <th>Изменения</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.AuditLogs.Any())
+            {
+                @foreach (var log in Model.AuditLogs)
+                {
+                    <tr>
+                        <td>@log.ChangedAt.ToString("dd.MM.yyyy HH:mm:ss")</td>
+                        <td>
+                            @(log.ChangedByNavigation != null 
+                                ? $"{log.ChangedByNavigation.FirstName} {log.ChangedByNavigation.LastName} ({log.ChangedByNavigation.Email})"
+                                : "Система")
+                        </td>
+                        <td><code>@log.TableName</code></td>
+                        <td>
+                            @{
+                                var opText = log.Operation switch
+                                {
+                                    'I' => "Создание",
+                                    'U' => "Обновление",
+                                    'D' => "Удаление",
+                                    _ => "Неизвестно"
+                                };
+                                var opClass = log.Operation switch
+                                {
+                                    'I' => "text-success",
+                                    'U' => "text-warning",
+                                    'D' => "text-danger",
+                                    _ => ""
+                                };
+                            }
+                            <span class="@opClass">@opText</span>
+                        </td>
+                        <td>@(log.RecordId ?? "—")</td>
+                        <td>
+                            @if (log.OldRow != null || log.NewRow != null)
+                            {
+                                <details>
+                                    <summary>Показать JSON</summary>
+                                    @if (log.OldRow != null)
+                                    {
+                                        <div><strong>Было:</strong> <pre style="font-size:0.85em;">@log.OldRow</pre></div>
+                                    }
+                                    @if (log.NewRow != null)
+                                    {
+                                        <div><strong>Стало:</strong> <pre style="font-size:0.85em;">@log.NewRow</pre></div>
+                                    }
+                                </details>
+                            }
+                            else
+                            {
+                                <em>Нет данных</em>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center">Нет записей в журнале</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <style>
+        pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 4px 0;
+        }
+    </style>
+}
