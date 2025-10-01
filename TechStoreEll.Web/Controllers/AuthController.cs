@@ -34,13 +34,20 @@ public class AuthController(AuthService authService, JwtService jwtService) : Co
     }
 
     [HttpGet]
-    public IActionResult Register() => View();
+    public IActionResult SignUp() => View();
 
     [HttpPost]
-    public async Task<IActionResult> Register(RegisterDto dto)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SignUp([FromForm] RegisterDto dto)
     {
+        if (!ModelState.IsValid)
+        {
+            Console.WriteLine("Неверные данные модели");
+            return View(dto);
+        }
+        
         var result = await authService.Register(dto);
-        if (result) return RedirectToAction("Login");
+        if (result) return RedirectToAction("Index", "Home");
         ModelState.AddModelError("", "Такой пользователь уже существует");
         return View(dto);
 

@@ -103,9 +103,17 @@
 
             
             <div class="d-grid mb-4">
-                <button class="btn btn-primary btn-lg">
-                    <i class="bi bi-cart-plus me-2"></i> Добавить в корзину
-                </button>
+                <form asp-controller="Cart" asp-action="Add" method="post">
+                    <input type="hidden" name="productId" value="@Model.Id" />
+                    <input type="hidden" name="name" value="@Model.Name" />
+                    <input type="hidden" name="price" value="@Model.Price" />
+                    <input type="hidden" name="imageUrl" value="@(Model.Images.FirstOrDefault()?.ImageUrl ?? "")" />
+                    <input type="hidden" name="quantity" value="1" />
+
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-cart-plus me-2"></i> Добавить в корзину
+                    </button>
+                </form>
             </div>
             
             <div>

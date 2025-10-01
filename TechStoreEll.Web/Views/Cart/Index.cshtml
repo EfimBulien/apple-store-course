@@ -1,0 +1,120 @@
+@model List<TechStoreEll.Web.Models.CartItemViewModel>
+
+<div class="container py-4">
+    <h2 class="mb-4"><i class="bi bi-cart3 me-2"></i>Корзина</h2>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">Ваша корзина пуста</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Товар</th>
+                        <th>Цена</th>
+                        <th style="width:150px;">Количество</th>
+                        <th>Сумма</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="cart-body">
+                    @foreach (var item in Model)
+                    {
+                        <tr data-id="@item.ProductId" data-price="@item.Price">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="@item.ImageUrl" class="rounded me-2" style="width: 70px; height: 70px; object-fit: cover;" 
+                                         alt="@item.Name">
+                                    <a href="/Home/Product/@item.ProductId" class="fw-semibold text-decoration-none">@item.Name</a>
+                                </div>
+                            </td>
+                            <td>@item.Price?.ToString("C")</td>
+                            <td>
+                                <input type="number" 
+                                       min="1" step="1" pattern="\d+" 
+                                       class="form-control form-control-sm quantity-input" 
+                                       value="@item.Quantity" style="width: 80px;">
+                            </td>
+                            <td class="item-total">@((item.Price ?? 0) * item.Quantity) ₽</td>
+                            <td>
+                                <form asp-action="Remove" method="post">
+                                    <input type="hidden" name="productId" value="@item.ProductId" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-end fw-bold">Итого:</td>
+                        <td id="cart-total" class="fw-bold"></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <form asp-action="Clear" method="post">
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-x-circle me-1"></i> Очистить корзину
+                </button>
+            </form>
+            <button class="btn btn-success btn-lg">Оформить заказ</button>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    function recalcTotals() {
+        let total = 0;
+        document.querySelectorAll("#cart-body tr").forEach(row => {
+            const price = parseFloat(row.dataset.price);
+            const qty = parseInt(row.querySelector(".quantity-input").value);
+            const subtotal = price * qty;
+            row.querySelector(".item-total").innerText = subtotal.toFixed(2) + " ₽";
+            total += subtotal;
+        });
+        document.getElementById("cart-total").innerText = total.toFixed(2) + " ₽";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        recalcTotals();
+
+        document.querySelectorAll(".quantity-input").forEach(input => {
+            input.addEventListener("input", e => {
+                let val = e.target.value;
+                val = val.replace(/\D/g, "");
+                if (!val) val = "1";
+                let num = parseInt(val, 10);
+                if (isNaN(num) || num < 1) num = 1;
+                if (num > 20) num = 20;
+                e.target.value = num;
+            });
+
+            input.addEventListener("change", async (e) => {
+                const row = e.target.closest("tr");
+                const id = row.dataset.id;
+                const qty = e.target.value;
+
+                await fetch("/cart/update", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: `productId=${id}&quantity=${qty}`
+                });
+
+                recalcTotals();
+                loadCartPreview();
+            });
+        });
+    });
+
+</script>
+}

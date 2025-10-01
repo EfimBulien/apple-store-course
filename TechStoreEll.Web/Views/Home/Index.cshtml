@@ -12,10 +12,13 @@
                 Ваш надёжный магазин техники и электроники.
                 Качество, удобство, быстрая доставка.
             </p>
-            <p>
-                <a href="/Auth/SignIn" class="btn btn-primary btn-lg px-4 me-2">Войти</a>
-                <a href="/Auth/Register" class="btn btn-outline-secondary btn-lg px-4">Регистрация</a>
-            </p>
+            @if (User.Identity is { IsAuthenticated: false })
+            {
+                <p>
+                    <a href="/Auth/SignIn" class="btn btn-primary btn-lg px-4 me-2">Войти</a>
+                    <a href="/Auth/SignUp" class="btn btn-outline-secondary btn-lg px-4">Регистрация</a>
+                </p>
+            }
         </div>
     </div>
 </section>

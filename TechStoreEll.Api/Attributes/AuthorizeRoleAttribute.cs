@@ -1,11 +1,11 @@
-// using Microsoft.AspNetCore.Mvc;
-// using Microsoft.AspNetCore.Mvc.Filters;
-// using System.Security.Claims;
-//
-// namespace TechStoreEll.Api.Attributes;
-//
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using System.Security.Claims;
+
+namespace TechStoreEll.Api.Attributes;
+
 // [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
-// public class AuthorizeRoleAttribute(string requiredRole) : Attribute, IAuthorizationFilter
+// public class AuthorizeRoleAttribute(params string[] allowedRoles) : Attribute, IAuthorizationFilter
 // {
 //     public void OnAuthorization(AuthorizationFilterContext context)
 //     {
@@ -19,16 +19,10 @@
 //
 //         var roleClaim = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
 //
-//         if (roleClaim != null && roleClaim == requiredRole) return;
+//         if (roleClaim != null && allowedRoles.Contains(roleClaim)) return;
 //         context.Result = new ForbidResult();
 //     }
 // }
-
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
-using System.Security.Claims;
-
-namespace TechStoreEll.Api.Attributes;
 
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
 public class AuthorizeRoleAttribute(params string[] allowedRoles) : Attribute, IAuthorizationFilter
@@ -39,13 +33,15 @@ public class AuthorizeRoleAttribute(params string[] allowedRoles) : Attribute, I
 
         if (user.Identity is not { IsAuthenticated: true })
         {
-            context.Result = new UnauthorizedResult();
+            context.Result = new RedirectToActionResult("SignIn", "Auth", null);
             return;
         }
 
         var roleClaim = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
 
-        if (roleClaim != null && allowedRoles.Contains(roleClaim)) return;
-        context.Result = new ForbidResult();
+        if (roleClaim == null || !allowedRoles.Contains(roleClaim))
+        {
+            context.Result = new ForbidResult();
+        }
     }
 }
