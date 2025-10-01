@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TechStoreEll.Api.DTOs;
 using TechStoreEll.Api.Infrastructure.Data;
@@ -15,13 +14,14 @@ public class UserService(AppDbContext context)
             .FirstOrDefaultAsync(u => u.Id == userId);
     }
 
-    public async Task<bool> UpdateUserAsync(long userId, [FromForm] UpdateUserDto dto)
+    public async Task<bool> UpdateUserAsync(long userId, UpdateUserDto dto)
     {
         try
         {
             var user = await context.Users.FindAsync(userId);
             if (user == null) return false;
 
+            // обновляем только нужные поля
             user.Email = dto.Email;
             user.Phone = dto.Phone;
             user.FirstName = dto.FirstName;
@@ -32,13 +32,14 @@ public class UserService(AppDbContext context)
             await context.SaveChangesAsync();
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"Ошибка при обновлении пользователя: {ex.Message}");
             return false;
         }
     }
 
-    public async Task<bool> UpdateUserSettingsAsync(long userId, [FromForm] UpdateUserSettingsDto dto)
+    public async Task<bool> UpdateUserSettingsAsync(long userId, UpdateUserSettingsDto dto)
     {
         try
         {
@@ -74,8 +75,9 @@ public class UserService(AppDbContext context)
             await context.SaveChangesAsync();
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"Ошибка при обновлении настроек пользователя: {ex.Message}");
             return false;
         }
     }

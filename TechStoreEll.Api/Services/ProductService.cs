@@ -41,7 +41,8 @@ public class ProductService(AppDbContext context)
         var query = context.ProductVariants
             .Include(v => v.Product)
             .Where(v => v.Product.Active);
-
+        
+        // ничего не трогать
         if (!string.IsNullOrEmpty(searchTerm))
         {
             query = query.Where(v => 

@@ -1,44 +1,19 @@
-// using Microsoft.AspNetCore.Mvc;
-// using TechStoreEll.Api.Attributes;
-//
-// namespace TechStoreEll.Web.Controllers;
-//
-// public class AccountController : Controller
-// {
-//     [AuthorizeRole("Customer", "Admin")]
-//     public IActionResult Profile()
-//     {
-//         return View();
-//     }
-//
-//     [AuthorizeRole("Admin")]
-//     public IActionResult AdminPanel()
-//     {
-//         return View();
-//     }
-// }
 using Microsoft.AspNetCore.Mvc;
 using TechStoreEll.Api.Attributes;
 using TechStoreEll.Api.Services;
 using TechStoreEll.Api.DTOs;
 using System.Security.Claims;
+using TechStoreEll.Web.Models;
 
 namespace TechStoreEll.Web.Controllers;
 
-public class AccountController : Controller
+public class AccountController(UserService userService) : Controller
 {
-    private readonly UserService _userService;
-
-    public AccountController(UserService userService)
-    {
-        _userService = userService;
-    }
-
     [AuthorizeRole("Customer", "Admin")]
     public async Task<IActionResult> Profile()
     {
         var userId = long.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-        var user = await _userService.GetUserWithSettingsAsync(userId);
+        var user = await userService.GetUserWithSettingsAsync(userId);
         
         if (user == null)
         {
@@ -72,28 +47,47 @@ public class AccountController : Controller
 
         return View(model);
     }
-
+    
     [HttpPost]
     [AuthorizeRole("Customer", "Admin")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateProfile(UpdateUserDto dto)
+    public async Task<IActionResult> UpdateProfile(ProfileViewModel model)
     {
+        
+        Console.WriteLine($"Raw Email: '{Request.Form["User.Email"]}'");
+        Console.WriteLine($"Raw Phone: '{Request.Form["User.Phone"]}'");
+        Console.WriteLine($"Raw FirstName: '{Request.Form["User.FirstName"]}'");
+        Console.WriteLine($"Raw LastName: '{Request.Form["User.LastName"]}'");
+        Console.WriteLine($"Raw MiddleName: '{Request.Form["User.MiddleName"]}'");
+        
+        // if (!ModelState.IsValid)
+        // {
+        //     Console.WriteLine("Неверная модель данных");
+        //     return View("Profile", model);
+        // }
+        
         if (!ModelState.IsValid)
         {
-            return View("Profile", await GetProfileViewModel(dto));
+            Console.WriteLine("Неверная модель данных");
+            foreach (var key in ModelState.Keys)
+            {
+                var state = ModelState[key];
+                if (state!.Errors.Count <= 0) continue;
+                foreach (var error in state.Errors)
+                {
+                    Console.WriteLine($"Ошибка в поле '{key}': {error.ErrorMessage}");
+                }
+            }
+            return View("Profile", model);
         }
 
         var userId = long.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-        var result = await _userService.UpdateUserAsync(userId, dto);
+        if (userId <= 0)
+            return BadRequest();
 
-        if (result)
-        {
-            TempData["SuccessMessage"] = "Данные успешно обновлены!";
-        }
-        else
-        {
-            TempData["ErrorMessage"] = "Ошибка при обновлении данных!";
-        }
+        var result = await userService.UpdateUserAsync(userId, model.User);
+
+        TempData["SuccessMessage"] = result ? "Данные успешно обновлены!" : "Ошибка при обновлении данных!";
 
         return RedirectToAction("Profile");
     }
@@ -104,7 +98,7 @@ public class AccountController : Controller
     public async Task<IActionResult> UpdateSettings(UpdateUserSettingsDto dto)
     {
         var userId = long.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-        var result = await _userService.UpdateUserSettingsAsync(userId, dto);
+        var result = await userService.UpdateUserSettingsAsync(userId, dto);
 
         if (result)
         {
@@ -122,45 +116,5 @@ public class AccountController : Controller
     public IActionResult AdminPanel()
     {
         return View();
-    }
-
-    private async Task<ProfileViewModel> GetProfileViewModel(UpdateUserDto? userDto = null)
-    {
-        var userId = long.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-        var user = await _userService.GetUserWithSettingsAsync(userId);
-
-        if (userDto == null)
-        {
-            userDto = new UpdateUserDto
-            {
-                Email = user.Email,
-                Phone = user.Phone ?? "",
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                MiddleName = user.MiddleName
-            };
-        }
-
-        var settingsDto = new UpdateUserSettingsDto
-        {
-            Theme = user.UserSetting?.Theme,
-            ItemsPerPage = user.UserSetting?.ItemsPerPage,
-            DateFormat = user.UserSetting?.DateFormat,
-            NumberFormat = user.UserSetting?.NumberFormat,
-            SavedFilters = user.UserSetting?.SavedFilters,
-            Hotkeys = user.UserSetting?.Hotkeys
-        };
-
-        return new ProfileViewModel
-        {
-            User = userDto,
-            Settings = settingsDto
-        };
-    }
-}
-
-public class ProfileViewModel
-{
-    public required UpdateUserDto User { get; set; }
-    public required UpdateUserSettingsDto Settings { get; set; }
+    } 
 }

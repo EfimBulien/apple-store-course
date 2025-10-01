@@ -13,6 +13,8 @@ public class JwtService
     private readonly string _audience;
     private readonly int _expireMinutes;
 
+    
+    // ПОТОМ ПОМЕНЯТЬ В КОНФИГ ФАЙЛЕ!
     public JwtService(IConfiguration config)
     {
         _key = "your_super_secret_key_here_at_least_32_characters_long";
