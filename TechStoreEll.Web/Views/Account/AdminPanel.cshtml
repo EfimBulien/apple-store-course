@@ -4,11 +4,31 @@
     ViewData["Title"] = "Админ-панель";
 }
 
-<h2>Админ-панель</h2>
+<h2>Журнал аудита</h2>
+
+@* <h2>Админ-панель</h2> *@
 
 <p>Только для админов 🎩</p>
 
-<h2>Журнал аудита</h2>
+<div class="mb-3">
+    <form method="get" class="row g-2">
+        <div class="col-auto">
+            <p>Выберите количество последних записей</p>
+            <label for="take" class="visually-hidden">Количество записей</label>
+            <input type="number"
+                   id="take"
+                   name="take"
+                   value="@Model.Take"
+                   min="10"
+                   max="1000"
+                   class="form-control"
+                   style="width: 120px;"/>
+            <div class="col-auto mt-3">
+                <button type="submit" class="btn btn-outline-primary">Применить</button>
+            </div>
+        </div>
+    </form>
+</div>
 
 <div class="table-responsive">
     <table class="table table-striped table-bordered">
@@ -31,8 +51,9 @@
                         <td>@log.ChangedAt.ToString("dd.MM.yyyy HH:mm:ss")</td>
                         <td>
                             @(log.ChangedByNavigation != null 
-                                ? $"{log.ChangedByNavigation.FirstName} {log.ChangedByNavigation.LastName} ({log.ChangedByNavigation.Email})"
-                                : "Система")
+                                ? $"{log.ChangedByNavigation.FirstName} " +
+                                  $"{log.ChangedByNavigation.LastName} " +
+                                  $"({log.ChangedByNavigation.Email})" : "Система")
                         </td>
                         <td><code>@log.TableName</code></td>
                         <td>
@@ -62,11 +83,16 @@
                                     <summary>Показать JSON</summary>
                                     @if (log.OldRow != null)
                                     {
-                                        <div><strong>Было:</strong> <pre style="font-size:0.85em;">@log.OldRow</pre></div>
+                                        <div>
+                                            <strong>Было:</strong>
+                                            <pre style="font-size:0.85em;">@log.OldRow</pre>
+                                        </div>
                                     }
                                     @if (log.NewRow != null)
                                     {
-                                        <div><strong>Стало:</strong> <pre style="font-size:0.85em;">@log.NewRow</pre></div>
+                                        <div>
+                                            <strong>Стало:</strong> <pre style="font-size:0.85em;">@log.NewRow</pre>
+                                        </div>
                                     }
                                 </details>
                             }
@@ -97,6 +123,7 @@
             padding: 8px;
             border-radius: 4px;
             margin: 4px 0;
+            font-size: 0.85em;
         }
     </style>
 }

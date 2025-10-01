@@ -113,13 +113,16 @@ public class AccountController(UserService userService, AuditLogService auditSer
     }
 
     [AuthorizeRole("Admin")]
-    public async Task<IActionResult> AdminPanel()
+    public async Task<IActionResult> AdminPanel(int take = 100)
     {
-        var logs = await auditService.GetAuditLogsAsync(100);
+        //take = Math.Clamp(take, 10, 1000);
+
+        var logs = await auditService.GetAuditLogsAsync(take);
         var model = new AdminPanelViewModel
         {
-            AuditLogs = logs
+            AuditLogs = logs,
+            Take = take // сохраним значение для отображения в форме
         };
         return View(model);
-    } 
+    }
 }

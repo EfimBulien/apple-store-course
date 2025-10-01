@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using TechStoreEll.Api.DTOs;
 using TechStoreEll.Api.Infrastructure.Data;
 using TechStoreEll.Api.Models;
 
@@ -14,10 +13,5 @@ public class AuditLogService(AppDbContext context)
             .OrderByDescending(a => a.ChangedAt)
             .Take(take)
             .ToListAsync();
-    }
-
-    public async Task<int> GetTotalCountAsync()
-    {
-        return await context.AuditLogs.CountAsync();
     }
 }
