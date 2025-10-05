@@ -1,4 +1,4 @@
-using TechStoreEll.Api.Models;
+using TechStoreEll.Api.Entities;
 
 namespace TechStoreEll.Web.Models;
 

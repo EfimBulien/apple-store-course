@@ -1,4 +1,4 @@
-﻿namespace TechStoreEll.Api.Models;
+﻿namespace TechStoreEll.Api.Entities.Views;
 
 public partial class VwProductStock
 {

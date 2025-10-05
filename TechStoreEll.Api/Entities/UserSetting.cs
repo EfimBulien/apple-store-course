@@ -1,8 +1,9 @@
-﻿namespace TechStoreEll.Api.Models;
+﻿namespace TechStoreEll.Api.Entities;
 
-public partial class UserSetting
+public partial class UserSetting : IEntity
 {
-    public int UserId { get; set; }
+    // это внешняя зависимость к UserId = ID
+    public int Id { get; set; }
 
     public string? Theme { get; set; }
 

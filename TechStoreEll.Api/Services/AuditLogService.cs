@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TechStoreEll.Api.Entities;
 using TechStoreEll.Api.Infrastructure.Data;
 using TechStoreEll.Api.Models;
 

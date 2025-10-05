@@ -1,6 +1,4 @@
-﻿using TechStoreEll.Api.Entities;
-
-namespace TechStoreEll.Api.Models;
+﻿namespace TechStoreEll.Api.Entities;
 
 public partial class Review : IEntity
 {

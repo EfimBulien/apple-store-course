@@ -1,6 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using TechStoreEll.Api.DTOs;
+using TechStoreEll.Api.Entities;
 using TechStoreEll.Api.Infrastructure.Data;
 using TechStoreEll.Api.Models;
 
@@ -45,13 +46,13 @@ public class UserService(AppDbContext context)
         try
         {
             var userSettings = await context.UserSettings
-                .FirstOrDefaultAsync(us => us.UserId == userId);
+                .FirstOrDefaultAsync(us => us.Id == userId);
 
             if (userSettings == null)
             {
                 userSettings = new UserSetting
                 {
-                    UserId = userId,
+                    Id = userId,
                     Theme = dto.Theme,
                     ItemsPerPage = dto.ItemsPerPage,
                     DateFormat = dto.DateFormat,

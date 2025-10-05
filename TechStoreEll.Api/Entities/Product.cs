@@ -1,6 +1,6 @@
 ﻿using NpgsqlTypes;
 
-namespace TechStoreEll.Api.Models;
+namespace TechStoreEll.Api.Entities;
 
 public partial class Product
 {

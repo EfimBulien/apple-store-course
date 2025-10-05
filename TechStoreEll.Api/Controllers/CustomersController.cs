@@ -1,5 +1,5 @@
 using TechStoreEll.Api.Attributes;
-using TechStoreEll.Api.Models;
+using TechStoreEll.Api.Entities;
 using TechStoreEll.Api.Services;
 
 namespace TechStoreEll.Api.Controllers;

@@ -30,6 +30,4 @@ public class AuthController(AuthService authService, JwtService jwtService) : Co
         var token = jwtService.GenerateToken(user);
         return Ok(new { Token = $"Bearer {token}" });
     }
-    
-    
 }

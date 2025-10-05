@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TechStoreEll.Api.DTOs;
+using TechStoreEll.Api.Entities;
 using TechStoreEll.Api.Infrastructure.Data;
 using TechStoreEll.Api.Models;
 
@@ -36,7 +37,7 @@ public class AuthService(AppDbContext context)
         var userId = context.Users.FirstOrDefault(u => u.Username == registerDto.Username)?.Id;
         var settings = new UserSetting
         {
-            UserId = (int)userId!
+            Id = (int)userId!
         };
         context.UserSettings.Add(settings);
         await context.SaveChangesAsync();

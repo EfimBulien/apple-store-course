@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TechStoreEll.Api.Entities;
+using TechStoreEll.Api.Entities.Views;
 using TechStoreEll.Api.Models;
 
 namespace TechStoreEll.Api.Infrastructure.Data;
@@ -542,11 +544,11 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<UserSetting>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("user_settings_pkey");
+            entity.HasKey(e => e.Id).HasName("user_settings_pkey");
 
             entity.ToTable("user_settings");
 
-            entity.Property(e => e.UserId)
+            entity.Property(e => e.Id)
                 .ValueGeneratedNever()
                 .HasColumnName("user_id");
             entity.Property(e => e.DateFormat)
@@ -577,7 +579,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("updated_at");
 
             entity.HasOne(d => d.User).WithOne(p => p.UserSetting)
-                .HasForeignKey<UserSetting>(d => d.UserId)
+                .HasForeignKey<UserSetting>(d => d.Id)
                 .HasConstraintName("user_settings_user_id_fkey");
         });
 
