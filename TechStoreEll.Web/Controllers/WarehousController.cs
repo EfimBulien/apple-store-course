@@ -6,9 +6,9 @@ using TechStoreEll.Api.Services;
 namespace TechStoreEll.Web.Controllers;
 
 [AuthorizeRole("Admin")]
-public class WarehousesController(
+public class WarehousController(
     IGenericRepository<Warehouse> repository,
-    ILogger<WarehousesController> logger)
+    ILogger<WarehousController> logger)
     : Controller
 {
     // GET: Warehouses

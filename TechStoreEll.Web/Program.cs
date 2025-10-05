@@ -61,6 +61,7 @@ builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<AuditLogService>();
+builder.Services.AddScoped<AnalyticsService>();
 
 var app = builder.Build();
 

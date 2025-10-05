@@ -90,6 +90,7 @@ builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<PasswordHasherService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<AuditLogService>();
+builder.Services.AddScoped<AnalyticsService>();
 
 var app = builder.Build();
 
