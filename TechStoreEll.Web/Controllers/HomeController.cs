@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using TechStoreEll.Api.Infrastructure.Data;
+using TechStoreEll.Core.Infrastructure.Data;
 using TechStoreEll.Web.Models;
 
 namespace TechStoreEll.Web.Controllers;

@@ -3,7 +3,6 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using TechStoreEll.Api.Entities;
-using TechStoreEll.Api.Models;
 
 namespace TechStoreEll.Api.Services;
 

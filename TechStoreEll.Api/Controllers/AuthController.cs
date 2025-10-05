@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TechStoreEll.Api.DTOs;
 using TechStoreEll.Api.Services;
+using TechStoreEll.Core.Services;
 
 namespace TechStoreEll.Api.Controllers;
 

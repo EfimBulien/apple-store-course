@@ -7,7 +7,7 @@ using TechStoreEll.Web.Models;
 
 namespace TechStoreEll.Web.Controllers;
 
-public class AccountController(UserService userService, AuditLogService auditService) : Controller
+public class AccountController(UserService userService) : Controller
 {
     [AuthorizeRole("Customer", "Admin")]
     public async Task<IActionResult> Profile()
@@ -53,18 +53,17 @@ public class AccountController(UserService userService, AuditLogService auditSer
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateProfile(ProfileViewModel model)
     {
-        
         Console.WriteLine($"Raw Email: '{Request.Form["User.Email"]}'");
         Console.WriteLine($"Raw Phone: '{Request.Form["User.Phone"]}'");
         Console.WriteLine($"Raw FirstName: '{Request.Form["User.FirstName"]}'");
         Console.WriteLine($"Raw LastName: '{Request.Form["User.LastName"]}'");
         Console.WriteLine($"Raw MiddleName: '{Request.Form["User.MiddleName"]}'");
         
-        // if (!ModelState.IsValid)
-        // {
-        //     Console.WriteLine("Неверная модель данных");
-        //     return View("Profile", model);
-        // }
+        if (!ModelState.IsValid)
+        {
+            Console.WriteLine("Неверная модель данных");
+            return View("Profile", model);
+        }
         
         if (!ModelState.IsValid)
         {
@@ -110,19 +109,5 @@ public class AccountController(UserService userService, AuditLogService auditSer
         }
 
         return RedirectToAction("Profile");
-    }
-
-    [AuthorizeRole("Admin")]
-    public async Task<IActionResult> AdminPanel(int take = 100)
-    {
-        //take = Math.Clamp(take, 10, 1000);
-
-        var logs = await auditService.GetAuditLogsAsync(take);
-        var model = new AdminPanelViewModel
-        {
-            AuditLogs = logs,
-            Take = take // сохраним значение для отображения в форме
-        };
-        return View(model);
     }
 }

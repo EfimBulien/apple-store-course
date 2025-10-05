@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using TechStoreEll.Api.DTOs;
 using TechStoreEll.Api.Entities;
-using TechStoreEll.Api.Infrastructure.Data;
-using TechStoreEll.Api.Models;
+using TechStoreEll.Api.Services;
+using TechStoreEll.Core.Infrastructure.Data;
 
-namespace TechStoreEll.Api.Services;
+namespace TechStoreEll.Core.Services;
 
 public class AuthService(AppDbContext context)
 {

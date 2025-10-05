@@ -1,13 +1,14 @@
 using Microsoft.EntityFrameworkCore;
-using TechStoreEll.Api.Infrastructure.Data;
+using TechStoreEll.Api.Entities;
+using TechStoreEll.Core.Infrastructure.Data;
 
 namespace TechStoreEll.Api.Services;
 
 public class GenericRepository<TEntity>(
     AppDbContext context, 
     ILogger<GenericRepository<TEntity>> logger) 
-    where TEntity 
-    : class
+    : IGenericRepository<TEntity>
+    where TEntity : class, IEntity
 {
     private readonly DbSet<TEntity> _dbSet = context.Set<TEntity>();
 

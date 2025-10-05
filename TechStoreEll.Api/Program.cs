@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using TechStoreEll.Api.Infrastructure.Data;
 using TechStoreEll.Api.Services;
+using TechStoreEll.Core.Infrastructure.Data;
+using TechStoreEll.Core.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

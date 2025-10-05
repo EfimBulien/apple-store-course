@@ -1,0 +1,15 @@
+/Users/macbookair/Documents/apple-store-course/TechStoreEll.Core/bin/Debug/net8.0/TechStoreEll.Core.deps.json
+/Users/macbookair/Documents/apple-store-course/TechStoreEll.Core/bin/Debug/net8.0/TechStoreEll.Core.runtimeconfig.json
+/Users/macbookair/Documents/apple-store-course/TechStoreEll.Core/bin/Debug/net8.0/TechStoreEll.Core.dll
+/Users/macbookair/Documents/apple-store-course/TechStoreEll.Core/bin/Debug/net8.0/TechStoreEll.Core.pdb
+/Users/macbookair/Documents/apple-store-course/TechStoreEll.Core/obj/Debug/net8.0/TechStoreEll.Core.csproj.AssemblyReference.cache
+/Users/macbookair/Documents/apple-store-course/TechStoreEll.Core/obj/Debug/net8.0/TechStoreEll.Core.GeneratedMSBuildEditorConfig.editorconfig
+/Users/macbookair/Documents/apple-store-course/TechStoreEll.Core/obj/Debug/net8.0/TechStoreEll.Core.AssemblyInfoInputs.cache
+/Users/macbookair/Documents/apple-store-course/TechStoreEll.Core/obj/Debug/net8.0/TechStoreEll.Core.AssemblyInfo.cs
+/Users/macbookair/Documents/apple-store-course/TechStoreEll.Core/obj/Debug/net8.0/TechStoreEll.Core.csproj.CoreCompileInputs.cache
+/Users/macbookair/Documents/apple-store-course/TechStoreEll.Core/obj/Debug/net8.0/TechStoreEll.Core.sourcelink.json
+/Users/macbookair/Documents/apple-store-course/TechStoreEll.Core/obj/Debug/net8.0/TechStoreEll.Core.dll
+/Users/macbookair/Documents/apple-store-course/TechStoreEll.Core/obj/Debug/net8.0/refint/TechStoreEll.Core.dll
+/Users/macbookair/Documents/apple-store-course/TechStoreEll.Core/obj/Debug/net8.0/TechStoreEll.Core.pdb
+/Users/macbookair/Documents/apple-store-course/TechStoreEll.Core/obj/Debug/net8.0/TechStoreEll.Core.genruntimeconfig.cache
+/Users/macbookair/Documents/apple-store-course/TechStoreEll.Core/obj/Debug/net8.0/ref/TechStoreEll.Core.dll

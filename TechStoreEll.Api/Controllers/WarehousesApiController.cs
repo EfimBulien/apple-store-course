@@ -5,7 +5,7 @@ using TechStoreEll.Api.Services;
 namespace TechStoreEll.Api.Controllers;
 
 [AuthorizeRole("Admin")] // доступ только для администратора
-public class WarehousesController(
+public class WarehousesApiController(
     IGenericRepository<Warehouse> repository, 
-    ILogger<WarehousesController> logger) 
+    ILogger<WarehousesApiController> logger) 
     : EntityController<Warehouse> (repository, logger);

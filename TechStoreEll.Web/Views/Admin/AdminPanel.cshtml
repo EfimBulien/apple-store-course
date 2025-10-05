@@ -4,12 +4,20 @@
     ViewData["Title"] = "Админ-панель";
 }
 
-<h2>Журнал аудита</h2>
-
-@* <h2>Админ-панель</h2> *@
-
 <p>Только для админов 🎩</p>
+<div class="mb-4">
+    <h4>Управление сущностями</h4>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-controller="Warehouses" asp-action="Index" class="btn btn-outline-secondary">Склады</a>
+        <a asp-controller="Roles" asp-action="Index" class="btn btn-outline-secondary">Роли</a>
+        <a asp-controller="Users" asp-action="Index" class="btn btn-outline-secondary">Пользователи</a>
+        <a asp-controller="Products" asp-action="Index" class="btn btn-outline-secondary">Товары</a>
+        <a asp-controller="Categories" asp-action="Index" class="btn btn-outline-secondary">Категории</a>
+        <!-- Добавьте другие ссылки по мере необходимости -->
+    </div>
+</div>
 
+<h2>Журнал аудита</h2>
 <div class="mb-3">
     <form method="get" class="row g-2">
         <div class="col-auto">

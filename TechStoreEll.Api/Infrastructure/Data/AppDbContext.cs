@@ -1,9 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TechStoreEll.Api.Entities;
 using TechStoreEll.Api.Entities.Views;
-using TechStoreEll.Api.Models;
 
-namespace TechStoreEll.Api.Infrastructure.Data;
+namespace TechStoreEll.Core.Infrastructure.Data;
 
 public partial class AppDbContext : DbContext
 {
