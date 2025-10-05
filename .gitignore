@@ -3,6 +3,7 @@
 TechStoreEll.sln.DotSettings.user
 .idea
 other
+other/superFinalNRscript.sql
 TechStoreEll.Api/bin
 TechStoreEll.Api/obj
 TechStoreEll.Api/*.json

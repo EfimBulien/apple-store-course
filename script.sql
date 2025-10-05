@@ -1,19 +1,21 @@
-
 CREATE TABLE roles (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE
 );
 
+CREATE TABLE warehouses (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+);
 
-INSERT INTO roles (id, name) VALUES
-  (1, 'admin'),
-  --(2, 'manager'),
-  (3, 'customer')
-ON CONFLICT (id) DO NOTHING;
+INSERT INTO roles (id, name) VALUES (1, 'Admin'), (3, 'Customer') ON CONFLICT (id) DO NOTHING;
+INSERT INTO warehouses (name) VALUES ('Москва'), ('Санкт-Петербург') ON CONFLICT (name) DO NOTHING;
 
 -- 2) Пользователи (только аутентификация)
 CREATE TABLE users (
-    id BIGSERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
@@ -21,7 +23,7 @@ CREATE TABLE users (
     last_name VARCHAR(100) NOT NULL,
     middle_name VARCHAR(100),
     phone VARCHAR(30),
-    role_id SMALLINT NOT NULL REFERENCES roles(id) ON DELETE RESTRICT,
+    role_id INT NOT NULL REFERENCES roles(id) ON DELETE RESTRICT,
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
@@ -29,8 +31,8 @@ CREATE TABLE users (
 
 -- 3) Адреса 3нф
 CREATE TABLE addresses (
-    id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
     label TEXT,
     country VARCHAR(100) NOT NULL,
     region VARCHAR(100),
@@ -39,15 +41,14 @@ CREATE TABLE addresses (
     house VARCHAR(50) NOT NULL,
     apartment VARCHAR(50),
     postcode VARCHAR(20),
-    phone VARCHAR(30),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
 -- 4) Покупатели
 CREATE TABLE customers (
-    user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    shipping_address_id BIGINT REFERENCES addresses(id) ON DELETE SET NULL,
-    billing_address_id  BIGINT REFERENCES addresses(id) ON DELETE SET NULL,
+    user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    shipping_address_id INT REFERENCES addresses(id) ON DELETE SET NULL,
+    billing_address_id INT REFERENCES addresses(id) ON DELETE SET NULL,
     loyalty_points INT DEFAULT 0 CHECK (loyalty_points >= 0)
 );
 
@@ -84,7 +85,7 @@ CREATE TABLE product_variants (
 
 -- ++ Добавлена таблица картинок товаров
 CREATE TABLE product_images (
-    id BIGSERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     product_variant_id INT NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
     image_url TEXT NOT NULL, -- ссылка на изображения в minio s3
     alt_text VARCHAR(255), -- текст для seo и доступности
@@ -97,27 +98,28 @@ CREATE TABLE product_images (
 CREATE TABLE inventory (
     id SERIAL PRIMARY KEY,
     product_variant_id INT NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
-    warehouse VARCHAR(100) NOT NULL,
+    warehouse_id INT REFERENCES warehouses(id) ON DELETE CASCADE,
+    --warehouse VARCHAR(100) NOT NULL,
     quantity INT NOT NULL DEFAULT 0 CHECK (quantity >= 0),
     reserve INT NOT NULL DEFAULT 0 CHECK (reserve >= 0),
-    UNIQUE(product_variant_id, warehouse)
+    UNIQUE(product_variant_id, warehouse_id)
 );
 
 CREATE TABLE inventory_movements (
-    id BIGSERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     product_variant_id INT NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
-    warehouse VARCHAR(100) NOT NULL,
+    warehouse_id INT NOT NULL REFERENCES warehouses(id) ON DELETE CASCADE,
     change_qty INT NOT NULL,
     reason VARCHAR(200) NOT NULL,
-    created_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    created_by INT REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
 -- 7) Заказы, позиции, платежи
 CREATE TABLE orders (
-    id BIGSERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     order_number TEXT NOT NULL UNIQUE,
-    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     status VARCHAR(30) NOT NULL DEFAULT 'new' CHECK (status IN ('new','paid','shipped','cancelled','completed','refunded')),
     total_amount NUMERIC(12,2) NOT NULL CHECK (total_amount >= 0),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
@@ -125,16 +127,16 @@ CREATE TABLE orders (
 );
 
 CREATE TABLE order_items (
-    id BIGSERIAL PRIMARY KEY,
-    order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    id SERIAL PRIMARY KEY,
+    order_id INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     product_variant_id INT NOT NULL REFERENCES product_variants(id) ON DELETE RESTRICT,
     quantity INT NOT NULL CHECK (quantity > 0),
     unit_price NUMERIC(12,2) NOT NULL CHECK (unit_price >= 0)
 );
 
 CREATE TABLE payments (
-    id BIGSERIAL PRIMARY KEY,
-    order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    id SERIAL PRIMARY KEY,
+    order_id INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     provider VARCHAR(50) NOT NULL,
     amount NUMERIC(12,2) NOT NULL CHECK (amount >= 0),
     paid_at TIMESTAMP WITH TIME ZONE,
@@ -144,24 +146,24 @@ CREATE TABLE payments (
 
 -- 8) Отзывы (без тегов!)
 CREATE TABLE reviews (
-    id BIGSERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-    user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
-    rating SMALLINT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    user_id INT REFERENCES users(id) ON DELETE SET NULL,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
     comment TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     is_moderated BOOLEAN NOT NULL DEFAULT FALSE,
-    moderated_by BIGINT REFERENCES users(id),
+    moderated_by INT REFERENCES users(id),
     UNIQUE(product_id, user_id)
 );
 
 -- 9) Журнал аудита
 CREATE TABLE audit_log (
-    id BIGSERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     table_name TEXT NOT NULL,
     operation CHAR(1) NOT NULL CHECK (operation IN ('I','U','D')),
     record_id TEXT,
-    changed_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    changed_by INT REFERENCES users(id) ON DELETE SET NULL,
     changed_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     old_row JSONB,
     new_row JSONB
@@ -169,7 +171,7 @@ CREATE TABLE audit_log (
 
 -- 10) Настройки пользователя
 CREATE TABLE user_settings (
-    user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     theme VARCHAR(20) DEFAULT 'light' CHECK (theme IN ('light','dark')),
     items_per_page INT DEFAULT 20 CHECK (items_per_page > 0 AND items_per_page <= 200),
     date_format VARCHAR(50) DEFAULT 'YYYY-MM-DD',
@@ -181,8 +183,8 @@ CREATE TABLE user_settings (
 
 -- 11) Бэкапы
 CREATE TABLE backups (
-    id BIGSERIAL PRIMARY KEY,
-    created_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    id SERIAL PRIMARY KEY,
+    created_by INT REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     filename TEXT,
     command TEXT,
@@ -196,6 +198,8 @@ CREATE INDEX IF NOT EXISTS idx_order_user ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_product ON reviews(product_id);
 -- ++ добавлен индекс для быстрого поиска
 CREATE INDEX IF NOT EXISTS idx_product_images_variant ON product_images(product_variant_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_warehouse ON inventory(warehouse_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_movements_warehouse ON inventory_movements(warehouse_id);
 
 -- ========== ТРИГГЕРЫ для АУДИТА ==========
 --  ТРИГГЕР АУДИТА (обновлен для minio)
@@ -241,7 +245,7 @@ DECLARE
     t TEXT;
     tables TEXT[] := ARRAY[
       'users','customers','addresses','products','product_variants','product_images', -- +++ minio
-      'inventory','orders','order_items','payments','reviews','inventory_movements'
+      'inventory','orders','order_items','payments','reviews','inventory_movements', 'warehouses'
     ];
 BEGIN
   FOREACH t IN ARRAY tables LOOP
@@ -322,37 +326,48 @@ LEFT JOIN order_items oi ON oi.order_id = o.id
 GROUP BY o.id, u.first_name, u.last_name, o.order_number, o.status, o.total_amount, o.created_at;
 
 CREATE OR REPLACE VIEW vw_product_stock AS
-SELECT pv.id AS variant_id, p.name AS product_name, pv.variant_code, COALESCE(SUM(i.quantity - i.reserve),0) AS available_qty
+SELECT
+    pv.id AS variant_id,
+    p.name AS product_name,
+    pv.variant_code,
+    w.name AS warehouse,
+    COALESCE(i.quantity - i.reserve, 0) AS available_qty
 FROM product_variants pv
 JOIN products p ON p.id = pv.product_id
-LEFT JOIN inventory i ON i.product_variant_id = pv.id
-GROUP BY pv.id, p.name, pv.variant_code;
+JOIN inventory i ON i.product_variant_id = pv.id
+JOIN warehouses w ON w.id = i.warehouse_id;
 
 -- ========== Хранимые процедуры ==========
 
 -- 1) sp_restock - пополнение склада
-CREATE OR REPLACE PROCEDURE sp_restock(p_user_id BIGINT, p_items JSONB)
+CREATE OR REPLACE PROCEDURE sp_restock(p_user_id INT, p_items JSONB)
 LANGUAGE plpgsql
 AS $$
 DECLARE
     r RECORD;
+    v_warehouse_id INT;
 BEGIN
     PERFORM set_config('app.current_user_id', p_user_id::text, true);
 
-    FOR r IN SELECT * FROM jsonb_to_recordset(p_items) AS (variant_id int, warehouse text, qty int) LOOP
-        INSERT INTO inventory (product_variant_id, warehouse, quantity)
-        VALUES (r.variant_id, r.warehouse, GREATEST(r.qty,0))
-        ON CONFLICT (product_variant_id, warehouse)
+    FOR r IN SELECT * FROM jsonb_to_recordset(p_items) AS (variant_id int, warehouse_name text, qty int) LOOP
+        SELECT id INTO v_warehouse_id FROM warehouses WHERE name = r.warehouse_name;
+        IF v_warehouse_id IS NULL THEN
+            RAISE EXCEPTION 'Склад "%" не найден', r.warehouse_name;
+        END IF;
+
+        INSERT INTO inventory (product_variant_id, warehouse_id, quantity)
+        VALUES (r.variant_id, v_warehouse_id, GREATEST(r.qty,0))
+        ON CONFLICT (product_variant_id, warehouse_id)
         DO UPDATE SET quantity = inventory.quantity + GREATEST(EXCLUDED.quantity,0);
 
-        INSERT INTO inventory_movements (product_variant_id, warehouse, change_qty, reason, created_by)
-        VALUES (r.variant_id, r.warehouse, r.qty, 'restock', p_user_id);
+        INSERT INTO inventory_movements (product_variant_id, warehouse_id, change_qty, reason, created_by)
+        VALUES (r.variant_id, v_warehouse_id, r.qty, 'restock', p_user_id);
     END LOOP;
 END;
 $$;
 
 -- 2)sp_create_order - Для создагия заказа т загесегя хаказа в рехерв
-CREATE OR REPLACE PROCEDURE sp_create_order(p_user_id BIGINT, p_items JSONB, OUT p_order_id BIGINT)
+CREATE OR REPLACE PROCEDURE sp_create_order(p_user_id INT, p_items JSONB, OUT p_order_id INT)
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -433,10 +448,10 @@ BEGIN
         END LOOP;
 
         -- логирование резервирования в запись в таблице
-        INSERT INTO inventory_movements (product_variant_id, warehouse, change_qty, reason, created_by)
+        INSERT INTO inventory_movements (product_variant_id, warehouse_id, change_qty, reason, created_by)
         SELECT
             v_variant_id,
-            warehouse,
+            warehouse_id,
             -v_item.quantity,  -- отрицательное изменение = в резерв
             'зарезервировано для заказа #' || p_order_id,
             p_user_id
@@ -453,7 +468,7 @@ END;
 $$;
 
 -- 3)sp_cancel_order — функция для очистки.освобождения резерва резерва
-CREATE OR REPLACE PROCEDURE sp_cancel_order(p_user_id BIGINT, p_order_id BIGINT)
+CREATE OR REPLACE PROCEDURE sp_cancel_order(p_user_id INT, p_order_id INT)
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -471,13 +486,14 @@ BEGIN
     FOR r IN SELECT product_variant_id, quantity FROM order_items WHERE order_id = p_order_id LOOP
         UPDATE inventory
         SET reserve = reserve - LEAST(reserve, r.quantity)
-        WHERE product_variant_id = r.product_id
+        -- было исправлено с product_variant_id = r.product_id
+        WHERE product_variant_id = r.product_variant_id
         AND reserve > 0;
 
-        INSERT INTO inventory_movements (product_variant_id, warehouse, change_qty, reason, created_by)
+        INSERT INTO inventory_movements (product_variant_id, warehouse_id, change_qty, reason, created_by)
         SELECT
             r.product_variant_id,
-            warehouse,
+            warehouse_id,
             r.quantity,
             'резерв освобождается после отмены #' || p_order_id,
             p_user_id
@@ -492,7 +508,7 @@ END;
 $$;
 
 -- 4)sp_complete_order — обновил списание зарезервированного товара
-CREATE OR REPLACE PROCEDURE sp_complete_order(p_user_id BIGINT, p_order_id BIGINT)
+CREATE OR REPLACE PROCEDURE sp_complete_order(p_user_id INT, p_order_id INT)
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -513,10 +529,10 @@ BEGIN
         WHERE product_variant_id = r.product_variant_id
         AND reserve >= r.quantity;
 
-        INSERT INTO inventory_movements (product_variant_id, warehouse, change_qty, reason, created_by)
+        INSERT INTO inventory_movements (product_variant_id, warehouse_id, change_qty, reason, created_by)
         SELECT
             r.product_variant_id,
-            warehouse,
+            warehouse_id,
             -r.quantity,
             'вычитается после завершения заказа #' || p_order_id,
             p_user_id
@@ -540,7 +556,7 @@ BEGIN
 END;
 $$;
 
--- Триггер на отзывы (уже добавил на completed выше)
+-- триггер на отзывы
 CREATE OR REPLACE FUNCTION trg_reviews_after() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   PERFORM recalc_product_rating(COALESCE(NEW.product_id, OLD.product_id));
@@ -552,12 +568,12 @@ DROP TRIGGER IF EXISTS trg_reviews_after ON reviews;
 CREATE TRIGGER trg_reviews_after AFTER INSERT OR UPDATE OR DELETE ON reviews FOR EACH ROW EXECUTE FUNCTION trg_reviews_after();
 
 -- ========== для BACKUP/RESTORE ==========
-CREATE OR REPLACE FUNCTION sp_request_backup(p_user_id BIGINT, p_note TEXT DEFAULT NULL)
-RETURNS TABLE(backup_id BIGINT, command TEXT) LANGUAGE plpgsql AS $$
+CREATE OR REPLACE FUNCTION sp_request_backup(p_user_id INT, p_note TEXT DEFAULT NULL)
+RETURNS TABLE(backup_id INT, command TEXT) LANGUAGE plpgsql AS $$
 DECLARE
     v_filename TEXT := 'shop_backup_' || to_char(now(),'YYYYMMDD_HH24MISS') || '.dump';
     v_cmd TEXT;
-    v_id BIGINT;
+    v_id INT;
 BEGIN
     v_cmd := format('pg_dump -Fc -f %s -d %%DBNAME%% --no-owner --schema=public', v_filename);
     INSERT INTO backups (created_by, filename, command, note) VALUES (p_user_id, v_filename, v_cmd, p_note) RETURNING id INTO v_id;
@@ -566,7 +582,7 @@ END;
 $$;
 
 -- ========== ХЭЛПЕРС ==========
-CREATE OR REPLACE FUNCTION fn_set_user_password(p_user_id BIGINT, p_password_hash TEXT) RETURNS VOID LANGUAGE sql AS $$
+CREATE OR REPLACE FUNCTION fn_set_user_password(p_user_id INT, p_password_hash TEXT) RETURNS VOID LANGUAGE sql AS $$
   UPDATE users SET password_hash = p_password_hash, updated_at = now() WHERE id = p_user_id;
 $$;
 
@@ -587,8 +603,8 @@ VALUES
 ON CONFLICT (username) DO NOTHING;
 
 --адрес покупателя
-INSERT INTO addresses (user_id, label, country, region, city, street, house, apartment, postcode, phone)
-SELECT u.id, 'Дом', 'Россия', 'Московская область', 'Москва', 'Ленинский проспект', '42', '15', '119334', u.phone
+INSERT INTO addresses (user_id, label, country, region, city, street, house, apartment, postcode)
+SELECT u.id, 'Дом', 'Россия', 'Московская область', 'Москва', 'Ленинский проспект', '42', '15', '119334'
 FROM users u WHERE u.username = 'customer1'
 ON CONFLICT DO NOTHING;
 
@@ -644,7 +660,7 @@ VALUES
     TRUE
 ),
 (
-    1, 
+    1,
     'https://minio.com/images/iphone-16-black-128gb-2.jpg', -- условная ссылка на bucket
     'iPhone 16 Black 128GB - вид сзади',
     1,
@@ -654,7 +670,7 @@ ON CONFLICT DO NOTHING;
 --
 
 -- НАПОЛНЯЕМ СКЛАД
-CALL sp_restock(1, '[{"variant_id":1,"warehouse":"москва","qty":25}, {"variant_id":2,"warehouse":"москва","qty":15}, {"variant_id":3,"warehouse":"спб","qty":8}]'::jsonb);
+CALL sp_restock(1, '[{"variant_id":1,"warehouse_name":"Москва","qty":25}, {"variant_id":2,"warehouse_name":"Москва","qty":15}, {"variant_id":3,"warehouse_name":"Санкт-Петербург","qty":8}]'::jsonb);
 
 --проверка наличия через представление
 SELECT * FROM vw_product_stock ORDER BY variant_id;
@@ -665,7 +681,7 @@ CALL sp_create_order(2, '[{"variant_id": 1, "quantity": 1}]'::jsonb, NULL);
 -- завершение заказа (чтобы можно было оставить отзыв) в будущем
 DO $$
 DECLARE
-    v_order_id BIGINT;
+    v_order_id INT;
 BEGIN
     SELECT id INTO v_order_id FROM orders WHERE user_id = 2 ORDER BY id DESC LIMIT 1;
     IF v_order_id IS NOT NULL THEN
@@ -691,9 +707,9 @@ SELECT name, avg_rating, reviews_count FROM products WHERE sku = 'IP16';
 
 DO $$
 DECLARE
-    v_new_user_id BIGINT;
-    v_new_address_id BIGINT;
-    v_order_id BIGINT;
+    v_new_user_id INT;
+    v_new_address_id INT;
+    v_order_id INT;
     v_product_id INT;
 BEGIN
     PERFORM set_config('app.current_user_id', (SELECT id::text FROM users WHERE username = 'admin'), true);
@@ -709,9 +725,9 @@ BEGIN
 
     PERFORM set_config('app.current_user_id', v_new_user_id::text, true);
 
-    -- спб
-    INSERT INTO addresses (user_id, label, country, region, city, street, house, apartment, postcode, phone)
-    VALUES (v_new_user_id, 'Квартира', 'Россия', 'Ленинградская область', 'Санкт-Петербург', 'Невский проспект', '25', '7', '191186', '+79161234569')
+    -- Санкт-Петербург
+    INSERT INTO addresses (user_id, label, country, region, city, street, house, apartment, postcode)
+    VALUES (v_new_user_id, 'Квартира', 'Россия', 'Ленинградская область', 'Санкт-Петербург', 'Невский проспект', '25', '7', '191186')
     RETURNING id INTO v_new_address_id;
 
     -- новые настройки
@@ -745,7 +761,7 @@ WHERE r.product_id = (SELECT id FROM products WHERE sku = 'IP16')
 ORDER BY r.created_at DESC;
 
 -- доп проверка
-SELECT 
+SELECT
     u.first_name,
     u.last_name,
     a.country,
@@ -764,10 +780,26 @@ ALTER TABLE "products"
 
 -- search_vector
 UPDATE "products"
-SET search_vector = 
+SET search_vector =
     setweight(to_tsvector('russian', coalesce("name", '')), 'A') ||
     setweight(to_tsvector('russian', coalesce("description", '')), 'B') ||
     setweight(to_tsvector('simple', coalesce("sku", '')), 'C');
 
 -- индексы
 CREATE INDEX idx_products_search ON "products" USING GIN (search_vector);
+
+
+-- Для продакшена
+-- CREATE OR REPLACE FUNCTION products_search_vector_update() RETURNS trigger AS $$
+-- BEGIN
+--   NEW.search_vector :=
+--     setweight(to_tsvector('russian', coalesce(NEW.name, '')), 'A') ||
+--     setweight(to_tsvector('russian', coalesce(NEW.description, '')), 'B') ||
+--     setweight(to_tsvector('simple', coalesce(NEW.sku, '')), 'C');
+--   RETURN NEW;
+-- END;
+-- $$ LANGUAGE plpgsql;
+
+-- CREATE TRIGGER trg_products_search_vector
+-- BEFORE INSERT OR UPDATE ON products
+-- FOR EACH ROW EXECUTE FUNCTION products_search_vector_update();
