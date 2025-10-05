@@ -1,3 +1,4 @@
+
 using Microsoft.EntityFrameworkCore;
 using TechStoreEll.Api.DTOs;
 using TechStoreEll.Api.Infrastructure.Data;
@@ -7,14 +8,14 @@ namespace TechStoreEll.Api.Services;
 
 public class UserService(AppDbContext context)
 {
-    public async Task<User?> GetUserWithSettingsAsync(long userId)
+    public async Task<User?> GetUserWithSettingsAsync(int userId)
     {
         return await context.Users
             .Include(u => u.UserSetting)
             .FirstOrDefaultAsync(u => u.Id == userId);
     }
 
-    public async Task<bool> UpdateUserAsync(long userId, UpdateUserDto dto)
+    public async Task<bool> UpdateUserAsync(int userId, UpdateUserDto dto)
     {
         try
         {
@@ -39,7 +40,7 @@ public class UserService(AppDbContext context)
         }
     }
 
-    public async Task<bool> UpdateUserSettingsAsync(long userId, UpdateUserSettingsDto dto)
+    public async Task<bool> UpdateUserSettingsAsync(int userId, UpdateUserSettingsDto dto)
     {
         try
         {

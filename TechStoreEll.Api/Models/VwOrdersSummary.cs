@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace TechStoreEll.Api.Models;
+﻿namespace TechStoreEll.Api.Models;
 
 public partial class VwOrdersSummary
 {
-    public long? OrderId { get; set; }
+    public int? OrderId { get; set; }
 
     public string? OrderNumber { get; set; }
 
-    public long? UserId { get; set; }
+    public int? UserId { get; set; }
 
     public string? UserName { get; set; }
 

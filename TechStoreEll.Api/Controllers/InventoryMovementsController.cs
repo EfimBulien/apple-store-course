@@ -1,7 +1,11 @@
-using TechStoreEll.Api.Infrastructure.Data;
+using TechStoreEll.Api.Attributes;
 using TechStoreEll.Api.Models;
+using TechStoreEll.Api.Services;
 
 namespace TechStoreEll.Api.Controllers;
 
-public class InventoryMovementsController(AppDbContext context, ILogger<EntityController<InventoryMovement>> logger) : 
-    EntityController<InventoryMovement>(context, logger);
+[AuthorizeRole("Admin")]
+public class InventoryMovementsController(
+    IGenericRepository<InventoryMovement> repository, 
+    ILogger<InventoryMovementsController> logger) 
+    : EntityController<InventoryMovement>(repository, logger);

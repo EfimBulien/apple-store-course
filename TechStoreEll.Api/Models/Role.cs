@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using TechStoreEll.Api.Entities;
 
 namespace TechStoreEll.Api.Models;
 
-public partial class Role
+public partial class Role : IEntity
 {
     public int Id { get; set; }
 

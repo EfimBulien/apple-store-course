@@ -1,10 +1,12 @@
-﻿namespace TechStoreEll.Api.Models;
+﻿using TechStoreEll.Api.Entities;
 
-public partial class Address
+namespace TechStoreEll.Api.Models;
+
+public partial class Address : IEntity
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
 
-    public long? UserId { get; set; }
+    public int? UserId { get; set; }
 
     public string? Label { get; set; }
 
@@ -21,8 +23,6 @@ public partial class Address
     public string? Apartment { get; set; }
 
     public string? Postcode { get; set; }
-
-    public string? Phone { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

@@ -1,7 +1,11 @@
-using TechStoreEll.Api.Infrastructure.Data;
+using TechStoreEll.Api.Attributes;
 using TechStoreEll.Api.Models;
+using TechStoreEll.Api.Services;
 
 namespace TechStoreEll.Api.Controllers;
 
-public class AuditLogsController(AppDbContext context, ILogger<EntityController<AuditLog>> logger) :
-    EntityController<AuditLog>(context, logger);
+[AuthorizeRole("Admin")]
+public class AuditLogsController(
+    IGenericRepository<AuditLog> repository, 
+    ILogger<AuditLogsController> logger) 
+    : EntityController<AuditLog> (repository, logger);

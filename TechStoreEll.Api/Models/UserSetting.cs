@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace TechStoreEll.Api.Models;
+﻿namespace TechStoreEll.Api.Models;
 
 public partial class UserSetting
 {
-    public long UserId { get; set; }
+    public int UserId { get; set; }
 
     public string? Theme { get; set; }
 

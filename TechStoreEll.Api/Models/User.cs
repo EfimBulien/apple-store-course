@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using TechStoreEll.Api.Entities;
 
 namespace TechStoreEll.Api.Models;
 
-public partial class User
+public partial class User : IEntity
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
 
     public string Username { get; set; } = null!;
 

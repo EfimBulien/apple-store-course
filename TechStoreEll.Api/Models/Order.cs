@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using TechStoreEll.Api.Entities;
 
 namespace TechStoreEll.Api.Models;
 
-public partial class Order
+public partial class Order : IEntity
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
 
     public string OrderNumber { get; set; } = null!;
 
-    public long UserId { get; set; }
+    public int UserId { get; set; }
 
     public string Status { get; set; } = null!;
 

@@ -12,7 +12,7 @@ public class AccountController(UserService userService, AuditLogService auditSer
     [AuthorizeRole("Customer", "Admin")]
     public async Task<IActionResult> Profile()
     {
-        var userId = long.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
         var user = await userService.GetUserWithSettingsAsync(userId);
         
         if (user == null)
@@ -81,7 +81,7 @@ public class AccountController(UserService userService, AuditLogService auditSer
             return View("Profile", model);
         }
 
-        var userId = long.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
         if (userId <= 0)
             return BadRequest();
 
@@ -97,7 +97,7 @@ public class AccountController(UserService userService, AuditLogService auditSer
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateSettings(UpdateUserSettingsDto dto)
     {
-        var userId = long.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
         var result = await userService.UpdateUserSettingsAsync(userId, dto);
 
         if (result)

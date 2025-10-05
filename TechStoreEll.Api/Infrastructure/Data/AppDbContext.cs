@@ -47,8 +47,11 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<VwProductStock> VwProductStocks { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) 
-        => optionsBuilder.UseNpgsql("Host=localhost;Database=shopdb;Username=postgres;Password=1008");
+    public virtual DbSet<Warehouse> Warehouses { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseNpgsql("Host=localhost;Database=TechStoreEll;Username=postgres;Password=1008");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -75,9 +78,6 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("house");
             entity.Property(e => e.Label).HasColumnName("label");
-            entity.Property(e => e.Phone)
-                .HasMaxLength(30)
-                .HasColumnName("phone");
             entity.Property(e => e.Postcode)
                 .HasMaxLength(20)
                 .HasColumnName("postcode");
@@ -168,11 +168,11 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<Customer>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("customers_pkey");
+            entity.HasKey(e => e.Id).HasName("customers_pkey");
 
             entity.ToTable("customers");
 
-            entity.Property(e => e.UserId)
+            entity.Property(e => e.Id)
                 .ValueGeneratedNever()
                 .HasColumnName("user_id");
             entity.Property(e => e.BillingAddressId).HasColumnName("billing_address_id");
@@ -192,7 +192,7 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("customers_shipping_address_id_fkey");
 
             entity.HasOne(d => d.User).WithOne(p => p.Customer)
-                .HasForeignKey<Customer>(d => d.UserId)
+                .HasForeignKey<Customer>(d => d.Id)
                 .HasConstraintName("customers_user_id_fkey");
         });
 
@@ -204,7 +204,9 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => e.ProductVariantId, "idx_inventory_variant");
 
-            entity.HasIndex(e => new { e.ProductVariantId, e.Warehouse }, "inventory_product_variant_id_warehouse_key").IsUnique();
+            entity.HasIndex(e => e.WarehouseId, "idx_inventory_warehouse");
+
+            entity.HasIndex(e => new { e.ProductVariantId, e.WarehouseId }, "inventory_product_variant_id_warehouse_id_key").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.ProductVariantId).HasColumnName("product_variant_id");
@@ -214,13 +216,16 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Reserve)
                 .HasDefaultValue(0)
                 .HasColumnName("reserve");
-            entity.Property(e => e.Warehouse)
-                .HasMaxLength(100)
-                .HasColumnName("warehouse");
+            entity.Property(e => e.WarehouseId).HasColumnName("warehouse_id");
 
             entity.HasOne(d => d.ProductVariant).WithMany(p => p.Inventories)
                 .HasForeignKey(d => d.ProductVariantId)
                 .HasConstraintName("inventory_product_variant_id_fkey");
+
+            entity.HasOne(d => d.Warehouse).WithMany(p => p.Inventories)
+                .HasForeignKey(d => d.WarehouseId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("inventory_warehouse_id_fkey");
         });
 
         modelBuilder.Entity<InventoryMovement>(entity =>
@@ -228,6 +233,8 @@ public partial class AppDbContext : DbContext
             entity.HasKey(e => e.Id).HasName("inventory_movements_pkey");
 
             entity.ToTable("inventory_movements");
+
+            entity.HasIndex(e => e.WarehouseId, "idx_inventory_movements_warehouse");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.ChangeQty).HasColumnName("change_qty");
@@ -239,9 +246,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Reason)
                 .HasMaxLength(200)
                 .HasColumnName("reason");
-            entity.Property(e => e.Warehouse)
-                .HasMaxLength(100)
-                .HasColumnName("warehouse");
+            entity.Property(e => e.WarehouseId).HasColumnName("warehouse_id");
 
             entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.InventoryMovements)
                 .HasForeignKey(d => d.CreatedBy)
@@ -251,6 +256,10 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.ProductVariant).WithMany(p => p.InventoryMovements)
                 .HasForeignKey(d => d.ProductVariantId)
                 .HasConstraintName("inventory_movements_product_variant_id_fkey");
+
+            entity.HasOne(d => d.Warehouse).WithMany(p => p.InventoryMovements)
+                .HasForeignKey(d => d.WarehouseId)
+                .HasConstraintName("inventory_movements_warehouse_id_fkey");
         });
 
         modelBuilder.Entity<Order>(entity =>
@@ -344,6 +353,8 @@ public partial class AppDbContext : DbContext
 
             entity.ToTable("products");
 
+            entity.HasIndex(e => e.SearchVector, "idx_products_search").HasMethod("gin");
+
             entity.HasIndex(e => e.Sku, "products_sku_key").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
@@ -364,6 +375,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.ReviewsCount)
                 .HasDefaultValue(0)
                 .HasColumnName("reviews_count");
+            entity.Property(e => e.SearchVector).HasColumnName("search_vector");
             entity.Property(e => e.Sku)
                 .HasMaxLength(100)
                 .HasColumnName("sku");
@@ -475,9 +487,7 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => e.Name, "roles_name_key").IsUnique();
 
-            entity.Property(e => e.Id)
-                .ValueGeneratedNever()
-                .HasColumnName("id");
+            entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Name)
                 .HasMaxLength(50)
                 .HasColumnName("name");
@@ -605,6 +615,29 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("variant_code");
             entity.Property(e => e.VariantId).HasColumnName("variant_id");
+            entity.Property(e => e.Warehouse)
+                .HasMaxLength(100)
+                .HasColumnName("warehouse");
+        });
+
+        modelBuilder.Entity<Warehouse>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("warehouses_pkey");
+
+            entity.ToTable("warehouses");
+
+            entity.HasIndex(e => e.Name, "warehouses_name_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
+            entity.Property(e => e.Name)
+                .HasMaxLength(100)
+                .HasColumnName("name");
         });
 
         OnModelCreatingPartial(modelBuilder);

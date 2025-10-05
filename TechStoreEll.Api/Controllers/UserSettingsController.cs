@@ -1,7 +1,9 @@
-using TechStoreEll.Api.Infrastructure.Data;
 using TechStoreEll.Api.Models;
+using TechStoreEll.Api.Services;
 
 namespace TechStoreEll.Api.Controllers;
 
-public class UserSettingsController(AppDbContext context, ILogger<EntityController<UserSetting>> logger) : 
-    EntityController<UserSetting>(context, logger);
+public class UserSettingsController(
+    IGenericRepository<User> repository, 
+    ILogger<UserSettingsController> logger) 
+    : EntityController<User> (repository, logger);

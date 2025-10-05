@@ -1,9 +1,11 @@
 using TechStoreEll.Api.Attributes;
-using TechStoreEll.Api.Infrastructure.Data;
 using TechStoreEll.Api.Models;
+using TechStoreEll.Api.Services;
 
 namespace TechStoreEll.Api.Controllers;
 
-[AuthorizeRole("Admin")] // админ
-public class RolesController(AppDbContext context, ILogger<EntityController<Role>> logger) : 
-    EntityController<Role>(context, logger);
+[AuthorizeRole("Admin")] // доступ только для администратора
+public class RolesController(
+    IGenericRepository<Role> repository, 
+    ILogger<RolesController> logger) 
+    : EntityController<Role> (repository, logger);

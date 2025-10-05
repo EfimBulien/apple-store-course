@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using TechStoreEll.Api.Entities;
 
 namespace TechStoreEll.Api.Models;
 
-public partial class Category
+public partial class Category : IEntity
 {
     public int Id { get; set; }
 

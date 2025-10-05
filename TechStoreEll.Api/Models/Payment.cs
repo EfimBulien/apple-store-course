@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using TechStoreEll.Api.Entities;
 
 namespace TechStoreEll.Api.Models;
 
-public partial class Payment
+public partial class Payment : IEntity
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
 
-    public long OrderId { get; set; }
+    public int OrderId { get; set; }
 
     public string Provider { get; set; } = null!;
 

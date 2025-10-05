@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using TechStoreEll.Api.Entities;
 
 namespace TechStoreEll.Api.Models;
 
-public partial class OrderItem
+public partial class OrderItem : IEntity
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
 
-    public long OrderId { get; set; }
+    public int OrderId { get; set; }
 
     public int ProductVariantId { get; set; }
 

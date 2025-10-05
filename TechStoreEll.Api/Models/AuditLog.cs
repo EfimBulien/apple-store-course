@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using TechStoreEll.Api.Entities;
 
 namespace TechStoreEll.Api.Models;
 
-public partial class AuditLog
+public partial class AuditLog : IEntity
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
 
     public string TableName { get; set; } = null!;
 
@@ -13,7 +12,7 @@ public partial class AuditLog
 
     public string? RecordId { get; set; }
 
-    public long? ChangedBy { get; set; }
+    public int? ChangedBy { get; set; }
 
     public DateTime ChangedAt { get; set; }
 

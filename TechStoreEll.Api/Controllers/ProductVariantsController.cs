@@ -1,7 +1,12 @@
-using TechStoreEll.Api.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
+using TechStoreEll.Api.Attributes;
 using TechStoreEll.Api.Models;
+using TechStoreEll.Api.Services;
 
 namespace TechStoreEll.Api.Controllers;
 
-public class ProductVariantsController(AppDbContext context, ILogger<EntityController<ProductVariant>> logger) : 
-    EntityController<ProductVariant>(context, logger);
+[AuthorizeRole("Admin")]
+public class ProductVariantsController(
+    IGenericRepository<ProductVariant> repository,
+    ILogger<ProductVariantsController> logger) 
+    : EntityController<ProductVariant>(repository, logger);

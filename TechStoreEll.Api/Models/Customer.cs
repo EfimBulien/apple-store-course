@@ -1,15 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using TechStoreEll.Api.Entities;
 
 namespace TechStoreEll.Api.Models;
 
-public partial class Customer
+public partial class Customer : IEntity
 {
-    public long UserId { get; set; }
+    // это внешняя зависимость к UserId = ID
+    public int Id { get; set; }
 
-    public long? ShippingAddressId { get; set; }
+    public int? ShippingAddressId { get; set; }
 
-    public long? BillingAddressId { get; set; }
+    public int? BillingAddressId { get; set; }
 
     public int? LoyaltyPoints { get; set; }
 

@@ -1,19 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using TechStoreEll.Api.Entities;
 
 namespace TechStoreEll.Api.Models;
 
-public partial class Inventory
+public partial class Inventory : IEntity
 {
     public int Id { get; set; }
 
     public int ProductVariantId { get; set; }
 
-    public string Warehouse { get; set; } = null!;
+    public int? WarehouseId { get; set; }
 
     public int Quantity { get; set; }
 
     public int Reserve { get; set; }
 
     public virtual ProductVariant ProductVariant { get; set; } = null!;
+
+    public virtual Warehouse? Warehouse { get; set; }
 }

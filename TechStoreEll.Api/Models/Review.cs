@@ -1,17 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using TechStoreEll.Api.Entities;
 
 namespace TechStoreEll.Api.Models;
 
-public partial class Review
+public partial class Review : IEntity
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
 
     public int ProductId { get; set; }
 
-    public long? UserId { get; set; }
+    public int? UserId { get; set; }
 
-    public short Rating { get; set; }
+    public int Rating { get; set; }
 
     public string? Comment { get; set; }
 
@@ -19,7 +18,7 @@ public partial class Review
 
     public bool IsModerated { get; set; }
 
-    public long? ModeratedBy { get; set; }
+    public int? ModeratedBy { get; set; }
 
     public virtual User? ModeratedByNavigation { get; set; }
 

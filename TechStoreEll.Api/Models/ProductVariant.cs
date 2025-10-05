@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using TechStoreEll.Api.Entities;
 
 namespace TechStoreEll.Api.Models;
 
-public partial class ProductVariant
+public partial class ProductVariant : IEntity
 {
     public int Id { get; set; }
 

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace TechStoreEll.Api.Models;
+﻿namespace TechStoreEll.Api.Models;
 
 public partial class VwProductStock
 {
@@ -11,5 +8,7 @@ public partial class VwProductStock
 
     public string? VariantCode { get; set; }
 
-    public long? AvailableQty { get; set; }
+    public string? Warehouse { get; set; }
+
+    public int? AvailableQty { get; set; }
 }

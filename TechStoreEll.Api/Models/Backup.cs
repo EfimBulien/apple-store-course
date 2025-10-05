@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using TechStoreEll.Api.Entities;
 
 namespace TechStoreEll.Api.Models;
 
-public partial class Backup
+public partial class Backup : IEntity
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
 
-    public long? CreatedBy { get; set; }
+    public int? CreatedBy { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

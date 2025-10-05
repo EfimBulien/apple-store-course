@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using NpgsqlTypes;
 
 namespace TechStoreEll.Api.Models;
 
@@ -21,7 +20,9 @@ public partial class Product
 
     public decimal? AvgRating { get; set; }
 
-    public int ReviewsCount { get; set; }
+    public int? ReviewsCount { get; set; }
+
+    public NpgsqlTsVector? SearchVector { get; set; }
 
     public virtual Category? Category { get; set; }
 
