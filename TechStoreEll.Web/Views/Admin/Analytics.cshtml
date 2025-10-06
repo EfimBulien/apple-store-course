@@ -27,15 +27,7 @@
 
 <!-- График 2: Топ категорий -->
 <canvas id="categoriesChart" height="100"></canvas>
-<h4>TopCategories (отладка):</h4>
-<ul>
-    @foreach (var c in Model.TopCategories)
-    {
-        <li>@c.CategoryName: @c.Revenue.ToString("F2")</li>
-    }
-</ul>
 
-<h4>Всего категорий: @Model.TopCategories.Count</h4>
 <!-- График 3: Активность пользователей -->
 <canvas id="usersChart" height="100"></canvas>
 @section Scripts {
