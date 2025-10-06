@@ -1,10 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using TechStoreEll.Api.DTOs;
 using TechStoreEll.Api.Entities;
-using TechStoreEll.Api.Services;
 using TechStoreEll.Core.Infrastructure.Data;
 
-namespace TechStoreEll.Core.Services;
+namespace TechStoreEll.Api.Services;
 
 public class AuthService(AppDbContext context)
 {
@@ -58,4 +57,5 @@ public class AuthService(AppDbContext context)
         
         return !PasswordHasherService.VerifyPassword(loginDto.Password, user.PasswordHash) ? null : user;
     }
+    
 }

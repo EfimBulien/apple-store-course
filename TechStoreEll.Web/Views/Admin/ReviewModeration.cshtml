@@ -1,0 +1,61 @@
+@model TechStoreEll.Web.Models.ReviewModerationViewModel
+
+<h2>Модерация отзывов</h2>
+
+@if (Model.Reviews.Any())
+{
+    <div class="alert alert-info">
+        Непроверенных отзывов: <strong>@Model.TotalUnmoderated</strong>
+    </div>
+
+    <div class="list-group">
+        @foreach (var review in Model.Reviews)
+        {
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between">
+                    <h5>
+                        @review.Product.Name
+                        <small class="text-muted">— @review.Rating ⭐</small>
+                    </h5>
+                    <span class="text-muted">@review.CreatedAt.ToString("g")</span>
+                </div>
+                <p class="mb-1">
+                    <strong>От: </strong>
+                    @(review.User != null 
+                        ? $"{review.User.FirstName} {review.User.LastName}" 
+                        : "Аноним")
+                </p>
+                <p class="text-body-secondary">@review.Comment</p>
+
+                <div class="mt-2">
+                    <form asp-action="ApproveReview" asp-route-id="@review.Id" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-sm btn-success">✅ Одобрить</button>
+                    </form>
+                    <form asp-action="RejectReview" asp-route-id="@review.Id" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-sm btn-danger">❌ Отклонить</button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+    
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="mt-3">
+            <ul class="pagination justify-content-center">
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.Page ? "active" : "")">
+                        <a class="page-link" asp-action="ReviewModeration" asp-route-page="@i">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}
+else
+{
+    <div class="alert alert-success">
+        Нет отзывов, требующих модерации. ✨
+    </div>
+}
