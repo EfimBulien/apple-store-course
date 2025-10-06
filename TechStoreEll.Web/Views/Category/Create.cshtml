@@ -1,0 +1,31 @@
+@model TechStoreEll.Api.Entities.Category
+@{
+    ViewData["Title"] = "Добавить категорию товаров";
+}
+<h2>Добавить категорию товаров</h2>
+<form asp-action="Create">
+    <div class="form-group mb-3">
+        <label asp-for="Name" class="form-label">Название</label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="ParentId" class="form-label">Родительская категория</label>
+        <select asp-for="ParentId" asp-items="ViewBag.ParentCategories" class="form-select">
+            <option value="">-- Без родительской категории --</option>
+        </select>
+        <span asp-validation-for="ParentId" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Description" class="form-label">Описание</label>
+        <input asp-for="Description" class="form-control" />
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Создать</button>
+    <a asp-controller="Category" asp-action="Index" class="btn btn-secondary">Отмена</a>
+</form>
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}   

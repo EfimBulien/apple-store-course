@@ -1,0 +1,28 @@
+@model TechStoreEll.Api.Entities.Category
+
+@{
+    ViewData["Title"] = "Категория";
+}
+
+<h2>Категория товаров "@Model.Name"</h2>
+
+<div>
+    <dl class="row">
+        <dt class="col-sm-3">ID</dt>
+        <dd class="col-sm-9">@Model.Id</dd>
+
+        <dt class="col-sm-3">Название</dt>
+        <dd class="col-sm-9">@Model.Name</dd>
+        
+        <dt class="col-sm-3">Родительская категория</dt>
+        <dd class="col-sm-9">@Model.ParentId</dd>
+        
+        <dt class="col-sm-3">Описание категории</dt>
+        <dd class="col-sm-9">@Model.Description</dd>
+    </dl>
+</div>
+
+<div>
+    <a asp-controller="Category" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Изменить</a>
+    <a asp-controller="Category" asp-action="Index" class="btn btn-secondary">Назад к списку</a>
+</div>

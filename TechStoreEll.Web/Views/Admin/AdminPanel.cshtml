@@ -10,6 +10,7 @@
     <div class="d-flex flex-wrap gap-2">
         <a asp-controller="Warehous" asp-action="Index" class="btn btn-outline-secondary">Склады</a>
         <a asp-controller="Role" asp-action="Index" class="btn btn-outline-secondary">Роли</a>
+        <a asp-controller="Category" asp-action="Index" class="btn btn-outline-secondary">Категории</a>
         <a asp-action="ReviewModeration" class="btn btn-warning">
             📝 Модерация отзывов
             @if (ViewBag.UnmoderatedCount > 0)
