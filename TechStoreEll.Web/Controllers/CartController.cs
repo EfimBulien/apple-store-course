@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis;
 using System.Text.Json;
+using TechStoreEll.Api.Attributes;
 using TechStoreEll.Web.Models;
 
 namespace TechStoreEll.Web.Controllers;
 
+[AuthorizeRole("Customer", "Admin")]
 public class CartController(IConnectionMultiplexer redis) : Controller
 {
     private readonly IDatabase _redis = redis.GetDatabase();
