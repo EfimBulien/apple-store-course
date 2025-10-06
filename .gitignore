@@ -14,3 +14,6 @@ TechStoreEll.Web/*.json
 TechStoreEll.sln.DotSettings.user
 TechStoreEll.Web.zip
 TechStoreEll.Web/node_modules
+TechStoreEll.Core/bin
+TechStoreEll.Core/obj
+TechStoreEll.Core/*.json

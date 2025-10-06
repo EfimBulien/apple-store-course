@@ -1,0 +1,76 @@
+@model List<TechStoreEll.Api.Entities.Address>
+@{
+    ViewData["Title"] = "Мои адреса";
+}
+
+<h2>Мои адреса</h2>
+
+<a asp-action="Edit" class="btn btn-primary mb-3">➕ Добавить адрес</a>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (Model.Any())
+{
+    <div class="row">
+        @foreach (var addr in Model)
+        {
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            @(addr.Label ?? "Без названия")
+                            @if (ViewBag.ShippingAddressId?.Equals(addr.Id) == true)
+                            {
+                                <span class="badge bg-success">Доставка</span>
+                            }
+                            @if (ViewBag.BillingAddressId?.Equals(addr.Id) == true)
+                            {
+                                <span class="badge bg-info">Оплата</span>
+                            }
+                        </h5>
+                        <p class="card-text">
+                            @addr.Country<br />
+                            @if (!string.IsNullOrEmpty(addr.Region)) { @addr.Region<br /> }
+                            @addr.City, @addr.Street, @addr.House
+                            @if (!string.IsNullOrEmpty(addr.Apartment)) { <text>, кв. @addr.Apartment</text> }
+                            @if (!string.IsNullOrEmpty(addr.Postcode)) { <text>, @addr.Postcode</text> }
+                        </p>
+                        <div>
+                            <a asp-action="Edit" asp-route-id="@addr.Id" class="btn btn-sm btn-outline-primary">✏️ Изменить</a>
+                            
+                            <form asp-action="SetShipping" asp-route-id="@addr.Id" method="post" style="display:inline;" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-success">🚚 Доставка</button>
+                            </form>
+                            
+                            <form asp-action="SetBilling" asp-route-id="@addr.Id" method="post" style="display:inline;" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-info">💳 Оплата</button>
+                            </form>
+                            
+                            @if (ViewBag.ShippingAddressId?.Equals(addr.Id) == false && ViewBag.BillingAddressId?.Equals(addr.Id) == false)
+                            {
+                                <form asp-action="Delete" asp-route-id="@addr.Id" method="post" style="display:inline;" 
+                                      onsubmit="return confirm('Удалить адрес?');" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">🗑️ Удалить</button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p>У вас пока нет сохранённых адресов.</p>
+}

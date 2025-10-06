@@ -1,0 +1,100 @@
+@model TechStoreEll.Web.Models.OrderHistoryViewModel
+@{
+ViewData["Title"] = "История заказов";
+}
+
+<h2>История заказов</h2>
+
+@if (Model.Orders.Any())
+{
+<div class="row">
+    @foreach (var order in Model.Orders)
+    {
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Заказ #@order.OrderNumber</h5>
+                <span class="badge bg-@(GetStatusColor(order.Status))">@GetStatusText(order.Status)</span>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-2">Создан: @order.CreatedAt.ToString("g")</p>
+                <p class="mb-2"><strong>Статус оплаты:</strong> @GetPaymentStatusText(order.PaymentStatus)</p>
+                <p class="h5">Сумма: @order.TotalAmount.ToString("C")</p>
+
+                <h6>Товары:</h6>
+                <div class="row">
+                    @foreach (var item in order.Items)
+                    {
+                    <div class="col-md-6 col-lg-4 mb-2">
+                        <div class="d-flex">
+                            @if (!string.IsNullOrEmpty(item.ImageUrl))
+                            {
+                            <img src="@item.ImageUrl" alt="@item.ProductName"
+                                 style="width: 60px; height: 60px; object-fit: cover; margin-right: 10px;" />
+                            }
+                            <div>
+                                <div><strong>@item.ProductName</strong></div>
+                                @if (!string.IsNullOrEmpty(item.VariantInfo))
+                                {
+                                <small class="text-muted">@item.VariantInfo</small>
+                                }
+                                <div>@item.Quantity × @item.UnitPrice.ToString("C")</div>
+                            </div>
+                        </div>
+                    </div>
+                    }
+                </div>
+
+                <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-outline-primary mt-3">Подробнее</a>
+            </div>
+        </div>
+    </div>
+    }
+</div>
+}
+else
+{
+<div class="alert alert-info">
+    У вас пока нет заказов.
+</div>
+}
+@functions {
+string GetStatusColor(string status)
+    {
+    return status switch
+    {
+    "completed" => "success",
+    "shipped" => "info",
+    "paid" => "primary",
+"cancelled" => "danger",
+            "refunded" => "warning",
+            _ => "secondary"
+};
+}
+
+string GetStatusText(string status)
+{
+return status switch
+{
+"new" => "Новый",
+"paid" => "Оплачен",
+"shipped" => "Отправлен",
+"completed" => "Завершён",
+"cancelled" => "Отменён",
+"refunded" => "Возврат",
+_ => status
+        };
+}
+
+string GetPaymentStatusText(string status)
+{
+return status switch
+{
+"success" => "Оплачено",
+"pending" => "Ожидает оплаты",
+"failed" => "Ошибка оплаты",
+"refunded" => "Средства возвращены",
+_ => status
+};
+}
+}

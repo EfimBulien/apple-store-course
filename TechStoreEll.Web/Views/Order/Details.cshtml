@@ -1,0 +1,95 @@
+@model TechStoreEll.Web.Models.OrderSummary
+@{
+    ViewData["Title"] = $"Заказ #{Model.OrderNumber}";
+}
+
+<h2>Заказ #@Model.OrderNumber</h2>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <p><strong>Статус заказа:</strong> 
+           <span class="badge bg-@(GetStatusColor(Model.Status))">@GetStatusText(Model.Status)</span>
+        </p>
+        <p><strong>Статус оплаты:</strong> @GetPaymentStatusText(Model.PaymentStatus)</p>
+        <p><strong>Дата создания:</strong> @Model.CreatedAt.ToString("g")</p>
+    </div>
+    <div class="col-md-6 text-end">
+        <h3>Итого: @Model.TotalAmount.ToString("C")</h3>
+    </div>
+</div>
+
+<h4>Товары</h4>
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Товар</th>
+                <th>Характеристики</th>
+                <th>Кол-во</th>
+                <th>Цена</th>
+                <th>Сумма</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                        {
+                            <img src="@item.ImageUrl" alt="@item.ProductName" 
+                                 style="width: 40px; height: 40px; object-fit: cover; margin-right: 10px;" />
+                        }
+                        @item.ProductName
+                    </td>
+                    <td>@item.VariantInfo</td>
+                    <td>@item.Quantity</td>
+                    <td>@item.UnitPrice.ToString("C")</td>
+                    <td>@((item.UnitPrice * item.Quantity).ToString("C"))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<a asp-action="Index" class="btn btn-secondary">← Назад к заказам</a>
+@functions {
+    string GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "completed" => "success",
+            "shipped" => "info",
+            "paid" => "primary",
+            "cancelled" => "danger",
+            "refunded" => "warning",
+            _ => "secondary"
+        };
+    }
+
+    string GetStatusText(string status)
+    {
+        return status switch
+        {
+            "new" => "Новый",
+            "paid" => "Оплачен",
+            "shipped" => "Отправлен",
+            "completed" => "Завершён",
+            "cancelled" => "Отменён",
+            "refunded" => "Возврат",
+            _ => status
+        };
+    }
+
+    string GetPaymentStatusText(string status)
+    {
+        return status switch
+        {
+            "success" => "Оплачено",
+            "pending" => "Ожидает оплаты",
+            "failed" => "Ошибка оплаты",
+            "refunded" => "Средства возвращены",
+            _ => status
+        };
+    }
+}

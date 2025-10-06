@@ -65,12 +65,6 @@ public class AdminController(
         return RedirectToAction(nameof(ReviewModeration));
     }
     
-    private int GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return int.Parse(userIdClaim ?? "0");
-    }
-    
     // private async Task UpdateProductRating(int productId)
     // {
     //     var product = await context.Products.FindAsync(productId);
@@ -136,8 +130,6 @@ public class AdminController(
         return View(model);
     }
     
-    
-
     [AuthorizeRole("Admin")]
     public async Task<IActionResult> Analytics(DateTime? startDate = null, DateTime? endDate = null)
     {
@@ -164,9 +156,7 @@ public class AdminController(
     }
 
     [AuthorizeRole("Admin")]
-    public async Task<IActionResult> ExportAnalyticsCsv(
-        DateTime? startDate = null,
-        DateTime? endDate = null)
+    public async Task<IActionResult> ExportAnalyticsCsv(DateTime? startDate = null, DateTime? endDate = null)
     {
         var start = (startDate?.Date ?? DateTime.UtcNow.Date.AddDays(-30)).ToUniversalTime();
         var end = (endDate?.Date ?? DateTime.UtcNow.Date).ToUniversalTime().AddDays(1).AddTicks(-1);
@@ -206,5 +196,11 @@ public class AdminController(
 
         var fileName = $"analytics_{DateTime.UtcNow:yyyyMMdd}.csv";
         return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", fileName);
+    }
+    
+    private int GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return int.Parse(userIdClaim ?? "0");
     }
 }
