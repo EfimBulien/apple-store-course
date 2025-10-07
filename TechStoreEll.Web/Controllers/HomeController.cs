@@ -270,4 +270,8 @@ public class HomeController(AppDbContext context, ILogger<HomeController> logger
         ViewData["CurrentSort"] = sort;
         return View(viewModels);
     }
+
+    public IActionResult Terms() => View();
+    public IActionResult About() => View();
+    public IActionResult Contact() => View();
 }

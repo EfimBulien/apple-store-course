@@ -1,33 +1,21 @@
-﻿@model List<TechStoreEll.Api.Entities.Role>
-
-
-@{
-    ViewData["Title"] = "Privacy";
+﻿@{
+    ViewData["Title"] = "Политика конфиденциальности";
 }
 
-<h2>Список ролей</h2>
+<section class="py-5">
+    <div class="container">
+        <h1 class="mb-4">@ViewData["Title"]</h1>
+        <p class="lead text-body-secondary">Мы ценим вашу конфиденциальность и защищаем ваши данные.</p>
 
-@if (!Model.Any())
-{
-    <p>Роли не найдены.</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Название</th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var role in Model)
-        {
-            <tr>
-                <td>@role.Id</td>
-                <td>@role.Name</td>
-            </tr>
-        }
-        </tbody>
-    </table>
-}
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam in venenatis enim. Suspendisse potenti. Donec sit amet lectus sed dolor efficitur fermentum.</p>
+
+        <h4>Сбор данных</h4>
+        <p>Мы собираем только необходимую информацию для обработки заказов и улучшения качества сервиса.</p>
+
+        <h4>Использование данных</h4>
+        <p>Ваши данные используются для обработки заказов, уведомлений о доставке и персонализированных предложений.</p>
+
+        <h4>Безопасность</h4>
+        <p>Мы применяем современные методы шифрования и защиты информации.</p>
+    </div>
+</section>

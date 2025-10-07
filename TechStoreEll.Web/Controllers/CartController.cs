@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis;
 using System.Text.Json;
@@ -13,7 +14,9 @@ public class CartController(IConnectionMultiplexer redis) : Controller
 
     private string GetCartKey()
     {
-        return $"cart:{HttpContext.User}";
+        var userName = User.Identity?.Name ?? "Anonymous";
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return $"cart:{userId}:{userName}";
     }
     
     public async Task<IActionResult> Index()
@@ -92,7 +95,7 @@ public class CartController(IConnectionMultiplexer redis) : Controller
         return RedirectToAction("Index");
     }
     
-    [HttpGet("json")]
+    [HttpGet("/cart/json")]
     public async Task<IActionResult> GetCartJson()
     {
         var cartKey = GetCartKey();
