@@ -41,6 +41,26 @@
             background-color: #343a40;
             color: #adb5bd;
         }
+        .neu-button {
+            background-color: #e0e0e0;
+            border-radius: 50px;
+            box-shadow: inset 4px 4px 10px #bcbcbc, inset -4px -4px 10px #ffffff;
+            color: #4d4d4d;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 15px 40px;
+            transition: all 0.2s ease-in-out;
+            border: 2px solid rgb(206, 206, 206);
+        }
+
+        .neu-button:hover {
+            box-shadow: inset 2px 2px 5px #bcbcbc, inset -2px -2px 5px #ffffff, 2px 2px 5px #bcbcbc, -2px -2px 5px #ffffff;
+        }
+
+        .neu-button:focus {
+            outline: none;
+            box-shadow: inset 2px 2px 5px #bcbcbc, inset -2px -2px 5px #ffffff, 2px 2px 5px #bcbcbc, -2px -2px 5px #ffffff;
+        }
     </style>
 </head>
 <body>
@@ -56,6 +76,7 @@
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Home" asp-action="Index">Главная</a>
+                        @* <button asp-controller="Home" asp-action="Index" class="neu-button">Главная</button> *@
                     </li>
                     @if (User.Identity is { IsAuthenticated: true })
                     {

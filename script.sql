@@ -192,11 +192,27 @@ CREATE TABLE backups (
 );
 
 -- ========== ИНДЕКСЫ ==========
-CREATE INDEX IF NOT EXISTS idx_products_name_ft ON products USING gin (to_tsvector('russian', coalesce(name,'') || ' ' || coalesce(description,'')));
+--CREATE INDEX IF NOT EXISTS idx_products_name_ft ON products USING gin (to_tsvector('russian', coalesce(name,'') || ' ' || coalesce(description,'')));
 CREATE INDEX IF NOT EXISTS idx_inventory_variant ON inventory(product_variant_id);
 CREATE INDEX IF NOT EXISTS idx_order_user ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_product ON reviews(product_id);
 -- ++ добавлен индекс для быстрого поиска
+CREATE OR REPLACE FUNCTION products_search_vector_update() RETURNS trigger AS $$
+BEGIN
+  NEW.search_vector :=
+    setweight(to_tsvector('russian', lower(coalesce(NEW.name, ''))), 'A') ||
+    setweight(to_tsvector('russian', lower(coalesce(NEW.description, ''))), 'B') ||
+    setweight(to_tsvector('simple', lower(coalesce(NEW.sku, ''))), 'C');
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE  TRIGGER trg_update_product_search_vector
+    BEFORE INSERT OR UPDATE OF name, description, sku
+                     ON products
+                         FOR EACH ROW
+                         EXECUTE FUNCTION products_search_vector_update();
+
 CREATE INDEX IF NOT EXISTS idx_product_images_variant ON product_images(product_variant_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_warehouse ON inventory(warehouse_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_movements_warehouse ON inventory_movements(warehouse_id);
@@ -775,18 +791,18 @@ WHERE a.country = 'Россия';
 
 
 -- добавил колонку для полнотекстового индекса
-ALTER TABLE "products"
-    ADD COLUMN search_vector tsvector;
-
--- search_vector
-UPDATE "products"
-SET search_vector =
-    setweight(to_tsvector('russian', coalesce("name", '')), 'A') ||
-    setweight(to_tsvector('russian', coalesce("description", '')), 'B') ||
-    setweight(to_tsvector('simple', coalesce("sku", '')), 'C');
-
--- индексы
-CREATE INDEX idx_products_search ON "products" USING GIN (search_vector);
+-- ALTER TABLE "products"
+--     ADD COLUMN search_vector tsvector;
+-- 
+-- -- search_vector
+-- UPDATE "products"
+-- SET search_vector =
+--     setweight(to_tsvector('russian', coalesce("name", '')), 'A') ||
+--     setweight(to_tsvector('russian', coalesce("description", '')), 'B') ||
+--     setweight(to_tsvector('simple', coalesce("sku", '')), 'C');
+-- 
+-- -- индексы
+-- CREATE INDEX idx_products_search ON "products" USING GIN (search_vector);
 
 
 -- Для продакшена
@@ -803,3 +819,4 @@ CREATE INDEX idx_products_search ON "products" USING GIN (search_vector);
 -- CREATE TRIGGER trg_products_search_vector
 -- BEFORE INSERT OR UPDATE ON products
 -- FOR EACH ROW EXECUTE FUNCTION products_search_vector_update();
+

@@ -16,13 +16,13 @@ public partial class ProductVariant : IEntity
 
     public int? Ram { get; set; }
 
-    public virtual ICollection<Inventory> Inventories { get; set; } = new List<Inventory>();
+    public virtual ICollection<Inventory> Inventories { get; set; } = [];
 
-    public virtual ICollection<InventoryMovement> InventoryMovements { get; set; } = new List<InventoryMovement>();
+    public virtual ICollection<InventoryMovement> InventoryMovements { get; set; } = [];
 
-    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    public virtual ICollection<OrderItem> OrderItems { get; set; } = [];
 
     public virtual Product Product { get; set; } = null!;
 
-    public virtual ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
+    public virtual ICollection<ProductImage> ProductImages { get; set; } = [];
 }
