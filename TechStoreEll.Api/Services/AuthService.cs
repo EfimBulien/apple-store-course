@@ -31,6 +31,8 @@ public class AuthService(AppDbContext context)
         };
 
         context.Users.Add(user);
+
+        
         await context.SaveChangesAsync();
         
         var userId = context.Users.FirstOrDefault(u => u.Username == registerDto.Username)?.Id;

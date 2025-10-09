@@ -3,7 +3,7 @@
 public partial class Customer : IEntity
 {
     // это внешняя зависимость к UserId = ID
-    public int Id { get; set; }
+    public int Id { get; set; } // равносильно public int UserId
 
     public int? ShippingAddressId { get; set; }
 

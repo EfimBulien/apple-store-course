@@ -138,28 +138,46 @@ public class AddressController(AppDbContext context) : Controller
     {
         var userId = GetCurrentUserId();
         var address = await context.Addresses.FindAsync(id);
-        if (address == null || address.UserId != userId) return NotFound();
+        if (address == null || address.UserId != userId)
+            return NotFound();
 
-        var customer = await context.Customers.FirstAsync(c => c.Id == userId);
-        customer.ShippingAddressId = id;
+        var customer = await context.Customers.FirstOrDefaultAsync(c => c.Id == userId);
+        if (customer == null)
+        {
+            customer = new Customer { Id = userId, ShippingAddressId = id };
+            context.Customers.Add(customer);
+        }
+        else
+        {
+            customer.ShippingAddressId = id;
+        }
+
         await context.SaveChangesAsync();
-
         TempData["Success"] = "Адрес доставки обновлён.";
         return RedirectToAction(nameof(Index));
     }
-    
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SetBilling(int id)
     {
         var userId = GetCurrentUserId();
         var address = await context.Addresses.FindAsync(id);
-        if (address == null || address.UserId != userId) return NotFound();
+        if (address == null || address.UserId != userId)
+            return NotFound();
 
-        var customer = await context.Customers.FirstAsync(c => c.Id == userId);
-        customer.BillingAddressId = id;
+        var customer = await context.Customers.FirstOrDefaultAsync(c => c.Id == userId);
+        if (customer == null)
+        {
+            customer = new Customer { Id = userId, BillingAddressId = id };
+            context.Customers.Add(customer);
+        }
+        else
+        {
+            customer.BillingAddressId = id;
+        }
+
         await context.SaveChangesAsync();
-
         TempData["Success"] = "Платёжный адрес обновлён.";
         return RedirectToAction(nameof(Index));
     }

@@ -201,8 +201,7 @@ CREATE OR REPLACE FUNCTION products_search_vector_update() RETURNS trigger AS $$
 BEGIN
   NEW.search_vector :=
     setweight(to_tsvector('russian', lower(coalesce(NEW.name, ''))), 'A') ||
-    setweight(to_tsvector('russian', lower(coalesce(NEW.description, ''))), 'B') ||
-    setweight(to_tsvector('simple', lower(coalesce(NEW.sku, ''))), 'C');
+    setweight(to_tsvector('russian', lower(coalesce(NEW.description, ''))), 'B');
 RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -216,6 +215,7 @@ CREATE OR REPLACE  TRIGGER trg_update_product_search_vector
 CREATE INDEX IF NOT EXISTS idx_product_images_variant ON product_images(product_variant_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_warehouse ON inventory(warehouse_id);
 CREATE INDEX IF NOT EXISTS idx_inventory_movements_warehouse ON inventory_movements(warehouse_id);
+CREATE INDEX IF NOT EXISTS  idx_products_search ON products USING GIN (search_vector);
 
 -- ========== ТРИГГЕРЫ для АУДИТА ==========
 --  ТРИГГЕР АУДИТА (обновлен для minio)
@@ -597,11 +597,7 @@ BEGIN
 END;
 $$;
 
--- ========== ХЭЛПЕРС ==========
-CREATE OR REPLACE FUNCTION fn_set_user_password(p_user_id INT, p_password_hash TEXT) RETURNS VOID LANGUAGE sql AS $$
-  UPDATE users SET password_hash = p_password_hash, updated_at = now() WHERE id = p_user_id;
-$$;
-
+-- ========== ЭКСПОРТ ==========
 CREATE OR REPLACE FUNCTION export_audit(p_from TIMESTAMPTZ, p_to TIMESTAMPTZ) RETURNS JSONB LANGUAGE sql AS $$
   SELECT coalesce(jsonb_agg(row_to_json(a)), '[]'::jsonb) FROM (SELECT * FROM audit_log WHERE changed_at BETWEEN p_from AND p_to ORDER BY changed_at) a;
 $$;
@@ -761,6 +757,8 @@ BEGIN
 
     UPDATE orders SET status = 'shipped' WHERE id = v_order_id;
     CALL sp_complete_order(v_new_user_id, v_order_id);
+    
+    -- правда оплата так и остается пустой и ожидает оплаты
 
     INSERT INTO reviews (product_id, user_id, rating, comment)
     VALUES (v_product_id, v_new_user_id, 5, 'Прекрасный ноутбук! Быстрый, экран отличный. Идеален для работы и творчества.')
@@ -788,35 +786,4 @@ SELECT
 FROM addresses a
 JOIN users u ON u.id = a.user_id
 WHERE a.country = 'Россия';
-
-
--- добавил колонку для полнотекстового индекса
--- ALTER TABLE "products"
---     ADD COLUMN search_vector tsvector;
--- 
--- -- search_vector
--- UPDATE "products"
--- SET search_vector =
---     setweight(to_tsvector('russian', coalesce("name", '')), 'A') ||
---     setweight(to_tsvector('russian', coalesce("description", '')), 'B') ||
---     setweight(to_tsvector('simple', coalesce("sku", '')), 'C');
--- 
--- -- индексы
--- CREATE INDEX idx_products_search ON "products" USING GIN (search_vector);
-
-
--- Для продакшена
--- CREATE OR REPLACE FUNCTION products_search_vector_update() RETURNS trigger AS $$
--- BEGIN
---   NEW.search_vector :=
---     setweight(to_tsvector('russian', coalesce(NEW.name, '')), 'A') ||
---     setweight(to_tsvector('russian', coalesce(NEW.description, '')), 'B') ||
---     setweight(to_tsvector('simple', coalesce(NEW.sku, '')), 'C');
---   RETURN NEW;
--- END;
--- $$ LANGUAGE plpgsql;
-
--- CREATE TRIGGER trg_products_search_vector
--- BEFORE INSERT OR UPDATE ON products
--- FOR EACH ROW EXECUTE FUNCTION products_search_vector_update();
 

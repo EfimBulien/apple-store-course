@@ -14,7 +14,7 @@ public class CartController(IConnectionMultiplexer redis) : Controller
 
     private string GetCartKey()
     {
-        var userName = User.Identity?.Name ?? "Anonymous";
+        var userName = User.Identity?.Name ?? throw new NullReferenceException();
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return $"cart:{userId}:{userName}";
     }

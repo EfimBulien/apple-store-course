@@ -23,7 +23,7 @@ public class RestockController(AppDbContext context) : Controller
             .Include(pv => pv.Product)
             .Select(pv => new
             {
-                Id = pv.Id,
+                pv.Id,
                 Name = $"{pv.Product.Name} ({pv.VariantCode})"
             })
             .ToListAsync();

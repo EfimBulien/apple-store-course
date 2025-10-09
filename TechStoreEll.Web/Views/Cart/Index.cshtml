@@ -5,7 +5,7 @@
         <div class="col-lg-10">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="mb-0 fw-bold">
-                    <i class="bi bi-cart3 me-2"></i>Корзина
+                    <i class="bi bi-cart3 me-2"></i>Ваша корзина
                 </h2>
                 <a href="/" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-arrow-left me-1"></i> Продолжить покупки
@@ -14,135 +14,125 @@
 
             @if (!Model.Any())
             {
-            <div class="alert alert-info text-center py-5 fs-5 rounded-3 shadow-sm">
-                <i class="bi bi-info-circle me-2"></i> Ваша корзина пуста
-            </div>
+                <div class="alert alert-info text-center py-5 rounded-3">
+                    <i class="bi bi-cart-x fs-1 mb-3"></i>
+                    <div class="fs-5 mb-3">Ваша корзина пуста</div>
+                    <a href="/" class="btn btn-primary">Перейти к покупкам</a>
+                </div>
             }
             else
             {
-            <div class="card shadow-sm border-0 rounded-4 mb-4">
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table align-middle mb-0">
-                            <thead class="bg-light">
-                            <tr>
-                                <th class="ps-4">Товар</th>
-                                <th>Цена</th>
-                                <th class="text-center" style="width:150px;">Кол-во</th>
-                                <th>Сумма</th>
-                                <th></th>
-                            </tr>
-                            </thead>
-                            <tbody id="cart-body">
+                <div class="card border-0 rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <div class="row g-3">
                             @foreach (var item in Model)
                             {
-                            <tr class="border-bottom" data-id="@item.ProductId" data-price="@item.Price">
-                                <td>
-                                    <div class="d-flex align-items-center ps-3">
-                                        <img src="@item.ImageUrl"
-                                             class="rounded-3 shadow-sm me-3"
-                                             style="width: 70px; height: 70px; object-fit: cover;"
-                                             alt="@item.Name">
-                                        <div>
-                                            <a href="/Home/Product/@item.ProductId"
-                                               class="fw-semibold text-decoration-none text-dark">
-                                                @item.Name
-                                            </a>
+                                <div class="col-12 cart-item" data-id="@item.ProductId" data-price="@item.Price">
+                                    <div class="d-flex align-items-center flex-column flex-md-row bg-light rounded-3 p-3">
+                                        <img src="@item.ImageUrl" class="rounded-3 me-3" style="width: 60px; height: 60px; object-fit: cover;" alt="@item.Name">
+                                        <div class="flex-grow-1">
+                                            <a href="/Home/Product/@item.ProductId" class="fw-semibold text-decoration-none text-dark">@item.Name</a>
                                         </div>
+                                        <div class="d-flex align-items-center mt-2 mt-md-0">
+                                            <div class="input-group input-group-sm" style="width: 120px;">
+                                                <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(this, -1)">−</button>
+                                                <input type="number" min="1" step="1" class="form-control text-center quantity-input" value="@item.Quantity">
+                                                <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(this, 1)">+</button>
+                                            </div>
+                                        </div>
+                                        <div class="text-center mt-2 mt-md-0 ms-md-3">
+                                            <span class="fw-semibold">@item.Price?.ToString("C")</span>
+                                        </div>
+                                        <div class="text-center mt-2 mt-md-0 ms-md-3">
+                                            <span class="item-total fw-semibold text-primary">@((item.Price ?? 0) * item.Quantity) ₽</span>
+                                        </div>
+                                        <form asp-action="Remove" method="post" class="ms-md-3 mt-2 mt-md-0">
+                                            <input type="hidden" name="productId" value="@item.ProductId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle" aria-label="Удалить товар">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
                                     </div>
-                                </td>
-                                <td class="fw-semibold">@item.Price?.ToString("C")</td>
-                                <td class="text-center">
-                                    <input type="number"
-                                           min="1" step="1" pattern="\d+"
-                                           class="form-control form-control-sm text-center quantity-input"
-                                           value="@item.Quantity"
-                                           style="width: 80px; margin: 0 auto;">
-                                </td>
-                                <td class="item-total fw-semibold text-success">@((item.Price ?? 0) * item.Quantity) ₽</td>
-                                <td class="text-end pe-3">
-                                    <form asp-action="Remove" method="post" class="d-inline">
-                                        <input type="hidden" name="productId" value="@item.ProductId" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
+                                </div>
                             }
-                            </tbody>
-                        </table>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="card border-0 shadow-sm rounded-4 p-4">
-                <div class="d-flex justify-content-between align-items-center flex-wrap">
-                    <form asp-action="Clear" method="post" class="mb-2 mb-md-0">
-                        <button type="submit" class="btn btn-outline-danger">
-                            <i class="bi bi-x-circle me-1"></i> Очистить корзину
+                <div class="card border-0 rounded-4 p-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <form asp-action="Clear" method="post" class="mb-2 mb-md-0">
+                            <button type="submit" class="btn btn-outline-danger" aria-label="Очистить корзину">
+                                <i class="bi bi-x-circle me-1"></i> Очистить корзину
+                            </button>
+                        </form>
+                        <div class="text-end">
+                            <div class="fs-5 fw-semibold text-muted mb-1">Итого:</div>
+                            <div id="cart-total" class="fs-3 fw-bold text-primary">0 ₽</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-end">
+                        <button class="btn btn-primary btn-lg px-4 py-2" aria-label="Оформить заказ">
+                            <i class="bi bi-bag-check-fill me-2"></i> Оформить заказ
                         </button>
-                    </form>
-
-                    <div class="text-end">
-                        <div class="fs-5 fw-semibold text-muted mb-1">Итого:</div>
-                        <div id="cart-total" class="fs-3 fw-bold text-success">0 ₽</div>
                     </div>
                 </div>
-
-                <div class="mt-4 text-end">
-                    <button class="btn btn-success btn-lg px-4 py-2 shadow-sm">
-                        <i class="bi bi-bag-check-fill me-2"></i> Оформить заказ
-                    </button>
-                </div>
-            </div>
             }
         </div>
     </div>
 </div>
 
 @section Scripts {
-<script>
-    function recalcTotals() {
-        let total = 0;
-        document.querySelectorAll("#cart-body tr").forEach(row => {
-            const price = parseFloat(row.dataset.price);
-            const qty = parseInt(row.querySelector(".quantity-input").value);
-            const subtotal = price * qty;
-            row.querySelector(".item-total").innerText = subtotal.toFixed(2) + " ₽";
-            total += subtotal;
-        });
-        document.getElementById("cart-total").innerText = total.toFixed(2) + " ₽";
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-        recalcTotals();
-
-        document.querySelectorAll(".quantity-input").forEach(input => {
-            input.addEventListener("input", e => {
-                let val = e.target.value.replace(/\D/g, "");
-                if (!val) val = "1";
-                let num = parseInt(val, 10);
-                if (isNaN(num) || num < 1) num = 1;
-                if (num > 20) num = 20;
-                e.target.value = num;
+    <script>
+        function recalcTotals() {
+            let total = 0;
+            document.querySelectorAll(".cart-item").forEach(row => {
+                const price = parseFloat(row.dataset.price);
+                const qty = parseInt(row.querySelector(".quantity-input").value);
+                const subtotal = price * qty;
+                row.querySelector(".item-total").innerText = subtotal.toFixed(2) + " ₽";
+                total += subtotal;
             });
+            document.getElementById("cart-total").innerText = total.toFixed(2) + " ₽";
+        }
 
-            input.addEventListener("change", async (e) => {
-                const row = e.target.closest("tr");
-                const id = row.dataset.id;
-                const qty = e.target.value;
+        function updateQuantity(btn, change) {
+            const input = btn.closest(".input-group").querySelector(".quantity-input");
+            let qty = parseInt(input.value) + change;
+            if (qty < 1) qty = 1;
+            if (qty > 20) qty = 20;
+            input.value = qty;
+            input.dispatchEvent(new Event("change"));
+        }
 
-                await fetch("/cart/update", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: `productId=${id}&quantity=${qty}`
+        document.addEventListener("DOMContentLoaded", () => {
+            recalcTotals();
+
+            document.querySelectorAll(".quantity-input").forEach(input => {
+                input.addEventListener("input", e => {
+                    let val = e.target.value.replace(/\D/g, "");
+                    if (!val) val = "1";
+                    let num = parseInt(val, 10);
+                    if (isNaN(num) || num < 1) num = 1;
+                    if (num > 20) num = 20;
+                    e.target.value = num;
                 });
 
-                recalcTotals();
-                loadCartPreview();
+                input.addEventListener("change", async (e) => {
+                    const row = e.target.closest(".cart-item");
+                    const id = row.dataset.id;
+                    const qty = e.target.value;
+
+                    await fetch("/cart/update", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body: `productId=${id}&quantity=${qty}`
+                    });
+
+                    recalcTotals();
+                    loadCartPreview();
+                });
             });
         });
-    });
-</script>
+    </script>
 }
