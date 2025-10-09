@@ -131,14 +131,16 @@ CREATE TABLE order_items (
     order_id INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     product_variant_id INT NOT NULL REFERENCES product_variants(id) ON DELETE RESTRICT,
     quantity INT NOT NULL CHECK (quantity > 0),
-    unit_price NUMERIC(12,2) NOT NULL CHECK (unit_price >= 0)
+    unit_price NUMERIC(12,2) NOT NULL CHECK (unit_price >= 0),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
 CREATE TABLE payments (
     id SERIAL PRIMARY KEY,
     order_id INT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-    provider VARCHAR(50) NOT NULL,
+    provider VARCHAR(50),
     amount NUMERIC(12,2) NOT NULL CHECK (amount >= 0),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     paid_at TIMESTAMP WITH TIME ZONE,
     status VARCHAR(30) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','success','failed','refunded')),
     transaction_ref VARCHAR(255)

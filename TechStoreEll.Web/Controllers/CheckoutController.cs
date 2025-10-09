@@ -183,7 +183,7 @@ public class CheckoutController(IConnectionMultiplexer redis, AppDbContext conte
                 Provider = "placeholder",
                 Amount = (decimal)totalAmount,
                 Status = "pending",
-                PaidAt = DateTime.UtcNow
+                //PaidAt = DateTime.UtcNow
             });
 
             await context.SaveChangesAsync();
