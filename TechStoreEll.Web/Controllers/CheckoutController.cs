@@ -183,6 +183,8 @@ public class CheckoutController(IConnectionMultiplexer redis, AppDbContext conte
                 Provider = "placeholder",
                 Amount = (decimal)totalAmount,
                 Status = "pending",
+                // Изменмть модель потом 
+                // добавить CreatedAt = DateTime.UtcNow
                 //PaidAt = DateTime.UtcNow
             });
 
@@ -207,10 +209,7 @@ public class CheckoutController(IConnectionMultiplexer redis, AppDbContext conte
         var addresses = await context.Addresses
             .Where(a => a.UserId == userId)
             .ToListAsync();
-
-        // var customer = await context.Customers
-        //     .FirstOrDefaultAsync(c => c.Id == userId);
-
+        
         ViewBag.Addresses = addresses;
         return View("Index", model);
     }

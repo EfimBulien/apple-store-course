@@ -20,19 +20,30 @@
                     {
                         <div class="col-12">
                             <div class="card shadow-sm border-0 rounded-4">
-                                <div class="card-header bg-light d-flex justify-content-between align-items-center rounded-top-4">
+                                <div class="card-header bg-body-tertiary d-flex justify-content-between align-items-center rounded-top-4">
                                     <h5 class="mb-0 fw-semibold">Заказ #@order.OrderNumber</h5>
-                                    <span class="badge bg-@(GetStatusColor(order.Status)) px-3 py-2">@GetStatusText(order.Status)</span>
+                                    <span class="badge bg-@GetStatusColor(order.Status) px-3 py-2">
+                                        @GetStatusText(order.Status)
+                                    </span>
                                 </div>
                                 <div class="card-body">
                                     <div class="d-flex flex-wrap justify-content-between align-items-start mb-3">
                                         <div>
-                                            <p class="text-muted mb-1"><i class="bi bi-calendar-event me-1"></i> Создан: @order.CreatedAt.ToString("g")</p>
-                                            <p class="text-muted mb-1"><i class="bi bi-cash-stack me-1"></i> Оплата: @GetPaymentStatusText(order.PaymentStatus)</p>
+                                            <p class="text-muted mb-1"><i class="bi bi-calendar-event me-1">
+                                            </i> Создан: @order.CreatedAt.ToString("g")</p>
+                                            <p class="text-muted mb-1"><i class="bi bi-cash-stack me-1">
+                                            </i> Оплата:
+                                            @if (order.PaymentStatus != null)
+                                            {
+                                                @GetPaymentStatusText(order.PaymentStatus)
+                                            }
+                                            </p>
                                         </div>
                                         <div class="text-end">
                                             <span class="text-muted small">Сумма заказа</span>
-                                            <div class="fs-4 fw-bold text-success">@order.TotalAmount.ToString("C")</div>
+                                            <div class="fs-4 fw-bold text-success">
+                                                @order.TotalAmount.ToString("C")
+                                            </div>
                                         </div>
                                     </div>
 
@@ -54,7 +65,9 @@
                                                         {
                                                             <small class="text-muted">@item.VariantInfo</small><br />
                                                         }
-                                                        <span class="text-muted">@item.Quantity × @item.UnitPrice.ToString("C")</span>
+                                                        <span class="text-muted">
+                                                            @item.Quantity × @item.UnitPrice.ToString("C")
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -84,7 +97,7 @@
 </div>
 
 @functions {
-    string GetStatusColor(string status) => status switch
+    static string GetStatusColor(string status) => status switch
     {
         "completed" => "success",
         "shipped" => "info",
@@ -94,7 +107,7 @@
         _ => "secondary"
     };
 
-    string GetStatusText(string status) => status switch
+    static string GetStatusText(string status) => status switch
     {
         "new" => "Новый",
         "paid" => "Оплачен",
@@ -105,7 +118,7 @@
         _ => status
     };
 
-    string GetPaymentStatusText(string status) => status switch
+    static string GetPaymentStatusText(string status) => status switch
     {
         "success" => "Оплачено",
         "pending" => "Ожидает оплаты",

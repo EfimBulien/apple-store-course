@@ -8,9 +8,15 @@
 <div class="mb-4">
     <h4>Управление сущностями</h4>
     <div class="d-flex flex-wrap gap-2">
-        <a asp-controller="Warehous" asp-action="Index" class="btn btn-outline-secondary">Склады</a>
-        <a asp-controller="Role" asp-action="Index" class="btn btn-outline-secondary">Роли</a>
-        <a asp-controller="Category" asp-action="Index" class="btn btn-outline-secondary">Категории</a>
+        <a asp-controller="Warehous" asp-action="Index" class="btn btn-outline-secondary">
+            Склады
+        </a>
+        <a asp-controller="Role" asp-action="Index" class="btn btn-outline-secondary">
+            Роли
+        </a>
+        <a asp-controller="Category" asp-action="Index" class="btn btn-outline-secondary">
+            Категории
+        </a>
         <a asp-action="ReviewModeration" class="btn btn-warning">
             📝 Модерация отзывов
             @if (ViewBag.UnmoderatedCount > 0)
@@ -132,7 +138,6 @@
         pre {
             white-space: pre-wrap;
             word-break: break-word;
-            background: #f8f9fa;
             padding: 8px;
             border-radius: 4px;
             margin: 4px 0;

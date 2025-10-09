@@ -28,10 +28,10 @@
                             @foreach (var item in Model)
                             {
                                 <div class="col-12 cart-item" data-id="@item.ProductId" data-price="@item.Price">
-                                    <div class="d-flex align-items-center flex-column flex-md-row bg-light rounded-3 p-3">
+                                    <div class="d-flex align-items-center flex-column flex-md-row bg-body-tertiary rounded-3 p-3">
                                         <img src="@item.ImageUrl" class="rounded-3 me-3" style="width: 60px; height: 60px; object-fit: cover;" alt="@item.Name">
                                         <div class="flex-grow-1">
-                                            <a href="/Home/Product/@item.ProductId" class="fw-semibold text-decoration-none text-dark">@item.Name</a>
+                                            <a href="/Home/Product/@item.ProductId" class="fw-semibold text-decoration-none">@item.Name</a>
                                         </div>
                                         <div class="d-flex align-items-center mt-2 mt-md-0">
                                             <div class="input-group input-group-sm" style="width: 120px;">

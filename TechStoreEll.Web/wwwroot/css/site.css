@@ -21,3 +21,10 @@ body {
     margin-bottom: 60px;
 }
 
+[data-bs-theme="dark"] {
+   background: #1c1f23;
+}
+
+[data-bs-theme="light"] {
+    /* Кастомные стили для светлой темы */
+}

@@ -18,9 +18,10 @@
                     <div class="row">
                         <div class="col-md-6">
                             <p class="mb-1"><strong>Статус:</strong>
-                                <span class="badge bg-@(GetStatusColor(Model.Status)) px-3 py-2">@GetStatusText(Model.Status)</span>
+                                <span class="badge bg-@GetStatusColor(Model.Status) px-3 py-2">@GetStatusText(Model.Status)</span>
                             </p>
-                            <p class="mb-1"><strong>Оплата:</strong> @GetPaymentStatusText(Model.PaymentStatus)</p>
+                            <p class="mb-1"><strong>Оплата:</strong> @GetPaymentStatusText(Model.PaymentStatus)
+                            </p>
                             <p class="mb-0"><strong>Создан:</strong> @Model.CreatedAt.ToString("g")</p>
                         </div>
                         <div class="col-md-6 text-end">
@@ -32,11 +33,11 @@
             </div>
 
             <div class="card shadow-sm border-0 rounded-4">
-                <div class="card-header bg-light fw-semibold">Товары</div>
+                <div class="card-header bg-body-tertiary fw-semibold">Товары</div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light">
+                            <thead class="bg-body-tertiary">
                                 <tr>
                                     <th>Товар</th>
                                     <th>Характеристики</th>
@@ -82,7 +83,8 @@
 </div>
 
 @functions {
-    string GetStatusColor(string status) => status switch
+
+    static string GetStatusColor(string status) => status switch
     {
         "completed" => "success",
         "shipped" => "info",
@@ -92,7 +94,7 @@
         _ => "secondary"
     };
 
-    string GetStatusText(string status) => status switch
+    static string GetStatusText(string status) => status switch
     {
         "new" => "Новый",
         "paid" => "Оплачен",
@@ -103,7 +105,7 @@
         _ => status
     };
 
-    string GetPaymentStatusText(string status) => status switch
+    static string GetPaymentStatusText(string status) => status switch
     {
         "success" => "Оплачено",
         "pending" => "Ожидает оплаты",

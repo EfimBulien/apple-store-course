@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-bs-theme="light">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,44 +7,58 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
+        :root {
+            --bs-body-bg: #f8f9fa; 
+            --bs-body-color: #212529; 
+        }
+        [data-bs-theme="dark"] 
+        {
+            --bs-body-bg: #212529;
+            --bs-body-color: #f8f9fa;
+        }
         html, body {
             height: 100%;
             margin: 0;
         }
-        
         .container {
             flex: 1;
         }
-    
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
+            background-color: var(--bs-body-bg);
             display: flex;
             flex-direction: column;
         }
         .navbar {
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        /*.hero-section {*/
-        /*    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);*/
-        /*    color: white;*/
-        /*    border-radius: 0.5rem;*/
-        /*}*/
-        /*.card {*/
-        /*    transition: transform 0.2s, box-shadow 0.2s;*/
-        /*}*/
-        /*.card:hover {*/
-        /*    transform: translateY(-5px);*/
-        /*    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);*/
-        /*}*/
         footer {
-            background-color: #343a40;
-            color: #adb5bd;
+            color: var(--bs-body-color);
+        }
+        [data-bs-theme="dark"] footer {
+            background-color: #212529;
+        }
+        [data-bs-theme="light"] footer {
+            background-color: #f8f9fa;
+        }
+        :root {
+            --bs-body-bg: #f8f9fa;
+            --bs-body-color: #212529;
+        }
+        [data-bs-theme="dark"] {
+            --bs-body-bg: #212529;
+            --bs-body-color: #f8f9fa;
         }
     </style>
+    <script>
+        (function() {
+            const theme = localStorage.getItem("theme") || "light";
+            document.documentElement.setAttribute("data-bs-theme", theme);
+        })();
+    </script>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark py-3">
+    <nav class="navbar navbar-expand-lg bg-body-tertiary py-3">
         <div class="container">
             <a class="navbar-brand fw-bold fs-4" asp-controller="Home" asp-action="Index">
                 <i class="bi bi-shop me-2"></i>TechStoreEll
@@ -62,103 +76,109 @@
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Account" asp-action="Profile">Профиль</a>
                         </li>
-                        
                         @if (User.IsInRole("Customer"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Address" asp-action="Index">Мои адреса</a>
                             </li>
-                            
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Order" asp-action="Index">Мои заказы</a>
                             </li>
                         }
-
                         @if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Admin" asp-action="AdminPanel">Админка</a>
                             </li>
-                            
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Restock" asp-action="Index">Управление складом</a>
                             </li>
-                            
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Admin" asp-action="Analytics">Аналитика</a>
                             </li>
                         }
                     }
                 </ul>
-                <div class="d-flex ms-3">
+                <div class="d-flex ms-3 align-items-center">
                     @if (User.Identity is { IsAuthenticated: false })
                     {
-                        <a href="/Auth/SignIn" class="btn btn-outline-light me-2">Войти</a>
-                        <a href="/Auth/SignUp" class="btn btn-light">Регистрация</a>
+                        <a href="/Auth/SignIn" class="btn btn-outline-primary me-2">Войти</a>
+                        <a href="/Auth/SignUp" class="btn btn-primary">Регистрация</a>
                     }
-                </div>
-                <div class="dropdown ms-3">
-                    <a class="btn btn-outline-light position-relative" href="#" id="cartDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-cart"></i>
-                        <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            0
-                        </span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end p-3" style="min-width: 300px;" aria-labelledby="cartDropdown">
-                        <li id="cart-preview">
-                            <p class="text-muted mb-0">Корзина пуста</p>
-                        </li>
-                        <li><hr class="dropdown-divider" /></li>
-                        <li>
-                            <a href="/cart" class="btn btn-primary w-100">Перейти в корзину</a>
-                        </li>
-                    </ul>
+                    <!-- Добавлен переключатель темы -->
+                    <div class="form-check form-switch ms-3">
+                        <input class="form-check-input" type="checkbox" id="themeSwitch" aria-label="Переключить тему">
+                        <label class="form-check-label" for="themeSwitch">
+                            <i class="bi bi-sun-fill me-1"></i>
+                            <i class="bi bi-moon-fill"></i>
+                        </label>
+                    </div>
+                    <div class="dropdown ms-3">
+                        <a class="btn btn-outline-primary position-relative" href="#" id="cartDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-cart"></i>
+                            <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                0
+                            </span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end p-3" style="min-width: 300px;" aria-labelledby="cartDropdown">
+                            <li id="cart-preview">
+                                <p class="text-muted mb-0">Корзина пуста</p>
+                            </li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li>
+                                <a href="/cart" class="btn btn-primary w-100">Перейти в корзину</a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </nav>
+
     <main class="container py-5">
         @RenderBody()
     </main>
-    <footer class="bg-light py-5 mt-5 border-top">
-    <div class="container">
-        <div class="row text-center text-md-start">
-            <!-- О компании -->
-            <div class="col-md-4 mb-3">
-                <h6 class="fw-bold mb-2">TechStoreEll</h6>
-                <p class="text-muted small mb-0">
-                    Ваш надёжный магазин техники и электроники. Качество, удобство, быстрая доставка.
-                </p>
-            </div>
 
-            <!-- Полезные ссылки -->
-            <div class="col-md-4 mb-3">
-                <h6 class="fw-bold mb-2">Полезное</h6>
-                <ul class="list-unstyled">
-                    <li><a asp-controller="Home" asp-action="Privacy" class="text-decoration-none text-muted">Политика конфиденциальности</a></li>
-                    <li><a asp-controller="Home" asp-action="Terms" class="text-decoration-none text-muted">Условия использования</a></li>
-                    <li><a asp-controller="Home" asp-action="About" class="text-decoration-none text-muted">О нас</a></li>
-                    <li><a asp-controller="Home" asp-action="Contact" class="text-decoration-none text-muted">Контакты</a></li>
-                </ul>
-            </div>
-
-            <!-- Социальные сети -->
-            <div class="col-md-4 mb-3">
-                <h6 class="fw-bold mb-2">Мы в соцсетях</h6>
-                <div class="d-flex justify-content-center justify-content-md-start gap-3">
-                    <a href="#" class="text-muted fs-5"><i class="bi bi-facebook"></i></a>
-                    <a href="#" class="text-muted fs-5"><i class="bi bi-twitter"></i></a>
-                    <a href="#" class="text-muted fs-5"><i class="bi bi-instagram"></i></a>
-                    <a href="#" class="text-muted fs-5"><i class="bi bi-youtube"></i></a>
+    <footer class="py-5 mt-5 border-top">
+        <div class="container">
+            <div class="row text-center text-md-start">
+                <div class="col-md-4 mb-3">
+                    <h6 class="fw-bold mb-2">TechStoreEll</h6>
+                    <p class="text-muted small mb-0">
+                        Ваш надёжный магазин техники и электроники. Качество, удобство, быстрая доставка.
+                    </p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6 class="fw-bold mb-2">Полезное</h6>
+                    <ul class="list-unstyled">
+                        <li><a asp-controller="Home" asp-action="Privacy" class="text-decoration-none text-muted">
+                            Политика конфиденциальности
+                        </a></li>
+                        <li><a asp-controller="Home" asp-action="Terms" class="text-decoration-none text-muted">
+                            Условия использования
+                        </a></li>
+                        <li><a asp-controller="Home" asp-action="About" class="text-decoration-none text-muted">
+                            О нас
+                        </a></li>
+                        <li><a asp-controller="Home" asp-action="Contact" class="text-decoration-none text-muted">
+                            Контакты
+                        </a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6 class="fw-bold mb-2">Мы в соцсетях</h6>
+                    <div class="d-flex justify-content-center justify-content-md-start gap-3">
+                        <a href="#" class="text-muted fs-5"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="text-muted fs-5"><i class="bi bi-twitter"></i></a>
+                        <a href="#" class="text-muted fs-5"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="text-muted fs-5"><i class="bi bi-youtube"></i></a>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <hr class="my-4" />
-
-        <div class="text-center">
-            <p class="small mb-0">&copy; @DateTime.Now.Year — TechStoreEll. Все права защищены.</p>
-        </div>
+            <hr class="my-4" />
+            <div class="text-center">
+                <p class="small mb-0">&copy; @DateTime.Now.Year — TechStoreEll. Все права защищены.</p>
+            </div>
         </div>
     </footer>
 
@@ -190,9 +210,63 @@
             `).join('') + (items.length > 3 ? `<div class="text-center text-muted">+ ещё ${items.length - 3} товаров</div>` : '');
         }
 
-        document.addEventListener("DOMContentLoaded", loadCartPreview);
-    </script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            loadCartPreview();
 
+            const htmlElement = document.documentElement;
+            const themeSwitch = document.getElementById("themeSwitch");
+            const isAuthenticated = @((User.Identity is { IsAuthenticated: true }).ToString().ToLower());
+            let currentTheme = localStorage.getItem("theme") || "light";
+
+            function applyTheme(theme) {
+                htmlElement.setAttribute("data-bs-theme", theme);
+                if (themeSwitch) {
+                    themeSwitch.checked = (theme === "dark");
+                }
+                localStorage.setItem("theme", theme);
+            }
+
+            if (isAuthenticated) {
+                try {
+                    const response = await fetch("/UserSettings/GetTheme");
+                    if (response.ok) {
+                        const data = await response.json();
+                        currentTheme = data.theme || "light";
+                        localStorage.setItem("theme_synced", "true");
+                    } else {
+                        console.error("Failed to fetch theme from server");
+                    }
+                } catch (error) {
+                    console.error("Error fetching theme:", error);
+                }
+            }
+
+            applyTheme(currentTheme);
+
+            if (themeSwitch) {
+                themeSwitch.addEventListener("change", async () => {
+                    const newTheme = themeSwitch.checked ? "dark" : "light";
+                    applyTheme(newTheme);
+
+                    if (isAuthenticated) {
+                        try {
+                            await fetch("/UserSettings/UpdateTheme", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/x-www-form-urlencoded",
+                                    "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+                                },
+                                body: `theme=${newTheme}`
+                            });
+                        } catch (error) {
+                            console.error("Failed to update theme on server:", error);
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+    @Html.AntiForgeryToken()
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

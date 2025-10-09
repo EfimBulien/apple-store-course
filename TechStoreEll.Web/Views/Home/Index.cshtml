@@ -4,7 +4,7 @@
     var currentSort = ViewData["CurrentSort"]?.ToString();
 }
 
-<section class="py-5 text-center bg-light">
+<section class="py-5 text-center bg-body-tertiary">
     <div class="container">
         <h1 class="fw-bold display-4">TechStoreEll</h1>
         <p class="lead text-body-secondary mb-4">
@@ -39,17 +39,33 @@
     </form>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold mb-0">Товары</h2>
+        <h2 class="fw-bold mb-0">
+            Товары
+        </h2>
         <div class="d-flex gap-2 align-items-center">
-            <label for="sortSelect" class="form-label mb-0 me-2">Сортировать:</label>
+            <label for="sortSelect" class="form-label mb-0 me-2">
+                Сортировать:
+            </label>
             <select id="sortSelect" class="form-select form-select-sm" style="width: auto;"
                     onchange="location.href='?sort=' + this.value">
-                <option value="date-desc" selected="@(currentSort == "date-desc")">Новинки (сначала новые)</option>
-                <option value="date-asc" selected="@(currentSort == "date-asc")">Новинки (сначала старые)</option>
-                <option value="price-asc" selected="@(currentSort == "price-asc")">Цена (по возрастанию)</option>
-                <option value="price-desc" selected="@(currentSort == "price-desc")">Цена (по убыванию)</option>
-                <option value="rating-asc" selected="@(currentSort == "rating-asc")">Рейтинг (по возрастанию)</option>
-                <option value="rating-desc" selected="@(currentSort == "rating-desc")">Рейтинг (по убыванию)</option>
+                <option value="date-desc" selected="@(currentSort == "date-desc")">
+                    Сначала новые
+                </option>
+                <option value="date-asc" selected="@(currentSort == "date-asc")">
+                    Сначала старые
+                </option>
+                <option value="price-asc" selected="@(currentSort == "price-asc")">
+                    По возрастанию цены
+                </option>
+                <option value="price-desc" selected="@(currentSort == "price-desc")">
+                    По убыванию цены
+                </option>
+                <option value="rating-asc" selected="@(currentSort == "rating-asc")">
+                    По возрастанию рейтинга
+                </option>
+                <option value="rating-desc" selected="@(currentSort == "rating-desc")">
+                    По убыванию рейтинга
+                </option>
             </select>
         </div>
     </div>
@@ -83,9 +99,15 @@
                             <div class="text-warning">
                                 @if (product.AvgRating.HasValue)
                                 {
-                                    <span>@string.Join("", Enumerable.Range(0, (int)Math.Round(product.AvgRating.Value)).Select(_ => "★"))</span>
-                                    <span class="text-muted">@string.Join("", Enumerable.Range(0, 5 - (int)Math.Round(product.AvgRating.Value)).Select(_ => "★"))</span>
-                                    <small class="ms-1">(@product.ReviewsCount)</small>
+                                    <span>
+                                        @string.Join("", Enumerable.Range(0, (int)Math.Round(product.AvgRating.Value)).Select(_ => "★"))
+                                    </span>
+                                    <span class="text-muted">
+                                        @string.Join("", Enumerable.Range(0, 5 - (int)Math.Round(product.AvgRating.Value)).Select(_ => "★"))
+                                    </span>
+                                    <small class="ms-1">
+                                        (@product.ReviewsCount)
+                                    </small>
                                 }
                                 else
                                 {
@@ -105,7 +127,6 @@
 </div>
 
 <style>
-    /* Эффект hover на карточках товаров */
     .product-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,.15);
