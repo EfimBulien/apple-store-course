@@ -11,7 +11,6 @@ namespace TechStoreEll.Web.Controllers;
 [AuthorizeRole("Admin")]
 public class RestockController(AppDbContext context) : Controller
 {
-    // В методе Index (GET)
     public async Task<IActionResult> Index(int take = 100)
     {
         var warehouses = await context.Warehouses
@@ -27,11 +26,10 @@ public class RestockController(AppDbContext context) : Controller
                 Name = $"{pv.Product.Name} ({pv.VariantCode})"
             })
             .ToListAsync();
-
-        // Загружаем инвентарь
+        
         var inventory = await context.Inventories
             .Include(i => i.ProductVariant)
-                .ThenInclude(pv => pv.Product)
+            .ThenInclude(pv => pv.Product)
             .Include(i => i.Warehouse)
             .Select(i => new InventoryViewModel
             {
@@ -42,11 +40,10 @@ public class RestockController(AppDbContext context) : Controller
                 Reserve = i.Reserve
             })
             .ToListAsync();
-
-        // Загружаем последние 50 движений
+        
         var movements = await context.InventoryMovements
             .Include(m => m.ProductVariant)
-                .ThenInclude(pv => pv.Product)
+            .ThenInclude(pv => pv.Product)
             .Include(m => m.Warehouse)
             .Include(m => m.CreatedByNavigation)
             .OrderByDescending(m => m.CreatedAt)
@@ -77,28 +74,6 @@ public class RestockController(AppDbContext context) : Controller
         return View(model);
     }
     
-    // GET: форма пополнения
-    // public async Task<IActionResult> Index()
-    // {
-    //     var warehouses = await context.Warehouses
-    //         .Where(w => w.IsActive)
-    //         .Select(w => w.Name)
-    //         .ToListAsync();
-    //
-    //     var variants = await context.ProductVariants
-    //         .Include(pv => pv.Product)
-    //         .Select(pv => new { pv.Id, Name = $"{pv.Product.Name} ({pv.VariantCode})" })
-    //         .ToListAsync();
-    //
-    //     ViewBag.Warehouses = warehouses;
-    //     ViewBag.Variants = variants;
-    //
-    //     return View(new RestockViewModel());
-    // }
-    
-    
-
-    // POST: отправка данных в БД
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Index(RestockViewModel model)

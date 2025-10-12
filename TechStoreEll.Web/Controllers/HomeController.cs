@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TechStoreEll.Api.Entities;
@@ -6,139 +7,8 @@ using TechStoreEll.Web.Models;
 
 namespace TechStoreEll.Web.Controllers;
 
-public class HomeController(AppDbContext context, ILogger<HomeController> logger) : Controller
+public class HomeController(AppDbContext context) : Controller
 {
-    // public async Task<IActionResult> Index(string sort = "date-desc")
-    // {
-    //     logger.LogInformation("Начало выполнения Index с параметром сортировки: {Sort}", sort);
-    //     try
-    //     {
-    //         // Запрос для получения вариантов товаров с основным изображением и связанными данными
-    //         var variantsQuery = context.ProductVariants
-    //             .Where(pv => pv.Product.Active)
-    //             .Include(pv => pv.Product)
-    //                 .ThenInclude(p => p.Category)
-    //             .Include(pv => pv.ProductImages.Where(pi => pi.IsPrimary))
-    //             .Select(pv => new ProductViewModel
-    //             {
-    //                 Id = pv.Id,
-    //                 Sku = pv.VariantCode,
-    //                 Name = pv.Product.Name,
-    //                 CategoryName = pv.Product.Category != null ? pv.Product.Category.Name : "Без категории",
-    //                 Price = pv.Price,
-    //                 PrimaryImageUrl = pv.ProductImages
-    //                     .Where(pi => pi.IsPrimary)
-    //                     .OrderBy(pi => pi.SortOrder)
-    //                     .Select(pi => pi.ImageUrl)
-    //                     .FirstOrDefault() ?? "",
-    //                 PrimaryImageAltText = pv.ProductImages
-    //                     .Where(pi => pi.IsPrimary)
-    //                     .OrderBy(pi => pi.SortOrder)
-    //                     .Select(pi => pi.AltText)
-    //                     .FirstOrDefault() ?? "",
-    //                 AvgRating = pv.Product.AvgRating,
-    //                 ReviewsCount = pv.Product.ReviewsCount,
-    //                 CreatedAt = pv.Product.CreatedAt
-    //             });
-    //         
-    //         variantsQuery = sort switch
-    //         {
-    //             "price-asc" => variantsQuery.OrderBy(p => p.Price ?? decimal.MaxValue),
-    //             "price-desc" => variantsQuery.OrderByDescending(p => p.Price ?? decimal.MinValue),
-    //             "rating-asc" => variantsQuery.OrderBy(p => p.AvgRating ?? 0),
-    //             "rating-desc" => variantsQuery.OrderByDescending(p => p.AvgRating ?? 5),
-    //             "date-asc" => variantsQuery.OrderBy(p => p.CreatedAt),
-    //             "date-desc" => variantsQuery.OrderByDescending(p => p.CreatedAt),
-    //             _ => variantsQuery.OrderByDescending(p => p.CreatedAt) 
-    //         };
-    //
-    //         var variants = await variantsQuery.ToListAsync();
-    //         logger.LogInformation("Успешно получено {VariantCount} вариантов товаров", variants.Count);
-    //
-    //         ViewData["CurrentSort"] = sort;
-    //         return View(variants);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         logger.LogError(ex, "Ошибка при получении вариантов товаров с сортировкой {Sort}", sort);
-    //         throw;
-    //     }
-    // }
-    
-//     public async Task<IActionResult> Index(string sort = "date-desc")
-// {
-//     // Получаем все варианты с продуктами
-//     var variants = await context.ProductVariants
-//         .Where(pv => pv.Product.Active)
-//         .Include(pv => pv.Product)
-//             .ThenInclude(p => p.Category)
-//         .Include(pv => pv.Product)
-//             .ThenInclude(p => p.Reviews) // ← подгружаем отзывы
-//         .Include(pv => pv.ProductImages.Where(pi => pi.IsPrimary))
-//         .ToListAsync();
-//
-//     // Преобразуем в ViewModel с пересчётом агрегатов
-//     var viewModels = variants.Select(pv =>
-//     {
-//         var approvedReviews = pv.Product.Reviews.Where(r => r.IsModerated).ToList();
-//         var reviewsCount = approvedReviews.Count;
-//         var avgRating = reviewsCount > 0 ? (decimal?)approvedReviews.Average(r => r.Rating) : null;
-//
-//         return new ProductViewModel
-//         {
-//             Id = pv.Id,
-//             Sku = pv.VariantCode,
-//             Name = pv.Product.Name,
-//             CategoryName = pv.Product.Category?.Name ?? "Без категории",
-//             Price = pv.Price,
-//             PrimaryImageUrl = pv.ProductImages
-//                 .Where(pi => pi.IsPrimary)
-//                 .OrderBy(pi => pi.SortOrder)
-//                 .Select(pi => pi.ImageUrl)
-//                 .FirstOrDefault() ?? "",
-//             PrimaryImageAltText = pv.ProductImages
-//                 .Where(pi => pi.IsPrimary)
-//                 .OrderBy(pi => pi.SortOrder)
-//                 .Select(pi => pi.AltText)
-//                 .FirstOrDefault() ?? "",
-//             AvgRating = avgRating,
-//             ReviewsCount = reviewsCount,
-//             CreatedAt = pv.Product.CreatedAt
-//         };
-//     }).ToList();
-//
-//     // Сортировка в памяти (после пересчёта)
-//     viewModels = sort switch
-//     {
-//         "price-asc" => viewModels.OrderBy(p => p.Price ?? decimal.MaxValue).ToList(),
-//         "price-desc" => viewModels.OrderByDescending(p => p.Price ?? decimal.MinValue).ToList(),
-//         "rating-asc" => viewModels.OrderBy(p => p.AvgRating ?? 0).ToList(),
-//         "rating-desc" => viewModels.OrderByDescending(p => p.AvgRating ?? 0).ToList(),
-//         "date-asc" => viewModels.OrderBy(p => p.CreatedAt).ToList(),
-//         "date-desc" => viewModels.OrderByDescending(p => p.CreatedAt).ToList(),
-//         _ => viewModels.OrderByDescending(p => p.CreatedAt).ToList()
-//     };
-//
-//     ViewData["CurrentSort"] = sort;
-//     return View(viewModels);
-// }
-
-    public async Task<ViewResult> Privacy()
-    {
-        logger.LogInformation("Начало выполнения Privacy");
-        try
-        {
-            var roles = await context.Roles.ToListAsync();
-            logger.LogInformation("Успешно получено {RoleCount} ролей", roles.Count);
-            return View(roles);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Ошибка при получении ролей");
-            throw;
-        }
-    }
-    
     public async Task<IActionResult> Product(int id)
     {
         var variant = await context.ProductVariants
@@ -160,9 +30,7 @@ public class HomeController(AppDbContext context, ILogger<HomeController> logger
 
         // агрегаты ТОЛЬКО по одобренным отзывам
         var reviewsCount = approvedReviews.Count;
-        var avgRating = reviewsCount > 0 
-            ? (decimal?)approvedReviews.Average(r => r.Rating) 
-            : null;
+        var avgRating = reviewsCount > 0 ? (decimal?)approvedReviews.Average(r => r.Rating) : null;
 
         var vm = new ProductDetailViewModel
         {
@@ -172,8 +40,8 @@ public class HomeController(AppDbContext context, ILogger<HomeController> logger
             CategoryName = variant.Product.Category?.Name ?? "Без категории",
             Description = variant.Product.Description,
             Price = variant.Price,
-            AvgRating = avgRating,          // ← пересчитано!
-            ReviewsCount = reviewsCount,    // ← пересчитано!
+            AvgRating = avgRating,   
+            ReviewsCount = reviewsCount,
             Color = variant.Color,
             StorageGb = variant.StorageGb,
             Ram = variant.Ram,
@@ -191,7 +59,7 @@ public class HomeController(AppDbContext context, ILogger<HomeController> logger
                 .Select(r => new ProductReviewViewModel
                 {
                     AuthorName = r.User != null 
-                        ? $"{r.User.FirstName} {r.User.LastName?.FirstOrDefault()}."
+                        ? $"{r.User.FirstName} {r.User.LastName.FirstOrDefault()}."
                         : "Покупатель",
                     CreatedAt = r.CreatedAt,
                     Rating = r.Rating,
@@ -274,4 +142,75 @@ public class HomeController(AppDbContext context, ILogger<HomeController> logger
     public IActionResult Terms() => View();
     public IActionResult About() => View();
     public IActionResult Contact() => View();
+    public IActionResult Privacy() => View();
+    
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SubmitReview(ReviewViewModel model)
+    {
+        if (User.Identity is { IsAuthenticated: false })
+        {
+            TempData["ErrorMessage"] = "Пожалуйста, войдите в систему, чтобы оставить отзыв.";
+            return RedirectToAction("Product", new { id = model.ProductVariantId });
+        }
+        
+        if (!ModelState.IsValid || model.Rating < 1 || model.Rating > 5)
+        {
+            TempData["ErrorMessage"] = "Пожалуйста, выберите оценку от 1 до 5.";
+            return RedirectToAction("Product", new { id = model.ProductVariantId });
+        }
+        
+        var userId = GetCurrentUserId();
+        
+        var variant = await context.ProductVariants
+            .Include(v => v.Product)
+            .FirstOrDefaultAsync(v => v.Id == model.ProductVariantId);
+
+        if (variant == null)
+        {
+            TempData["ErrorMessage"] = "Товар не найден.";
+            return RedirectToAction("Product", new { id = model.ProductVariantId });
+        }
+        
+        var hasPurchased = await context.OrderItems
+            .AnyAsync(oi => oi.Order.UserId == userId 
+                            && oi.ProductVariantId == model.ProductVariantId 
+                            && oi.Order.Status == "completed");
+
+        if (!hasPurchased)
+        {
+            TempData["ErrorMessage"] = "Вы не можете оставить отзыв, так как не приобрели этот товар.";
+            return RedirectToAction("Product", new { id = model.ProductVariantId });
+        }
+
+        try
+        {
+            var review = new Review
+            {
+                ProductId = variant.ProductId,
+                UserId = userId,
+                Rating = model.Rating,
+                Comment = model.Comment,
+                CreatedAt = DateTime.UtcNow,
+                IsModerated = false 
+            };
+
+            context.Reviews.Add(review);
+            await context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Ваш отзыв успешно отправлен и ожидает модерации.";
+        }
+        catch (Exception)
+        {
+            TempData["ErrorMessage"] = "Произошла ошибка сервера. Пожалуйста, попробуйте снова позже.";
+        }
+
+        return RedirectToAction("Product", new { id = model.ProductVariantId });
+    }
+    
+    private int GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return int.Parse(userIdClaim ?? "0");
+    }
 }

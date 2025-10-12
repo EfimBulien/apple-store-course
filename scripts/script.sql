@@ -525,7 +525,7 @@ BEGIN
 END;
 $$;
 
--- 4)sp_complete_order — обновил списание зарезервированного товара
+-- 4)sp_complete_order
 CREATE OR REPLACE PROCEDURE sp_complete_order(p_user_id INT, p_order_id INT)
 LANGUAGE plpgsql
 AS $$
@@ -692,7 +692,7 @@ SELECT * FROM vw_product_stock ORDER BY variant_id;
 -- создание заказа
 CALL sp_create_order(2, '[{"variant_id": 1, "quantity": 1}]'::jsonb, NULL);
 
--- завершение заказа (чтобы можно было оставить отзыв) в будущем
+-- завершение заказа (чтобы можно было оставить отзыв)
 DO $$
 DECLARE
     v_order_id INT;
@@ -757,6 +757,8 @@ BEGIN
 
     CALL sp_create_order(v_new_user_id, '[{"variant_id": 3, "quantity": 1}]'::jsonb, v_order_id);
 
+
+    -- оставить отзыв без этого не получится
     UPDATE orders SET status = 'shipped' WHERE id = v_order_id;
     CALL sp_complete_order(v_new_user_id, v_order_id);
     

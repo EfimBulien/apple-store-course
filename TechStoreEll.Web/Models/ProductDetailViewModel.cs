@@ -10,12 +10,12 @@ public class ProductDetailViewModel
     public decimal Price { get; set; }
     public decimal? AvgRating { get; set; }
     public int ReviewsCount { get; set; }
-
     public string? Color { get; set; }
     public int? StorageGb { get; set; }
     public int? Ram { get; set; }
     public List<ProductImageViewModel> Images { get; set; } = [];
     public List<ProductReviewViewModel> Reviews { get; set; } = [];
+    public ReviewViewModel ReviewForm { get; set; } = new();
 }
 
 public class ProductImageViewModel
@@ -27,9 +27,8 @@ public class ProductImageViewModel
 
 public class ProductReviewViewModel
 {
-    public string AuthorName { get; set; } = "Покупатель"; // если нет имени — нейтрально
+    public string AuthorName { get; set; } = "Покупатель";
     public DateTime CreatedAt { get; set; }
     public int Rating { get; set; }
     public string? Comment { get; set; }
-    //public bool IsModerated { get; set; } // можно скрыть неодобренные
 }
