@@ -5,7 +5,7 @@ using StackExchange.Redis;
 using System.Text.Json;
 using TechStoreEll.Api.Attributes;
 using TechStoreEll.Api.Entities;
-using TechStoreEll.Core.Infrastructure.Data;
+using TechStoreEll.Api.Infrastructure.Data;
 using TechStoreEll.Web.Models;
 using Order = TechStoreEll.Api.Entities.Order;
 

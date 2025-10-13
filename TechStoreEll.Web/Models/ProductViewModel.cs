@@ -13,4 +13,7 @@ public class ProductViewModel
     public int ReviewsCount { get; set; }
     
     public DateTime CreatedAt { get; set; }
+    public int? CategoryId { get; set; }
+    public int? StorageSize { get; set; }
+    public int? Ram { get; set; }
 }

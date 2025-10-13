@@ -2,7 +2,7 @@
 using TechStoreEll.Api.Entities;
 using TechStoreEll.Api.Entities.Views;
 
-namespace TechStoreEll.Core.Infrastructure.Data;
+namespace TechStoreEll.Api.Infrastructure.Data;
 
 public partial class AppDbContext : DbContext
 {

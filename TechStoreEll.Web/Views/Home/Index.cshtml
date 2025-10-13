@@ -1,7 +1,14 @@
-﻿@model IEnumerable<TechStoreEll.Web.Models.ProductViewModel>
+﻿@using TechStoreEll.Api.Entities
+@model IEnumerable<TechStoreEll.Web.Models.ProductViewModel>
 @{
     ViewData["Title"] = "Главная";
     var currentSort = ViewData["CurrentSort"]?.ToString();
+    var categories = ViewData["Categories"] as List<Category>;
+    var selectedCategoryId = ViewData["SelectedCategoryId"] as int?;
+    var minRam = ViewData["MinRam"] as int?;
+    var maxRam = ViewData["MaxRam"] as int?;
+    var minStorage = ViewData["MinStorage"] as int?;
+    var maxStorage = ViewData["MaxStorage"] as int?;
 }
 
 <section class="py-5 text-center bg-body-tertiary">
@@ -21,108 +28,215 @@
 </section>
 
 <div class="container py-4">
-    <form method="get" class="mb-4">
-        <div class="input-group shadow-sm rounded">
-            <input type="text" 
-                   name="q" 
-                   value="@ViewData["CurrentSearch"]" 
-                   class="form-control border-0" 
-                   placeholder="Поиск товаров..." />
-            <button class="btn btn-outline-secondary" type="submit">🔍</button>
-        </div>
-        @if (!string.IsNullOrEmpty(ViewData["CurrentSearch"]?.ToString()))
-        {
-            <div class="mt-2">
-                <a href="@Url.Action("Index")" class="btn btn-sm btn-link">Сбросить поиск</a>
-            </div>
-        }
-    </form>
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold mb-0">
-            Товары
-        </h2>
-        <div class="d-flex gap-2 align-items-center">
-            <label for="sortSelect" class="form-label mb-0 me-2">
-                Сортировать:
-            </label>
-            <select id="sortSelect" class="form-select form-select-sm" style="width: auto;"
-                    onchange="location.href='?sort=' + this.value">
-                <option value="date-desc" selected="@(currentSort == "date-desc")">
-                    Сначала новые
-                </option>
-                <option value="date-asc" selected="@(currentSort == "date-asc")">
-                    Сначала старые
-                </option>
-                <option value="price-asc" selected="@(currentSort == "price-asc")">
-                    По возрастанию цены
-                </option>
-                <option value="price-desc" selected="@(currentSort == "price-desc")">
-                    По убыванию цены
-                </option>
-                <option value="rating-asc" selected="@(currentSort == "rating-asc")">
-                    По возрастанию рейтинга
-                </option>
-                <option value="rating-desc" selected="@(currentSort == "rating-desc")">
-                    По убыванию рейтинга
-                </option>
-            </select>
-        </div>
-    </div>
-
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-        @foreach (var product in Model)
-        {
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0 rounded-4 position-relative product-card">
-                    @if (!string.IsNullOrEmpty(product.PrimaryImageUrl))
-                    {
-                        <img src="@product.PrimaryImageUrl" class="card-img-top bg-white p-3" 
-                             alt="@product.PrimaryImageAltText" 
-                             style="height: 200px; object-fit: contain;">
-                    }
-                    else
-                    {
-                        <div class="d-flex justify-content-center align-items-center bg-dark text-white" 
-                             style="height: 200px;">
-                            <span>Нет изображения</span>
-                        </div>
-                    }
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title text-truncate">@product.Name</h5>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="badge bg-primary">@product.CategoryName</span>
-                            <span class="fw-bold">@(product.Price.HasValue ? $"{product.Price:C}" : "Н/Д")</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <small class="text-body-secondary">Артикул: @product.Sku</small>
-                            <div class="text-warning">
-                                @if (product.AvgRating.HasValue)
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-body-tertiary border-0 py-3">
+                    <h5 class="mb-0 fw-bold">Фильтры</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" id="filterForm">
+                        <input type="hidden" name="q" value="@ViewData["CurrentSearch"]" />
+                        <input type="hidden" name="sort" value="@currentSort" />
+                        <div class="mb-4">
+                            <h6 class="fw-semibold mb-3">Категория</h6>
+                            <select name="categoryId" class="form-select" onchange="this.form.submit()">
+                                <option value="">Все категории</option>
+                                @if (categories != null)
                                 {
-                                    <span>
-                                        @string.Join("", Enumerable.Range(0, (int)Math.Round(product.AvgRating.Value)).Select(_ => "★"))
-                                    </span>
-                                    <span class="text-muted">
-                                        @string.Join("", Enumerable.Range(0, 5 - (int)Math.Round(product.AvgRating.Value)).Select(_ => "★"))
-                                    </span>
-                                    <small class="ms-1">
-                                        (@product.ReviewsCount)
-                                    </small>
+                                    foreach (var category in categories)
+                                    {
+                                        <option value="@category.Id" selected="@(selectedCategoryId == category.Id)">
+                                            @category.Name
+                                        </option>
+                                    }
                                 }
-                                else
-                                {
-                                    <span class="text-muted">Нет рейтинга</span>
-                                }
+                            </select>
+                        </div>
+
+                        <!-- Фильтр по оперативной памяти -->
+                        <div class="mb-4">
+                            <h6 class="fw-semibold mb-3">Оперативная память (ГБ)</h6>
+                            <div class="row g-2">
+                                <div class="col">
+                                    <input type="number" name="minRam" class="form-control" 
+                                           placeholder="Мин" value="@minRam" min="0" />
+                                </div>
+                                <div class="col">
+                                    <input type="number" name="maxRam" class="form-control" 
+                                           placeholder="Макс" value="@maxRam" min="0" />
+                                </div>
                             </div>
                         </div>
-                        <a asp-controller="Home" asp-action="Product" asp-route-id="@product.Id"
-                           class="btn btn-primary mt-auto w-100 shadow-sm">
-                            Заказать
-                        </a>
-                    </div>
+
+                        <!-- Фильтр по постоянной памяти -->
+                        <div class="mb-4">
+                            <h6 class="fw-semibold mb-3">Постоянная память (ГБ)</h6>
+                            <div class="row g-2">
+                                <div class="col">
+                                    <input type="number" name="minStorage" class="form-control" 
+                                           placeholder="Мин" value="@minStorage" min="0" />
+                                </div>
+                                <div class="col">
+                                    <input type="number" name="maxStorage" class="form-control" 
+                                           placeholder="Макс" value="@maxStorage" min="0" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Кнопки фильтрации -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Применить фильтры</button>
+                            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">Сбросить все</a>
+                        </div>
+                    </form>
                 </div>
             </div>
-        }
+        </div>
+
+        <!-- Основной контент -->
+        <div class="col-lg-9">
+            <form method="get" class="mb-4">
+                <div class="input-group shadow-sm rounded">
+                    <input type="text" 
+                           name="q" 
+                           value="@ViewData["CurrentSearch"]" 
+                           class="form-control border-0" 
+                           placeholder="Поиск товаров..." />
+                    <button class="btn btn-outline-secondary" type="submit">🔍</button>
+                </div>
+                <!-- Передаем параметры фильтров в форму поиска -->
+                <input type="hidden" name="categoryId" value="@selectedCategoryId" />
+                <input type="hidden" name="minRam" value="@minRam" />
+                <input type="hidden" name="maxRam" value="@maxRam" />
+                <input type="hidden" name="minStorage" value="@minStorage" />
+                <input type="hidden" name="maxStorage" value="@maxStorage" />
+                
+                @if (!string.IsNullOrEmpty(ViewData["CurrentSearch"]?.ToString()) || 
+                     selectedCategoryId.HasValue || 
+                     minRam.HasValue || maxRam.HasValue || 
+                     minStorage.HasValue || maxStorage.HasValue)
+                {
+                    <div class="mt-2">
+                        <a href="@Url.Action("Index")" class="btn btn-sm btn-link">Сбросить все фильтры</a>
+                    </div>
+                }
+            </form>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold mb-0">
+                    Товары
+                    @if (selectedCategoryId.HasValue)
+                    {
+                        <span class="text-muted fs-5">
+                            - @categories?.FirstOrDefault(c => c.Id == selectedCategoryId)?.Name
+                        </span>
+                    }
+                </h2>
+                <div class="d-flex gap-2 align-items-center">
+                    <label for="sortSelect" class="form-label mb-0 me-2">
+                        Сортировать:
+                    </label>
+                    <select id="sortSelect" class="form-select form-select-sm" style="width: auto;"
+                            onchange="updateSort(this.value)">
+                        <option value="date-desc" selected="@(currentSort == "date-desc")">
+                            Сначала новые
+                        </option>
+                        <option value="date-asc" selected="@(currentSort == "date-asc")">
+                            Сначала старые
+                        </option>
+                        <option value="price-asc" selected="@(currentSort == "price-asc")">
+                            По возрастанию цены
+                        </option>
+                        <option value="price-desc" selected="@(currentSort == "price-desc")">
+                            По убыванию цены
+                        </option>
+                        <option value="rating-asc" selected="@(currentSort == "rating-asc")">
+                            По возрастанию рейтинга
+                        </option>
+                        <option value="rating-desc" selected="@(currentSort == "rating-desc")">
+                            По убыванию рейтинга
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 g-4">
+                @foreach (var product in Model)
+                {
+                    <div class="col">
+                        <div class="card h-100 shadow-sm border-0 rounded-4 position-relative product-card">
+                            @if (!string.IsNullOrEmpty(product.PrimaryImageUrl))
+                            {
+                                <img src="@product.PrimaryImageUrl" class="card-img-top bg-white p-3" 
+                                     alt="@product.PrimaryImageAltText" 
+                                     style="height: 200px; object-fit: contain;">
+                            }
+                            else
+                            {
+                                <div class="d-flex justify-content-center align-items-center bg-dark text-white" 
+                                     style="height: 200px;">
+                                    <span>Нет изображения</span>
+                                </div>
+                            }
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title text-truncate">@product.Name</h5>
+                                
+                                <div class="mb-2">
+                                    @if (product.Ram > 0)
+                                    {
+                                        <small class="text-muted d-block">ОЗУ: @product.Ram ГБ</small>
+                                    }
+                                    @if (product.StorageSize > 0)
+                                    {
+                                        <small class="text-muted d-block">Память: @product.StorageSize ГБ</small>
+                                    }
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-primary">@product.CategoryName</span>
+                                    <span class="fw-bold">@(product.Price.HasValue ? $"{product.Price:C}" : "Н/Д")</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <small class="text-body-secondary">Артикул: @product.Sku</small>
+                                    <div class="text-warning">
+                                        @if (product.AvgRating.HasValue)
+                                        {
+                                            <span>
+                                                @string.Join("", Enumerable.Range(0, (int)Math.Round(product.AvgRating.Value)).Select(_ => "★"))
+                                            </span>
+                                            <span class="text-muted">
+                                                @string.Join("", Enumerable.Range(0, 5 - (int)Math.Round(product.AvgRating.Value)).Select(_ => "★"))
+                                            </span>
+                                            <small class="ms-1">
+                                                (@product.ReviewsCount)
+                                            </small>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Нет рейтинга</span>
+                                        }
+                                    </div>
+                                </div>
+                                <a asp-controller="Home" asp-action="Product" asp-route-id="@product.Id"
+                                   class="btn btn-primary mt-auto w-100 shadow-sm">
+                                    Заказать
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5">
+                    <h4 class="text-muted">Товары не найдены</h4>
+                    <p class="text-muted">Попробуйте изменить параметры фильтрации</p>
+                    <a href="@Url.Action("Index")" class="btn btn-primary">Сбросить фильтры</a>
+                </div>
+            }
+        </div>
     </div>
 </div>
 
@@ -136,3 +250,25 @@
         transition: all 0.2s ease-in-out;
     }
 </style>
+
+<script>
+    function updateSort(sortValue) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('sort', sortValue);
+        window.location.href = url.toString();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const numberInputs = document.querySelectorAll('input[type="number"]');
+        let timeout;
+        
+        numberInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    document.getElementById('filterForm').submit();
+                }, 1000);
+            });
+        });
+    });
+</script>

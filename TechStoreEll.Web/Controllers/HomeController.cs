@@ -2,7 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TechStoreEll.Api.Entities;
-using TechStoreEll.Core.Infrastructure.Data;
+using TechStoreEll.Api.Infrastructure.Data;
 using TechStoreEll.Web.Models;
 
 namespace TechStoreEll.Web.Controllers;
@@ -71,73 +71,123 @@ public class HomeController(AppDbContext context) : Controller
         return View(vm);
     }
     
-    public async Task<IActionResult> Index(string? q = null, string sort = "date-desc", int take = 100, int skip = 10)
+    public async Task<IActionResult> Index(
+    string? q = null, 
+    string sort = "date-desc", 
+    int take = 100, 
+    int skip = 10,
+    int? categoryId = null,
+    int? minRam = null,
+    int? maxRam = null,
+    int? minStorage = null,
+    int? maxStorage = null)
+{
+    var query = context.ProductVariants
+        .Where(pv => pv.Product.Active);
+
+    // Поиск
+    if (!string.IsNullOrWhiteSpace(q))
     {
-        var query = context.ProductVariants
-            .Where(pv => pv.Product.Active);
-
-        
-        if (!string.IsNullOrWhiteSpace(q))
-        {
-            var cleanQuery = q.Trim();
-            query = query.Where(pv => 
-                pv.Product.SearchVector.Matches(EF.Functions.PlainToTsQuery("russian", cleanQuery))
-            );
-        }
-
-        var variants = await query
-            .Include(pv => pv.Product)
-            .ThenInclude(p => p.Category)
-            .Include(pv => pv.Product)
-            .ThenInclude(p => p.Reviews)
-            .Include(pv => pv.ProductImages.Where(pi => pi.IsPrimary))
-            .Take(take)
-            .ToListAsync();
-    
-        var viewModels = variants.Select(pv =>
-        {
-            var approvedReviews = pv.Product.Reviews.Where(r => r.IsModerated).ToList();
-            var reviewsCount = approvedReviews.Count;
-            var avgRating = reviewsCount > 0 ? (decimal?)approvedReviews.Average(r => r.Rating) : null;
-
-            return new ProductViewModel
-            {
-                Id = pv.Id,
-                Sku = pv.VariantCode,
-                Name = pv.Product.Name,
-                CategoryName = pv.Product.Category?.Name ?? "Без категории",
-                Price = pv.Price,
-                PrimaryImageUrl = pv.ProductImages
-                    .Where(pi => pi.IsPrimary)
-                    .OrderBy(pi => pi.SortOrder)
-                    .Select(pi => pi.ImageUrl)
-                    .FirstOrDefault() ?? "",
-                PrimaryImageAltText = pv.ProductImages
-                    .Where(pi => pi.IsPrimary)
-                    .OrderBy(pi => pi.SortOrder)
-                    .Select(pi => pi.AltText)
-                    .FirstOrDefault() ?? "",
-                AvgRating = avgRating,
-                ReviewsCount = reviewsCount,
-                CreatedAt = pv.Product.CreatedAt
-            };
-        }).ToList();
-
-        viewModels = sort switch
-        {
-            "price-asc" => viewModels.OrderBy(p => p.Price).ToList(),
-            "price-desc" => viewModels.OrderByDescending(p => p.Price).ToList(),
-            "rating-asc" => viewModels.OrderBy(p => p.AvgRating ?? 0).ToList(),
-            "rating-desc" => viewModels.OrderByDescending(p => p.AvgRating ?? 0).ToList(),
-            "date-asc" => viewModels.OrderBy(p => p.CreatedAt).ToList(),
-            "date-desc" => viewModels.OrderByDescending(p => p.CreatedAt).ToList(),
-            _ => viewModels.OrderByDescending(p => p.CreatedAt).ToList()
-        };
-
-        ViewData["CurrentSearch"] = q;
-        ViewData["CurrentSort"] = sort;
-        return View(viewModels);
+        var cleanQuery = q.Trim();
+        query = query.Where(pv => 
+            pv.Product.SearchVector.Matches(EF.Functions.PlainToTsQuery("russian", cleanQuery))
+        );
     }
+
+    // Фильтрация по категории
+    if (categoryId.HasValue && categoryId > 0)
+    {
+        query = query.Where(pv => pv.Product.CategoryId == categoryId);
+    }
+
+    // Фильтрация по оперативной памяти
+    if (minRam.HasValue)
+    {
+        query = query.Where(pv => pv.Ram >= minRam.Value);
+    }
+    if (maxRam.HasValue)
+    {
+        query = query.Where(pv => pv.Ram <= maxRam.Value);
+    }
+
+    // Фильтрация по постоянной памяти
+    if (minStorage.HasValue)
+    {
+        query = query.Where(pv => pv.StorageGb >= minStorage.Value);
+    }
+    if (maxStorage.HasValue)
+    {
+        query = query.Where(pv => pv.StorageGb <= maxStorage.Value);
+    }
+
+    var variants = await query
+        .Include(pv => pv.Product)
+        .ThenInclude(p => p.Category)
+        .Include(pv => pv.Product)
+        .ThenInclude(p => p.Reviews)
+        .Include(pv => pv.ProductImages.Where(pi => pi.IsPrimary))
+        .Take(take)
+        .ToListAsync();
+
+    var viewModels = variants.Select(pv =>
+    {
+        var approvedReviews = pv.Product.Reviews.Where(r => r.IsModerated).ToList();
+        var reviewsCount = approvedReviews.Count;
+        var avgRating = reviewsCount > 0 ? (decimal?)approvedReviews.Average(r => r.Rating) : null;
+
+        return new ProductViewModel
+        {
+            Id = pv.Id,
+            Sku = pv.VariantCode,
+            Name = pv.Product.Name,
+            CategoryName = pv.Product.Category?.Name ?? "Без категории",
+            CategoryId = pv.Product.CategoryId,
+            Price = pv.Price,
+            Ram = pv.Ram,
+            StorageSize = pv.StorageGb,
+            PrimaryImageUrl = pv.ProductImages
+                .Where(pi => pi.IsPrimary)
+                .OrderBy(pi => pi.SortOrder)
+                .Select(pi => pi.ImageUrl)
+                .FirstOrDefault() ?? "",
+            PrimaryImageAltText = pv.ProductImages
+                .Where(pi => pi.IsPrimary)
+                .OrderBy(pi => pi.SortOrder)
+                .Select(pi => pi.AltText)
+                .FirstOrDefault() ?? "",
+            AvgRating = avgRating,
+            ReviewsCount = reviewsCount,
+            CreatedAt = pv.Product.CreatedAt
+        };
+    }).ToList();
+
+    viewModels = sort switch
+    {
+        "price-asc" => viewModels.OrderBy(p => p.Price).ToList(),
+        "price-desc" => viewModels.OrderByDescending(p => p.Price).ToList(),
+        "rating-asc" => viewModels.OrderBy(p => p.AvgRating ?? 0).ToList(),
+        "rating-desc" => viewModels.OrderByDescending(p => p.AvgRating ?? 0).ToList(),
+        "date-asc" => viewModels.OrderBy(p => p.CreatedAt).ToList(),
+        "date-desc" => viewModels.OrderByDescending(p => p.CreatedAt).ToList(),
+        _ => viewModels.OrderByDescending(p => p.CreatedAt).ToList()
+    };
+
+    // Получаем категории для фильтра
+    var categories = await context.Categories
+        .OrderBy(c => c.Name)
+        .ToListAsync();
+
+    ViewData["CurrentSearch"] = q;
+    ViewData["CurrentSort"] = sort;
+    ViewData["Categories"] = categories;
+    ViewData["SelectedCategoryId"] = categoryId;
+    ViewData["MinRam"] = minRam;
+    ViewData["MaxRam"] = maxRam;
+    ViewData["MinStorage"] = minStorage;
+    ViewData["MaxStorage"] = maxStorage;
+
+    return View(viewModels);
+}
 
     public IActionResult Terms() => View();
     public IActionResult About() => View();

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using TechStoreEll.Api.Infrastructure.Data;
 using TechStoreEll.Api.Models;
-using TechStoreEll.Core.Infrastructure.Data;
 
 namespace TechStoreEll.Api.Services;
 

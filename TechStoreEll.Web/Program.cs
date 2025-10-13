@@ -2,8 +2,8 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
+using TechStoreEll.Api.Infrastructure.Data;
 using TechStoreEll.Api.Services;
-using TechStoreEll.Core.Infrastructure.Data;
 using TechStoreEll.Core.Services;
 
 var builder = WebApplication.CreateBuilder(args);

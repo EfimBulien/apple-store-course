@@ -3,9 +3,9 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TechStoreEll.Api.Attributes;
+using TechStoreEll.Api.Infrastructure.Data;
 using TechStoreEll.Api.Models;
 using TechStoreEll.Api.Services;
-using TechStoreEll.Core.Infrastructure.Data;
 using TechStoreEll.Core.Services;
 using TechStoreEll.Web.Models;
 
@@ -28,10 +28,12 @@ namespace TechStoreEll.Web.Controllers;
 //     }
 // }
 
-public class AdminController(
-    AuditLogService auditService,
-    AnalyticsService analyticsService, AppDbContext context) : Controller
+public class AdminController(AuditLogService auditService, AnalyticsService analyticsService, AppDbContext context) : Controller
 {
+    [AuthorizeRole("Admin")]
+    public IActionResult Export() => View("Export");
+    
+    
     [AuthorizeRole("Admin")]
     [HttpPost]
     public async Task<IActionResult> ApproveReview(int id)
