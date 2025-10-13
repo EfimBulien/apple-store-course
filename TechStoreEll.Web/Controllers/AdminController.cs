@@ -33,7 +33,6 @@ public class AdminController(AuditLogService auditService, AnalyticsService anal
     [AuthorizeRole("Admin")]
     public IActionResult Export() => View("Export");
     
-    
     [AuthorizeRole("Admin")]
     [HttpPost]
     public async Task<IActionResult> ApproveReview(int id)

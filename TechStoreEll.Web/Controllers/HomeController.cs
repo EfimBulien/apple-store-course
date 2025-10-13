@@ -22,13 +22,11 @@ public class HomeController(AppDbContext context) : Controller
 
         if (variant == null)
             return NotFound();
-
-        // только ОДОБРЕННЫЕ отзывы
+        
         var approvedReviews = variant.Product.Reviews
             .Where(r => r.IsModerated)
             .ToList();
-
-        // агрегаты ТОЛЬКО по одобренным отзывам
+        
         var reviewsCount = approvedReviews.Count;
         var avgRating = reviewsCount > 0 ? (decimal?)approvedReviews.Average(r => r.Rating) : null;
 
@@ -80,12 +78,14 @@ public class HomeController(AppDbContext context) : Controller
     int? minRam = null,
     int? maxRam = null,
     int? minStorage = null,
-    int? maxStorage = null)
+    int? maxStorage = null,
+    decimal? minPrice = null,
+    decimal? maxPrice = null,
+    bool? inStock = null)
 {
     var query = context.ProductVariants
         .Where(pv => pv.Product.Active);
-
-    // Поиск
+    
     if (!string.IsNullOrWhiteSpace(q))
     {
         var cleanQuery = q.Trim();
@@ -94,13 +94,11 @@ public class HomeController(AppDbContext context) : Controller
         );
     }
 
-    // Фильтрация по категории
     if (categoryId.HasValue && categoryId > 0)
     {
         query = query.Where(pv => pv.Product.CategoryId == categoryId);
     }
 
-    // Фильтрация по оперативной памяти
     if (minRam.HasValue)
     {
         query = query.Where(pv => pv.Ram >= minRam.Value);
@@ -110,7 +108,6 @@ public class HomeController(AppDbContext context) : Controller
         query = query.Where(pv => pv.Ram <= maxRam.Value);
     }
 
-    // Фильтрация по постоянной памяти
     if (minStorage.HasValue)
     {
         query = query.Where(pv => pv.StorageGb >= minStorage.Value);
@@ -120,12 +117,27 @@ public class HomeController(AppDbContext context) : Controller
         query = query.Where(pv => pv.StorageGb <= maxStorage.Value);
     }
 
+    if (minPrice.HasValue)
+    {
+        query = query.Where(pv => pv.Price >= minPrice.Value);
+    }
+    if (maxPrice.HasValue)
+    {
+        query = query.Where(pv => pv.Price <= maxPrice.Value);
+    }
+    
+    if (inStock.HasValue && inStock.Value)
+    {
+        query = query.Where(pv => pv.Inventories.Any(i => i.Quantity - i.Reserve > 0));
+    }
+
     var variants = await query
         .Include(pv => pv.Product)
         .ThenInclude(p => p.Category)
         .Include(pv => pv.Product)
         .ThenInclude(p => p.Reviews)
         .Include(pv => pv.ProductImages.Where(pi => pi.IsPrimary))
+        .Include(pv => pv.Inventories)
         .Take(take)
         .ToListAsync();
 
@@ -134,6 +146,9 @@ public class HomeController(AppDbContext context) : Controller
         var approvedReviews = pv.Product.Reviews.Where(r => r.IsModerated).ToList();
         var reviewsCount = approvedReviews.Count;
         var avgRating = reviewsCount > 0 ? (decimal?)approvedReviews.Average(r => r.Rating) : null;
+
+        var totalAvailable = pv.Inventories?.Sum(i => i.Quantity - i.Reserve) ?? 0;
+        var isInStock = totalAvailable > 0;
 
         return new ProductViewModel
         {
@@ -157,7 +172,9 @@ public class HomeController(AppDbContext context) : Controller
                 .FirstOrDefault() ?? "",
             AvgRating = avgRating,
             ReviewsCount = reviewsCount,
-            CreatedAt = pv.Product.CreatedAt
+            CreatedAt = pv.Product.CreatedAt,
+            IsInStock = isInStock,
+            StockQuantity = totalAvailable
         };
     }).ToList();
 
@@ -171,11 +188,18 @@ public class HomeController(AppDbContext context) : Controller
         "date-desc" => viewModels.OrderByDescending(p => p.CreatedAt).ToList(),
         _ => viewModels.OrderByDescending(p => p.CreatedAt).ToList()
     };
-
-    // Получаем категории для фильтра
+    
     var categories = await context.Categories
         .OrderBy(c => c.Name)
         .ToListAsync();
+
+    var priceRange = await context.ProductVariants
+        .Where(pv => pv.Product.Active)
+        .Select(pv => pv.Price)
+        .ToListAsync();
+
+    var minPriceOverall = priceRange.Count != 0 ? priceRange.Min() : 0;
+    var maxPriceOverall = priceRange.Count != 0 ? priceRange.Max() : 100000;
 
     ViewData["CurrentSearch"] = q;
     ViewData["CurrentSort"] = sort;
@@ -185,10 +209,15 @@ public class HomeController(AppDbContext context) : Controller
     ViewData["MaxRam"] = maxRam;
     ViewData["MinStorage"] = minStorage;
     ViewData["MaxStorage"] = maxStorage;
+    ViewData["MinPrice"] = minPrice;
+    ViewData["MaxPrice"] = maxPrice;
+    ViewData["MinPriceOverall"] = minPriceOverall;
+    ViewData["MaxPriceOverall"] = maxPriceOverall;
+    ViewData["InStock"] = inStock;
 
     return View(viewModels);
 }
-
+    
     public IActionResult Terms() => View();
     public IActionResult About() => View();
     public IActionResult Contact() => View();

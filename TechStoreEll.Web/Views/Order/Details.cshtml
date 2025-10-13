@@ -13,14 +13,28 @@
                 </a>
             </div>
 
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
             <div class="card shadow-sm border-0 rounded-4 mb-4">
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
                             <p class="mb-1"><strong>Статус:</strong>
-                                <span class="badge bg-@GetStatusColor(Model.Status) px-3 py-2">@GetStatusText(Model.Status)</span>
+                                <span class="badge bg-@GetStatusColor(Model.Status) px-3 py-2">
+                                    @GetStatusText(Model.Status)
+                                </span>
                             </p>
-                            <p class="mb-1"><strong>Оплата:</strong> @GetPaymentStatusText(Model.PaymentStatus)
+                            <p class="mb-1"><strong>Оплата:</strong>
+                                @if (Model.PaymentStatus != null)
+                                {
+                                    @GetPaymentStatusText(Model.PaymentStatus)
+                                }
                             </p>
                             <p class="mb-0"><strong>Создан:</strong> @Model.CreatedAt.ToString("g")</p>
                         </div>
@@ -64,7 +78,9 @@
                                     <td class="text-muted">@item.VariantInfo</td>
                                     <td>@item.Quantity</td>
                                     <td>@item.UnitPrice.ToString("C")</td>
-                                    <td class="fw-semibold text-success">@((item.UnitPrice * item.Quantity).ToString("C"))</td>
+                                    <td class="fw-semibold text-success">
+                                        @((item.UnitPrice * item.Quantity).ToString("C"))
+                                    </td>
                                 </tr>
                             }
                             </tbody>
@@ -72,74 +88,184 @@
                     </div>
                 </div>
             </div>
-            <!-- ОПЛАТА -->
-@if (Model.CanPay)
-{
-    <form asp-action="PayOrder" asp-route-id="@Model.Id" method="post" class="mt-4">
-        @Html.AntiForgeryToken()
-        <button type="submit" class="btn btn-success btn-lg w-100">
-            <i class="bi bi-credit-card me-2"></i>Оплатить заказ
-        </button>
-    </form>
-}
-
-<!-- ЗАВЕРШЕНИЕ -->
-@if (Model.CanComplete)
-{
-    <form asp-action="CompleteOrder" asp-route-id="@Model.Id" method="post" class="mt-4">
-        @Html.AntiForgeryToken()
-        <button type="submit" class="btn btn-primary btn-lg w-100"
-                onclick="return confirm('Подтвердить получение?')">
-            <i class="bi bi-check-circle me-2"></i>Подтвердить получение
-        </button>
-    </form>
-}
-
-<!-- ОТЗЫВЫ -->
-@if (Model.CanReview)
-{
-    <div class="mt-5">
-        <h4>Оставить отзыв</h4>
-        @if (TempData["Success"] != null)
-        {
-            <div class="alert alert-success">@TempData["Success"]</div>
-        }
-        @foreach (var item in Model.Reviews)
-        {
-            if (!item.AlreadyReviewed)
+            
+            @if (Model.CanPay)
             {
-                <div class="card mb-3">
+                <div class="card shadow-sm border-0 rounded-4 mt-4">
+                    <div class="card-header bg-body-tertiary fw-semibold">
+                        <i class="bi bi-credit-card me-2"></i>Выберите способ оплаты
+                    </div>
                     <div class="card-body">
-                        <h5>@item.ProductName</h5>
-                        <form asp-action="LeaveReview" method="post">
+                        <form asp-action="PayOrder" asp-route-id="@Model.Id" method="post" id="paymentForm">
                             @Html.AntiForgeryToken()
-                            <input type="hidden" name="orderId" value="@Model.Id" />
-                            <input type="hidden" name="productId" value="@item.ProductId" />
-                            <div class="mb-2">
-                                <label>Оценка</label>
-                                <select name="rating" class="form-select" required>
-                                    <option value="5">5 ★</option>
-                                    <option value="4">4 ★</option>
-                                    <option value="3">3 ★</option>
-                                    <option value="2">2 ★</option>
-                                    <option value="1">1 ★</option>
-                                </select>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check card border rounded-3 p-3 h-100">
+                                        <input class="form-check-input" type="radio" name="paymentMethod" 
+                                               id="card" value="card" checked>
+                                        <label class="form-check-label w-100" for="card">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <i class="bi bi-credit-card-2-front fs-2 text-primary"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-1">Банковская карта</h6>
+                                                    <small class="text-muted">Visa, Mastercard, Мир</small>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-check card border rounded-3 p-3 h-100">
+                                        <input class="form-check-input" type="radio" name="paymentMethod" 
+                                               id="sbp" value="sbp">
+                                        <label class="form-check-label w-100" for="sbp">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <i class="bi bi-phone fs-2 text-success"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-1">СБП</h6>
+                                                    <small class="text-muted">Быстрый платеж через банк</small>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-check card border rounded-3 p-3 h-100">
+                                        <input class="form-check-input" type="radio" name="paymentMethod" 
+                                               id="yoomoney" value="yoomoney">
+                                        <label class="form-check-label w-100" for="yoomoney">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <i class="bi bi-wallet fs-2 text-warning"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-1">ЮMoney</h6>
+                                                    <small class="text-muted">Электронный кошелек</small>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-check card border rounded-3 p-3 h-100">
+                                        <input class="form-check-input" type="radio" name="paymentMethod" 
+                                               id="qiwi" value="qiwi">
+                                        <label class="form-check-label w-100" for="qiwi">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <i class="bi bi-phone-vibrate fs-2 text-danger"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-1">QIWI Кошелек</h6>
+                                                    <small class="text-muted">Онлайн-платежи</small>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="mb-2">
-                                <label>Комментарий</label>
-                                <textarea name="comment" class="form-control" rows="2" required></textarea>
+                            
+                            <div class="alert alert-info mt-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    <div>
+                                        <strong>Демо-режим</strong><br>
+                                        <small>Это тестовая среда. Платежи не списывают реальные деньги.</small>
+                                    </div>
+                                </div>
                             </div>
-                            <button type="submit" class="btn btn-warning btn-sm">Отправить</button>
+
+                            <button type="submit" class="btn btn-success btn-lg w-100 mt-3">
+                                <i class="bi bi-lock-fill me-2"></i>Оплатить @Model.TotalAmount.ToString("C")
+                            </button>
                         </form>
                     </div>
                 </div>
             }
-        }
-    </div>
-}
+            
+            @if (Model.CanComplete)
+            {
+                <form asp-action="CompleteOrder" asp-route-id="@Model.Id" method="post" class="mt-4">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-primary btn-lg w-100"
+                            onclick="return confirm('Подтвердить получение заказа?')">
+                        <i class="bi bi-check-circle me-2"></i>Подтвердить получение
+                    </button>
+                </form>
+            }
+            
+            @if (Model.CanReview)
+            {
+                <div class="card shadow-sm border-0 rounded-4 mt-4">
+                    <div class="card-header bg-body-tertiary fw-semibold">
+                        <i class="bi bi-chat-dots me-2"></i>Оставить отзыв о товарах
+                    </div>
+                    <div class="card-body">
+                        @foreach (var item in Model.Reviews)
+                        {
+                            if (!item.AlreadyReviewed)
+                            {
+                                <div class="border rounded-3 p-4 mb-3">
+                                    <div class="d-flex align-items-start">
+                                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                        {
+                                            <img src="@item.ImageUrl" alt="@item.ProductName" 
+                                                 class="rounded-3 me-3" 
+                                                 style="width: 60px; height: 60px; object-fit: cover;">
+                                        }
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">@item.ProductName</h6>
+                                            <small class="text-muted">@item.VariantInfo</small>
+                                            
+                                            <form asp-action="LeaveReview" method="post" class="mt-3">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="orderId" value="@Model.Id" />
+                                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                                
+                                                <div class="row g-3">
+                                                    <div class="col-md-3">
+                                                        <label class="form-label">Оценка</label>
+                                                        <select name="rating" class="form-select" required>
+                                                            <option value="">Выберите оценку</option>
+                                                            <option value="5">Отлично (5 ★)</option>
+                                                            <option value="4">Хорошо (4 ★)</option>
+                                                            <option value="3">Нормально (3 ★)</option>
+                                                            <option value="2">Плохо (2 ★)</option>
+                                                            <option value="1">Ужасно (1 ★)</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Комментарий</label>
+                                                        <textarea name="comment" class="form-control" 
+                                                                  rows="1" placeholder="Расскажите о товаре..." 
+                                                                  required></textarea>
+                                                    </div>
+                                                    <div class="col-md-3 d-flex align-items-end">
+                                                        <button type="submit" class="btn btn-warning w-100">
+                                                            <i class="bi bi-send me-1"></i>Отправить
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
                 
-            <div class="text-end mt-4">
-                <a href="/" class="btn btn-primary">
+            <div class="text-center mt-4">
+                <a href="/" class="btn btn-outline-primary">
                     <i class="bi bi-house-door me-1"></i> На главную
                 </a>
             </div>
@@ -147,8 +273,62 @@
     </div>
 </div>
 
-@functions {
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const paymentCards = document.querySelectorAll('.form-check.card');
+            
+            paymentCards.forEach(card => {
+                const radio = card.querySelector('input[type="radio"]');
+                const label = card.querySelector('.form-check-label');
+                
+                card.addEventListener('click', function(e) {
+                    if (e.target !== radio) {
+                        radio.checked = true;
+                    }
+                    
+                    paymentCards.forEach(c => c.classList.remove('border-primary', 'bg-light'));
+                    
+                    if (radio.checked) {
+                        card.classList.add('border-primary', 'bg-light');
+                    }
+                });
+                
+                if (radio.checked) {
+                    card.classList.add('border-primary', 'bg-light');
+                }
+            });
 
+            document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
+                const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked');
+                const methodName = selectedMethod?.parentElement?.querySelector('h6')?.textContent || 'выбранный способ';
+                
+                if (!confirm(`Оплатить заказ на сумму @Model.TotalAmount.ToString("C") через ${methodName}?`)) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+
+    <style>
+        .form-check.card {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .form-check.card:hover {
+            border-color: #0d6efd;
+            transform: translateY(-2px);
+        }
+
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+    </style>
+}
+
+@functions {
     static string GetStatusColor(string status) => status switch
     {
         "completed" => "success",

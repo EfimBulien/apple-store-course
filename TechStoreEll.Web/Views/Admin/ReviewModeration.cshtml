@@ -1,65 +1,181 @@
 @model TechStoreEll.Web.Models.ReviewModerationViewModel
 
-<h2>Модерация отзывов</h2>
-
-@if (Model.Reviews.Any())
-{
-    <div class="alert alert-info">
-        Непроверенных отзывов: <strong>@Model.TotalUnmoderated</strong>
-    </div>
-
-    <div class="list-group">
-        @foreach (var review in Model.Reviews)
-        {
-            <div class="list-group-item">
-                <div class="d-flex justify-content-between">
-                    <h5>
-                        @review.Product.Name
-                        <small class="text-muted">— @review.Rating ⭐</small>
-                    </h5>
-                    <span class="text-muted">@review.CreatedAt.ToString("g")</span>
-                </div>
-                <p class="mb-1">
-                    <strong>От: </strong>
-                    @(review.User != null 
-                        ? $"{review.User.FirstName} {review.User.LastName}" 
-                        : "Аноним")
-                </p>
-                <p class="text-body-secondary">@review.Comment</p>
-
-                <div class="mt-2">
-                    <form asp-action="ApproveReview" asp-route-id="@review.Id" method="post" style="display:inline;">
-                        <button type="submit" class="btn btn-sm btn-success">
-                            ✅ Одобрить
-                        </button>
-                    </form>
-                    <form asp-action="RejectReview" asp-route-id="@review.Id" method="post" style="display:inline;">
-                        <button type="submit" class="btn btn-sm btn-danger">
-                            ❌ Отклонить
-                        </button>
-                    </form>
-                </div>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0 fw-bold">
+                    <i class="bi bi-chat-dots me-2"></i>Модерация отзывов
+                </h2>
             </div>
-        }
-    </div>
-    
-    @if (Model.TotalPages > 1)
-    {
-        <nav class="mt-3">
-            <ul class="pagination justify-content-center">
-                @for (var i = 1; i <= Model.TotalPages; i++)
+
+            @if (Model.Reviews.Any())
+            {
+                <div class="alert alert-info rounded-3">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                        <div>
+                            <strong>Непроверенных отзывов: @Model.TotalUnmoderated</strong>
+                            <div class="small">Страница @Model.Page из @Model.TotalPages</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 rounded-4 mb-4">
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            @foreach (var review in Model.Reviews)
+                            {
+                                <div class="list-group-item border-0 p-4">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div class="flex-grow-1">
+                                            <h5 class="fw-bold mb-1">
+                                                <i class="bi bi-box text-muted me-2"></i>@review.Product.Name
+                                            </h5>
+                                            <div class="text-warning mb-2">
+                                                @for (var i = 1; i <= 5; i++)
+                                                {
+                                                    <i class="bi @(i <= review.Rating ? "bi-star-fill" : "bi-star")"></i>
+                                                }
+                                                <span class="text-muted ms-2">(@review.Rating / 5)</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <small class="text-muted d-block">
+                                                <i class="bi bi-calendar me-1"></i>@review.CreatedAt.ToString("g")
+                                            </small>
+                                            <span class="badge bg-secondary">
+                                                <i class="bi bi-clock me-1"></i>Ожидает модерации
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-person-circle text-muted me-2"></i>
+                                            <div>
+                                                <strong>Автор:</strong>
+                                                @if (review.User != null)
+                                                {
+                                                    <span>@review.User.FirstName @review.User.LastName</span>
+                                                    <small class="text-muted ms-2">(@review.User.Email)</small>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Анонимный пользователь</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-body-tertiary rounded-3 p-3 mb-3">
+                                        <div class="fw-semibold mb-2">
+                                            <i class="bi bi-chat-quote text-muted me-2"></i>Текст отзыва:
+                                        </div>
+                                        <p class="mb-0 text-body">@review.Comment</p>
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        <form asp-action="ApproveReview" asp-route-id="@review.Id" method="post" class="flex-fill">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-success w-100 rounded-3 py-2">
+                                                <i class="bi bi-check-lg me-2"></i>Одобрить отзыв
+                                            </button>
+                                        </form>
+                                        <form asp-action="RejectReview" asp-route-id="@review.Id" method="post" class="flex-fill">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-danger w-100 rounded-3 py-2"
+                                                    onclick="return confirm('Вы уверены, что хотите отклонить этот отзыв?')">
+                                                <i class="bi bi-x-lg me-2"></i>Отклонить
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                
+                                @if (review != Model.Reviews.Last())
+                                {
+                                    <hr class="my-0">
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.TotalPages > 1)
                 {
-                    <li class="page-item @(i == Model.Page ? "active" : "")">
-                        <a class="page-link" asp-action="ReviewModeration" asp-route-page="@i">@i</a>
-                    </li>
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            @if (Model.Page > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link rounded-3 me-1" asp-action="ReviewModeration" 
+                                       asp-route-page="@(Model.Page - 1)">
+                                        <i class="bi bi-chevron-left"></i> Назад
+                                    </a>
+                                </li>
+                            }
+                            
+                            @for (var i = 1; i <= Model.TotalPages; i++)
+                            {
+                                <li class="page-item @(i == Model.Page ? "active" : "")">
+                                    <a class="page-link rounded-3 mx-1" asp-action="ReviewModeration"
+                                       asp-route-page="@i">@i</a>
+                                </li>
+                            }
+                            
+                            @if (Model.Page < Model.TotalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link rounded-3 ms-1" asp-action="ReviewModeration" 
+                                       asp-route-page="@(Model.Page + 1)">
+                                        Вперед <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
                 }
-            </ul>
-        </nav>
-    }
-}
-else
-{
-    <div class="alert alert-success">
-        Нет отзывов, требующих модерации. ✨
+            }
+            else
+            {
+                <div class="card shadow-sm border-0 rounded-4">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-check-circle display-1 text-success mb-3"></i>
+                        <h4 class="fw-bold text-success mb-3">Все отзывы проверены!</h4>
+                        <p class="text-muted mb-4">Нет отзывов, требующих модерации.</p>
+                        <a href="/" class="btn btn-primary rounded-3">
+                            <i class="bi bi-house me-2"></i>На главную
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
     </div>
-}
+</div>
+@* *@
+@* <style> *@
+@*     .list-group-item { *@
+@*         transition: all 0.2s ease-in-out; *@
+@*     } *@
+@*      *@
+@*     .list-group-item:hover { *@
+@*         background-color: #f8f9fa; *@
+@*     } *@
+@*      *@
+@*     .page-item.active .page-link { *@
+@*         background-color: #0d6efd; *@
+@*         border-color: #0d6efd; *@
+@*     } *@
+@*      *@
+@*     .card { *@
+@*         transition: all 0.2s ease-in-out; *@
+@*     } *@
+@*      *@
+@*     .card:hover { *@
+@*         box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15) !important; *@
+@*     } *@
+@*      *@
+@*     .bg-body-tertiary { *@
+@*         background-color: #f8f9fa !important; *@
+@*     } *@
+@* </style> *@

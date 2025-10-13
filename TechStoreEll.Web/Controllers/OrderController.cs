@@ -137,10 +137,10 @@ public class OrderController(AppDbContext context) : Controller
     
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> PayOrder(int id)
+    public async Task<IActionResult> PayOrder(int id, string paymentMethod)
     {
         var userId = GetCurrentUserId();
-        
+    
         var order = await context.Orders
             .Include(o => o.Payments)
             .FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
@@ -150,12 +150,16 @@ public class OrderController(AppDbContext context) : Controller
             return NotFound();
         }
 
+        // Здесь будет интеграция с реальными платежными системами
+        // Сейчас просто имитируем успешную оплату
+    
         var payment = order.Payments.FirstOrDefault();
         if (payment != null)
         {
             payment.Status = "success";
             payment.PaidAt = DateTime.UtcNow;
             payment.TransactionRef = "placeholder";
+            payment.Provider = paymentMethod;
             context.Payments.Update(payment);
         }
 
@@ -164,8 +168,19 @@ public class OrderController(AppDbContext context) : Controller
         context.Orders.Update(order);
         await context.SaveChangesAsync();
 
+        TempData["Success"] = $"Оплата через {GetPaymentMethodName(paymentMethod)} прошла успешно!";
         return RedirectToAction(nameof(Details), new { id });
     }
+
+    private static string GetPaymentMethodName(string method) => method switch
+    {
+        "card" => "банковскую карту",
+        "sbp" => "СБП",
+        "yoomoney" => "ЮMoney",
+        "qiwi" => "QIWI",
+        "webmoney" => "WebMoney",
+        _ => "выбранный способ"
+    };
 
     [HttpPost]
     [ValidateAntiForgeryToken]

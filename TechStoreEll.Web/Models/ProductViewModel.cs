@@ -16,4 +16,6 @@ public class ProductViewModel
     public int? CategoryId { get; set; }
     public int? StorageSize { get; set; }
     public int? Ram { get; set; }
+    public bool IsInStock { get; set; }
+    public int StockQuantity { get; set; }
 }

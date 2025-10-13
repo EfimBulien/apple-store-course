@@ -9,6 +9,11 @@
     var maxRam = ViewData["MaxRam"] as int?;
     var minStorage = ViewData["MinStorage"] as int?;
     var maxStorage = ViewData["MaxStorage"] as int?;
+    var minPrice = ViewData["MinPrice"] as decimal?;
+    var maxPrice = ViewData["MaxPrice"] as decimal?;
+    var minPriceOverall = ViewData["MinPriceOverall"] as decimal? ?? 0;
+    var maxPriceOverall = ViewData["MaxPriceOverall"] as decimal? ?? 100000;
+    var inStock = ViewData["InStock"] as bool?;
 }
 
 <section class="py-5 text-center bg-body-tertiary">
@@ -38,6 +43,7 @@
                     <form method="get" id="filterForm">
                         <input type="hidden" name="q" value="@ViewData["CurrentSearch"]" />
                         <input type="hidden" name="sort" value="@currentSort" />
+
                         <div class="mb-4">
                             <h6 class="fw-semibold mb-3">Категория</h6>
                             <select name="categoryId" class="form-select" onchange="this.form.submit()">
@@ -54,7 +60,23 @@
                             </select>
                         </div>
 
-                        <!-- Фильтр по оперативной памяти -->
+                        <div class="mb-4">
+                            <h6 class="fw-semibold mb-3">Цена, ₽</h6>
+                            <div class="row g-2">
+                                <div class="col">
+                                    <input type="number" name="minPrice" class="form-control" 
+                                           placeholder="Мин" value="@minPrice" 
+                                           min="0" step="100" />
+                                </div>
+                                <div class="col">
+                                    <input type="number" name="maxPrice" class="form-control" 
+                                           placeholder="Макс" value="@maxPrice" 
+                                           min="0" step="100" />
+                                </div>
+                            </div>
+                            <small class="text-muted">Диапазон: @minPriceOverall.ToString("N0") - @maxPriceOverall.ToString("N0") ₽</small>
+                        </div>
+
                         <div class="mb-4">
                             <h6 class="fw-semibold mb-3">Оперативная память (ГБ)</h6>
                             <div class="row g-2">
@@ -69,7 +91,6 @@
                             </div>
                         </div>
 
-                        <!-- Фильтр по постоянной памяти -->
                         <div class="mb-4">
                             <h6 class="fw-semibold mb-3">Постоянная память (ГБ)</h6>
                             <div class="row g-2">
@@ -84,7 +105,17 @@
                             </div>
                         </div>
 
-                        <!-- Кнопки фильтрации -->
+                        <div class="mb-4">
+                            <h6 class="fw-semibold mb-3">Наличие</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="inStock" value="true" 
+                                       id="inStockFilter" @(inStock == true ? "checked" : "") onchange="this.form.submit()" />
+                                <label class="form-check-label" for="inStockFilter">
+                                    Только в наличии
+                                </label>
+                            </div>
+                        </div>
+
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">Применить фильтры</button>
                             <a href="@Url.Action("Index")" class="btn btn-outline-secondary">Сбросить все</a>
@@ -94,7 +125,6 @@
             </div>
         </div>
 
-        <!-- Основной контент -->
         <div class="col-lg-9">
             <form method="get" class="mb-4">
                 <div class="input-group shadow-sm rounded">
@@ -103,19 +133,29 @@
                            value="@ViewData["CurrentSearch"]" 
                            class="form-control border-0" 
                            placeholder="Поиск товаров..." />
-                    <button class="btn btn-outline-secondary" type="submit">🔍</button>
+                    <button class="btn btn-outline-secondary" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
                 </div>
-                <!-- Передаем параметры фильтров в форму поиска -->
                 <input type="hidden" name="categoryId" value="@selectedCategoryId" />
                 <input type="hidden" name="minRam" value="@minRam" />
                 <input type="hidden" name="maxRam" value="@maxRam" />
                 <input type="hidden" name="minStorage" value="@minStorage" />
                 <input type="hidden" name="maxStorage" value="@maxStorage" />
+                <input type="hidden" name="minPrice" value="@minPrice" />
+                <input type="hidden" name="maxPrice" value="@maxPrice" />
+                
+                @if (inStock == true)
+                {
+                    <input type="hidden" name="inStock" value="true" />
+                }
                 
                 @if (!string.IsNullOrEmpty(ViewData["CurrentSearch"]?.ToString()) || 
                      selectedCategoryId.HasValue || 
                      minRam.HasValue || maxRam.HasValue || 
-                     minStorage.HasValue || maxStorage.HasValue)
+                     minStorage.HasValue || maxStorage.HasValue ||
+                     minPrice.HasValue || maxPrice.HasValue ||
+                     inStock == true)
                 {
                     <div class="mt-2">
                         <a href="@Url.Action("Index")" class="btn btn-sm btn-link">Сбросить все фильтры</a>
@@ -157,6 +197,9 @@
                         <option value="rating-desc" selected="@(currentSort == "rating-desc")">
                             По убыванию рейтинга
                         </option>
+                        <option value="stock-desc" selected="@(currentSort == "stock-desc")">
+                            Сначала в наличии
+                        </option>
                     </select>
                 </div>
             </div>
@@ -166,6 +209,19 @@
                 {
                     <div class="col">
                         <div class="card h-100 shadow-sm border-0 rounded-4 position-relative product-card">
+                            @if (!product.IsInStock)
+                            {
+                                <div class="position-absolute top-0 start-0 m-2">
+                                    <span class="badge bg-danger">Нет в наличии</span>
+                                </div>
+                            }
+                            else if (product.StockQuantity < 5)
+                            {
+                                <div class="position-absolute top-0 start-0 m-2">
+                                    <span class="badge bg-warning text-dark">Мало</span>
+                                </div>
+                            }
+
                             @if (!string.IsNullOrEmpty(product.PrimaryImageUrl))
                             {
                                 <img src="@product.PrimaryImageUrl" class="card-img-top bg-white p-3" 
@@ -195,8 +251,28 @@
 
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span class="badge bg-primary">@product.CategoryName</span>
-                                    <span class="fw-bold">@(product.Price.HasValue ? $"{product.Price:C}" : "Н/Д")</span>
+                                    <span class="fw-bold">@(product.Price.HasValue ? $"{product.Price:N0} ₽" : "Н/Д")</span>
                                 </div>
+
+                                <div class="mb-2">
+                                    @if (product.IsInStock)
+                                    {
+                                        <small class="text-success">
+                                            <i class="bi bi-check-circle"></i> В наличии
+                                            @if (product.StockQuantity > 0)
+                                            {
+                                                <span class="text-muted">(@product.StockQuantity шт.)</span>
+                                            }
+                                        </small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-danger">
+                                            <i class="bi bi-x-circle"></i> Нет в наличии
+                                        </small>
+                                    }
+                                </div>
+
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <small class="text-body-secondary">Артикул: @product.Sku</small>
                                     <div class="text-warning">
@@ -219,8 +295,8 @@
                                     </div>
                                 </div>
                                 <a asp-controller="Home" asp-action="Product" asp-route-id="@product.Id"
-                                   class="btn btn-primary mt-auto w-100 shadow-sm">
-                                    Заказать
+                                   class="btn @(product.IsInStock ? "btn-primary" : "btn-outline-secondary") mt-auto w-100 shadow-sm @(!product.IsInStock ? "disabled" : "")">
+                                    @(product.IsInStock ? "Заказать" : "Нет в наличии")
                                 </a>
                             </div>
                         </div>
