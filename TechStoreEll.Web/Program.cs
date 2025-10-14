@@ -62,6 +62,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<AuditLogService>();
 builder.Services.AddScoped<AnalyticsService>();
+builder.Services.AddScoped<IMinioService, MinioService>();
 
 var app = builder.Build();
 

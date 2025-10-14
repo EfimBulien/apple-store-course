@@ -1,0 +1,239 @@
+@model TechStoreEll.Web.Models.ProductCreateViewModel
+
+@{
+ViewData["Title"] = "Добавление товара";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0 fw-bold">
+                    <i class="bi bi-plus-circle me-2"></i>Добавление товара
+                </h2>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Назад
+                </a>
+            </div>
+
+            @if (TempData["Success"] != null)
+            {
+            <div class="alert alert-success alert-dismissible fade show rounded-3">
+                <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            }
+
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <form asp-action="Create" method="post" enctype="multipart/form-data" id="productForm" novalidate>
+                        @Html.AntiForgeryToken()
+
+                        <div class="row g-4 mb-5">
+                            <div class="col-12">
+                                <h4 class="fw-bold text-primary mb-3">
+                                    <i class="bi bi-info-circle me-2"></i>Основная информация
+                                </h4>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Sku" class="form-label fw-semibold">
+                                    <i class="bi bi-upc-scan text-muted me-1"></i>SKU товара *
+                                </label>
+                                <input asp-for="Sku" class="form-control rounded-3" placeholder="Например: IP16, MBP16" />
+                                <span asp-validation-for="Sku" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="CategoryId" class="form-label fw-semibold">
+                                    <i class="bi bi-tags text-muted me-1"></i>Категория
+                                </label>
+                                <select asp-for="CategoryId" class="form-select rounded-3">
+                                    <option value="">-- Выберите категорию --</option>
+                                    @foreach (var category in Model.Categories)
+                                    {
+                                    <option value="@category.Id" selected="@(Model.CategoryId == category.Id ? "selected" : null)">@category.Name</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Name" class="form-label fw-semibold">
+                                    <i class="bi bi-card-text text-muted me-1"></i>Название товара *
+                                </label>
+                                <input asp-for="Name" class="form-control rounded-3" placeholder="Например: iPhone 16, MacBook Pro 16 M3 Pro" />
+                                <span asp-validation-for="Name" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Description" class="form-label fw-semibold">
+                                    <i class="bi bi-text-paragraph text-muted me-1"></i>Описание
+                                </label>
+                                <textarea asp-for="Description" class="form-control rounded-3" rows="4" placeholder="Подробное описание товара..."></textarea>
+                                <span asp-validation-for="Description" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input asp-for="Active" class="form-check-input" type="checkbox" />
+                                    <label asp-for="Active" class="form-check-label fw-semibold">
+                                        Товар активен и отображается в каталоге
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Варианты -->
+                        <div class="row g-4">
+                            <div class="col-12 d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="fw-bold text-primary mb-0">
+                                    <i class="bi bi-list-nested me-2"></i>Варианты товара
+                                </h4>
+                                <div>
+                                    <button type="button" id="addVariantBtn" class="btn btn-outline-primary btn-sm rounded-3">
+                                        <i class="bi bi-plus-circle me-1"></i>Добавить вариант
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="variants-container">
+                                @* Существующие варианты (при возврате View с ошибками) *@
+                                @for (var i = 0; i < Model.Variants.Count; i++)
+                                {
+                                @await Html.PartialAsync("_VariantEditor", Model.Variants[i], new ViewDataDictionary(ViewData) { { "Index", i } })
+                                }
+
+                                @* Если нет вариантов, рендерим один пустой по-умолчанию *@
+                                @if (Model.Variants.Count == 0)
+                                {
+                                @await Html.PartialAsync("_VariantEditor", new TechStoreEll.Web.Models.ProductVariantCreateModel(), new ViewDataDictionary(ViewData) { { "Index", 0 } })
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Кнопки -->
+                        <div class="row mt-5">
+                            <div class="col-12">
+                                <div class="d-flex gap-3 justify-content-end">
+                                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary rounded-3 px-4">
+                                        <i class="bi bi-x-circle me-2"></i>Отмена
+                                    </a>
+                                    <button type="submit" class="btn btn-primary rounded-3 px-4">
+                                        <i class="bi bi-check-lg me-2"></i>Создать товар
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @* Клиентский шаблон для добавления нового варианта (с placeholder __index__) *@
+            <template id="variant-template">
+                @Html.Raw(await Html.PartialAsync("_VariantEditor", new TechStoreEll.Web.Models.ProductVariantCreateModel(), new ViewDataDictionary(ViewData) { { "Index", "__index__" } }))
+            </template>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+
+<script>
+    (function () {
+        const container = document.getElementById('variants-container');
+        const addBtn = document.getElementById('addVariantBtn');
+
+        function updateIndices() {
+            // Обойти все variant blocks и переписать индексы в name/id/for
+            const blocks = container.querySelectorAll('.variant-block');
+            blocks.forEach((block, i) => {
+                block.querySelectorAll('[data-field-name]').forEach(el => {
+                    const field = el.getAttribute('data-field-name'); // e.g. VariantCode, Price, Images
+                    const newName = `Variants[${i}].${field}`;
+                    el.name = newName;
+
+                    // id и label(for)
+                    const newId = `Variants_${i}__${field}`;
+                    el.id = newId;
+
+                    // если есть связанный label
+                    const label = block.querySelector(`[data-label-for="${field}"]`);
+                    if (label) label.setAttribute('for', newId);
+
+                    // если file input — очистим значение (безопасно при клонировании)
+                    if (el.type === 'file') {
+                        el.value = null;
+                    }
+                });
+            });
+        }
+
+        function addVariantFromTemplate() {
+            const tpl = document.getElementById('variant-template').content.cloneNode(true);
+            // when partial was rendered with placeholder "__index__", we need to replace occurrences
+            const html = tpl.firstElementChild ? tpl.firstElementChild.outerHTML : tpl.innerHTML;
+            // create temporary container to replace placeholders and because Partial returns full markup that includes root .variant-block
+            const temp = document.createElement('div');
+            // We rely on server partial containing "__index__" where needed; if not, updateIndices will fix names
+            temp.innerHTML = html.replace(/__index__/g, '0'); // will be fixed by updateIndices
+            const node = temp.firstElementChild;
+            container.appendChild(node);
+            updateIndices();
+        }
+
+        addBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            addVariantFromTemplate();
+        });
+
+        // Делегирование удаления
+        container.addEventListener('click', function (e) {
+            const del = e.target.closest('.remove-variant');
+            if (!del) return;
+            e.preventDefault();
+            const blocks = container.querySelectorAll('.variant-block');
+            if (blocks.length <= 1) {
+                alert('Должен остаться хотя бы один вариант товара');
+                return;
+            }
+            const toRemove = del.closest('.variant-block');
+            toRemove.remove();
+            updateIndices();
+        });
+
+        // Превью изображений (делегирование)
+        container.addEventListener('change', function (e) {
+            const input = e.target;
+            if (input && input.type === 'file') {
+                const preview = input.closest('.image-upload')?.querySelector('.image-preview');
+                if (!preview) return;
+                preview.innerHTML = '';
+                Array.from(input.files).forEach(file => {
+                    if (!file.type.startsWith('image/')) return;
+                    const reader = new FileReader();
+                    reader.onload = function (ev) {
+                        const img = document.createElement('img');
+                        img.src = ev.target.result;
+                        img.className = 'img-thumbnail me-2 mb-2';
+                        img.style.maxHeight = '100px';
+                        preview.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+
+        // при загрузке страницы приведём индексы в порядок
+        updateIndices();
+    })();
+</script>
+
+<style>
+    .variant-block { margin-bottom: 1.25rem; padding: 1rem; border-radius: .5rem; border-left: 4px solid #0d6efd; background: #f8f9fa; }
+    .variant-block:hover { transform: translateY(-1px); transition: .12s; }
+    .image-preview img { transition: transform .15s ease-in-out; }
+    .image-preview img:hover { transform: scale(1.05); }
+</style>
+}

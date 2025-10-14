@@ -681,7 +681,6 @@ VALUES
     FALSE
 )
 ON CONFLICT DO NOTHING;
---
 
 -- НАПОЛНЯЕМ СКЛАД
 CALL sp_restock(1, '[{"variant_id":1,"warehouse_name":"Москва","qty":25}, {"variant_id":2,"warehouse_name":"Москва","qty":15}, {"variant_id":3,"warehouse_name":"Санкт-Петербург","qty":8}]'::jsonb);
