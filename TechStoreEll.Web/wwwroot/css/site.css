@@ -28,3 +28,67 @@ body {
 [data-bs-theme="light"] {
     /* Кастомные стили для светлой темы */
 }
+
+/* Стили для горячих клавиш */
+.hotkeys-hint kbd {
+    background-color: #6c757d;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    font-family: monospace;
+}
+
+.hotkeys-hint .small div {
+    margin: 3px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hotkeys-hint .small kbd {
+    min-width: 60px;
+    text-align: center;
+}
+
+/* Анимация для кнопки горячих клавиш */
+.navbar .btn-link.nav-link:hover {
+    color: var(--bs-primary) !important;
+    transform: scale(1.1);
+    transition: all 0.2s ease-in-out;
+}
+
+/* Стили для уведомлений */
+.hotkeys-hint,
+.theme-notification {
+    animation: slideInRight 0.3s ease-out;
+    transition: all 0.3s ease-in-out;
+}
+
+.hotkeys-hint .alert-dismissible .btn-close,
+.theme-notification .alert-dismissible .btn-close {
+    padding: 0.75rem;
+}
+
+/* Анимация появления */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Анимация исчезновения */
+.hotkeys-hint.fade,
+.theme-notification.fade {
+    transition: all 0.3s ease-in-out;
+}
+
+.hotkeys-hint.fade.show,
+.theme-notification.fade.show {
+    opacity: 1;
+}

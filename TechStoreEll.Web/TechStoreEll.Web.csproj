@@ -26,4 +26,8 @@
       <ProjectReference Include="..\TechStoreEll.Api\TechStoreEll.Api.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Services\" />
+    </ItemGroup>
+
 </Project>
