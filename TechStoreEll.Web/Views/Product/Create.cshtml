@@ -2,7 +2,7 @@
 @model TechStoreEll.Core.Models.ProductCreateViewModel
 
 @{
-ViewData["Title"] = "Добавление товара";
+    ViewData["Title"] = "Добавление товара";
 }
 
 <div class="container py-5">
@@ -19,10 +19,10 @@ ViewData["Title"] = "Добавление товара";
 
             @if (TempData["Success"] != null)
             {
-            <div class="alert alert-success alert-dismissible fade show rounded-3">
-                <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
+                <div class="alert alert-success alert-dismissible fade show rounded-3">
+                    <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
             }
 
             <div class="card shadow-sm border-0 rounded-4">
@@ -39,7 +39,7 @@ ViewData["Title"] = "Добавление товара";
 
                             <div class="col-md-6">
                                 <label asp-for="Sku" class="form-label fw-semibold">
-                                    <i class="bi bi-upc-scan text-muted me-1"></i>SKU товара *
+                                    <i class="bi bi-upc-scan text-muted me-1"></i>SKU товара
                                 </label>
                                 <input asp-for="Sku" class="form-control rounded-3" placeholder="Например: IP16, MBP16" />
                                 <span asp-validation-for="Sku" class="text-danger small"></span>
@@ -53,7 +53,7 @@ ViewData["Title"] = "Добавление товара";
                                     <option value="">-- Выберите категорию --</option>
                                     @foreach (var category in Model.Categories)
                                     {
-                                    <option value="@category.Id" selected="@(Model.CategoryId == category.Id ? "selected" : null)">@category.Name</option>
+                                        <option value="@category.Id" selected="@(Model.CategoryId == category.Id ? "selected" : null)">@category.Name</option>
                                     }
                                 </select>
                                 <span asp-validation-for="CategoryId" class="text-danger small"></span>
@@ -61,7 +61,7 @@ ViewData["Title"] = "Добавление товара";
 
                             <div class="col-12">
                                 <label asp-for="Name" class="form-label fw-semibold">
-                                    <i class="bi bi-card-text text-muted me-1"></i>Название товара *
+                                    <i class="bi bi-card-text text-muted me-1"></i>Название товара 
                                 </label>
                                 <input asp-for="Name" class="form-control rounded-3" placeholder="Например: iPhone 16, MacBook Pro 16 M3 Pro" />
                                 <span asp-validation-for="Name" class="text-danger small"></span>
@@ -99,16 +99,14 @@ ViewData["Title"] = "Добавление товара";
                             </div>
 
                             <div id="variants-container">
-                                @* Существующие варианты (при возврате View с ошибками) *@
                                 @for (var i = 0; i < Model.Variants.Count; i++)
                                 {
-                                @await Html.PartialAsync("_VariantEditor", Model.Variants[i], new ViewDataDictionary(ViewData) { { "Index", i } })
+                                    @await Html.PartialAsync("_VariantEditor", Model.Variants[i], new ViewDataDictionary(ViewData) { { "Index", i } })
                                 }
 
-                                @* Если нет вариантов, рендерим один пустой по-умолчанию *@
                                 @if (Model.Variants.Count == 0)
                                 {
-                                @await Html.PartialAsync("_VariantEditor", new ProductVariantCreateModel(), new ViewDataDictionary(ViewData) { { "Index", 0 } })
+                                    @await Html.PartialAsync("_VariantEditor", new ProductVariantCreateModel(), new ViewDataDictionary(ViewData) { { "Index", 0 } })
                                 }
                             </div>
                         </div>
@@ -130,111 +128,110 @@ ViewData["Title"] = "Добавление товара";
                 </div>
             </div>
 
-            @* Клиентский шаблон для добавления нового варианта (с placeholder __index__) *@
-            <template id="variant-template">
-                @Html.Raw(await Html.PartialAsync("_VariantEditor", new ProductVariantCreateModel(), new ViewDataDictionary(ViewData) { { "Index", "__index__" } }))
-            </template>
+            <div id="variant-template" class="d-none">
+                @await Html.PartialAsync("_VariantEditor", new ProductVariantCreateModel(), new ViewDataDictionary(ViewData) { { "Index", "__index__" } })
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
-<partial name="_ValidationScriptsPartial" />
+    <partial name="_ValidationScriptsPartial" />
 
-<script>
-    (function () {
-        const container = document.getElementById('variants-container');
-        const addBtn = document.getElementById('addVariantBtn');
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const container = document.getElementById('variants-container');
+            const addBtn = document.getElementById('addVariantBtn');
+            const tpl = document.getElementById('variant-template');
 
-        function updateIndices() {
-            // Обойти все variant blocks и переписать индексы в name/id/for
-            const blocks = container.querySelectorAll('.variant-block');
-            blocks.forEach((block, i) => {
-                block.querySelectorAll('[data-field-name]').forEach(el => {
-                    const field = el.getAttribute('data-field-name'); // e.g. VariantCode, Price, Images
-                    const newName = `Variants[${i}].${field}`;
-                    el.name = newName;
+            if (!container || !addBtn || !tpl) return;
 
-                    // id и label(for)
-                    const newId = `Variants_${i}__${field}`;
-                    el.id = newId;
-
-                    // если есть связанный label
-                    const label = block.querySelector(`[data-label-for="${field}"]`);
-                    if (label) label.setAttribute('for', newId);
-
-                    // если file input — очистим значение (безопасно при клонировании)
-                    if (el.type === 'file') {
-                        el.value = null;
-                    }
+            function updateIndices() {
+                container.querySelectorAll('.variant-block').forEach((variant, index) => {
+                    const title = variant.querySelector('.variant-title');
+                    if (title) title.textContent = `Вариант ${index + 1}`;
+                    
+                    variant.querySelectorAll('[name]').forEach(el => {
+                        el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
+                        el.id = el.id.replace(/_\d+_/, `_${index}_`);
+                    });
                 });
+            }
+
+            function createNodeFromTemplate(index) {
+                
+                const html = tpl.innerHTML.replace(/__index__/g, String(index));
+                const temp = document.createElement('div');
+                temp.innerHTML = html.trim();
+                
+                const node = temp.querySelector('.variant-block');
+                if (!node) {
+                    console.error('Шаблон пуст или в шаблоне нет .variant-block');
+                    return null;
+                }
+                
+                return node.cloneNode(true);
+            }
+
+            function addVariantFromTemplate() {
+                const currentCount = container.querySelectorAll('.variant-block').length;
+                const node = createNodeFromTemplate(currentCount);
+                if (!node) return;
+                container.appendChild(node);
+                updateIndices();
+            }
+
+            addBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                addVariantFromTemplate();
             });
-        }
-
-        function addVariantFromTemplate() {
-            const tpl = document.getElementById('variant-template').content.cloneNode(true);
-            // when partial was rendered with placeholder "__index__", we need to replace occurrences
-            const html = tpl.firstElementChild ? tpl.firstElementChild.outerHTML : tpl.innerHTML;
-            // create temporary container to replace placeholders and because Partial returns full markup that includes root .variant-block
-            const temp = document.createElement('div');
-            // We rely on server partial containing "__index__" where needed; if not, updateIndices will fix names
-            temp.innerHTML = html.replace(/__index__/g, '0'); // will be fixed by updateIndices
-            const node = temp.firstElementChild;
-            container.appendChild(node);
+            
+            container.addEventListener('click', function (e) {
+                const del = e.target.closest('.remove-variant');
+                if (!del) return;
+                e.preventDefault();
+                const blocks = container.querySelectorAll('.variant-block');
+                if (blocks.length <= 1) { alert('Должен остаться хотя бы один вариант товара'); return; }
+                const toRemove = del.closest('.variant-block');
+                toRemove.remove();
+                updateIndices();
+            });
+            
+            container.addEventListener('change', function (e) {
+                const input = e.target;
+                if (input && input.type === 'file') {
+                    const preview = input.closest('.image-upload')?.querySelector('.image-preview');
+                    if (!preview) return;
+                    preview.innerHTML = '';
+                    Array.from(input.files).forEach(file => {
+                        if (!file.type.startsWith('image/')) return;
+                        const reader = new FileReader();
+                        reader.onload = function (ev) {
+                            const img = document.createElement('img');
+                            img.src = ev.target.result;
+                            img.className = 'img-thumbnail me-2 mb-2';
+                            img.style.maxHeight = '100px';
+                            preview.appendChild(img);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                }
+            });
+            
             updateIndices();
+        });
+    </script>
+
+    <style>
+        .variant-block { 
+            margin-bottom: 1.25rem; 
+            padding: 1rem;
+            border-radius: .5rem; border-left: 4px solid #0d6efd; background: #f8f9fa; 
         }
-
-        addBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            addVariantFromTemplate();
-        });
-
-        // Делегирование удаления
-        container.addEventListener('click', function (e) {
-            const del = e.target.closest('.remove-variant');
-            if (!del) return;
-            e.preventDefault();
-            const blocks = container.querySelectorAll('.variant-block');
-            if (blocks.length <= 1) {
-                alert('Должен остаться хотя бы один вариант товара');
-                return;
-            }
-            const toRemove = del.closest('.variant-block');
-            toRemove.remove();
-            updateIndices();
-        });
-
-        // Превью изображений (делегирование)
-        container.addEventListener('change', function (e) {
-            const input = e.target;
-            if (input && input.type === 'file') {
-                const preview = input.closest('.image-upload')?.querySelector('.image-preview');
-                if (!preview) return;
-                preview.innerHTML = '';
-                Array.from(input.files).forEach(file => {
-                    if (!file.type.startsWith('image/')) return;
-                    const reader = new FileReader();
-                    reader.onload = function (ev) {
-                        const img = document.createElement('img');
-                        img.src = ev.target.result;
-                        img.className = 'img-thumbnail me-2 mb-2';
-                        img.style.maxHeight = '100px';
-                        preview.appendChild(img);
-                    };
-                    reader.readAsDataURL(file);
-                });
-            }
-        });
-
-        // при загрузке страницы приведём индексы в порядок
-        updateIndices();
-    })();
-</script>
-
-<style>
-    .variant-block { margin-bottom: 1.25rem; padding: 1rem; border-radius: .5rem; border-left: 4px solid #0d6efd; background: #f8f9fa; }
-    .variant-block:hover { transform: translateY(-1px); transition: .12s; }
-    .image-preview img { transition: transform .15s ease-in-out; }
-    .image-preview img:hover { transform: scale(1.05); }
-</style>
+        .variant-block:hover { transform: translateY(-1px); transition: .12s; }
+        .image-preview img { transition: transform .15s ease-in-out; }
+        .image-preview img:hover { transform: scale(1.05); }
+    </style>
 }
+
+
