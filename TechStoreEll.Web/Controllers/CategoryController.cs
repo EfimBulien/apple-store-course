@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using TechStoreEll.Api.Attributes;
-using TechStoreEll.Api.Entities;
-using TechStoreEll.Api.Services;
+using TechStoreEll.Core.Entities;
+using TechStoreEll.Core.Services;
+using TechStoreEll.Core.Services.IServices;
+using TechStoreEll.Web.Helpers;
 
 namespace TechStoreEll.Web.Controllers;
 

@@ -1,9 +1,9 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using TechStoreEll.Api.Attributes;
-using TechStoreEll.Api.Entities;
-using TechStoreEll.Api.Infrastructure.Data;
+using TechStoreEll.Core.Entities;
+using TechStoreEll.Core.Infrastructure.Data;
+using TechStoreEll.Web.Helpers;
 
 namespace TechStoreEll.Web.Controllers;
 
@@ -21,13 +21,11 @@ public class UserSettingsController(AppDbContext context) : Controller
         var userId = GetCurrentUserId();
         var theme = "light";
 
-        if (userId != 0)
-        {
-            var settings = await context.UserSettings
-                .FirstOrDefaultAsync(s => s.Id == userId);
+        if (userId == 0) return Json(new { theme });
+        var settings = await context.UserSettings
+            .FirstOrDefaultAsync(s => s.Id == userId);
             
-            theme = settings?.Theme ?? "light";
-        }
+        theme = settings?.Theme ?? "light";
 
         return Json(new { theme });
     }

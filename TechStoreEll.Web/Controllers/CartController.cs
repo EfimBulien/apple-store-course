@@ -1,107 +1,60 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using StackExchange.Redis;
-using System.Text.Json;
-using TechStoreEll.Api.Attributes;
-using TechStoreEll.Web.Models;
+using TechStoreEll.Core.Models;
+using TechStoreEll.Core.Services.IServices;
+using TechStoreEll.Web.Helpers;
 
 namespace TechStoreEll.Web.Controllers;
 
 [AuthorizeRole("Customer", "Admin")]
-public class CartController(IConnectionMultiplexer redis) : Controller
+public class CartController(ICartService cartService) : Controller
 {
-    private readonly IDatabase _redis = redis.GetDatabase();
+    private string GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new NullReferenceException();
+    private string GetUserName() => User.Identity?.Name ?? throw new NullReferenceException();
 
-    private string GetCartKey()
-    {
-        var userName = User.Identity?.Name ?? throw new NullReferenceException();
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return $"cart:{userId}:{userName}";
-    }
-    
     public async Task<IActionResult> Index()
     {
-        var cartKey = GetCartKey();
-        var cartData = await _redis.StringGetAsync(cartKey);
-
-        var cart = string.IsNullOrEmpty(cartData) ? []
-            : JsonSerializer.Deserialize<List<CartItemViewModel>>(cartData!) ?? [];
-
+        var cart = await cartService.GetCartAsync(GetUserId(), GetUserName());
         return View(cart);
     }
-    
+
     public async Task<IActionResult> Add(int productId, string name, decimal price, string imageUrl, int quantity = 1)
     {
-        var cartKey = GetCartKey();
-        var cartData = await _redis.StringGetAsync(cartKey);
-        var cart = string.IsNullOrEmpty(cartData) ? []
-            : JsonSerializer.Deserialize<List<CartItemViewModel>>(cartData!) ?? [];
-
-        var existingItem = cart.FirstOrDefault(c => c.ProductId == productId);
-        if (existingItem != null)
+        var item = new CartItemViewModel
         {
-            existingItem.Quantity += quantity;
-        }
-        else
-        {
-            cart.Add(new CartItemViewModel
-            {
-                ProductId = productId,
-                Name = name,
-                Price = price,
-                Quantity = quantity,
-                ImageUrl = imageUrl
-            });
-        }
+            ProductId = productId,
+            Name = name,
+            Price = price,
+            Quantity = quantity,
+            ImageUrl = imageUrl
+        };
 
-        await _redis.StringSetAsync(cartKey, JsonSerializer.Serialize(cart));
+        await cartService.AddItemAsync(GetUserId(), GetUserName(), item);
         return RedirectToAction("Index");
     }
-    
-    public async Task<IActionResult> Remove(int productId)
-    {
-        var cartKey = GetCartKey();
-        var cartData = await _redis.StringGetAsync(cartKey);
-        var cart = string.IsNullOrEmpty(cartData) ? []
-            : JsonSerializer.Deserialize<List<CartItemViewModel>>(cartData!) ?? [];
 
-        cart.RemoveAll(c => c.ProductId == productId);
-
-        await _redis.StringSetAsync(cartKey, JsonSerializer.Serialize(cart));
-        return RedirectToAction("Index");
-    }
-    
     public async Task<IActionResult> Update(int productId, int quantity)
     {
-        var cartKey = GetCartKey();
-        var cartData = await _redis.StringGetAsync(cartKey);
-        var cart = string.IsNullOrEmpty(cartData) ? []
-            : JsonSerializer.Deserialize<List<CartItemViewModel>>(cartData!) ?? [];
-
-        var item = cart.FirstOrDefault(c => c.ProductId == productId);
-        if (item != null)
-        {
-            item.Quantity = quantity > 0 ? quantity : 1;
-        }
-
-        await _redis.StringSetAsync(cartKey, JsonSerializer.Serialize(cart));
+        await cartService.UpdateItemAsync(GetUserId(), GetUserName(), productId, quantity);
         return RedirectToAction("Index");
     }
-    
+
+    public async Task<IActionResult> Remove(int productId)
+    {
+        await cartService.RemoveItemAsync(GetUserId(), GetUserName(), productId);
+        return RedirectToAction("Index");
+    }
+
     public async Task<IActionResult> Clear()
     {
-        var cartKey = GetCartKey();
-        await _redis.KeyDeleteAsync(cartKey);
+        await cartService.ClearCartAsync(GetUserId(), GetUserName());
         return RedirectToAction("Index");
     }
-    
+
     [HttpGet("/cart/json")]
     public async Task<IActionResult> GetCartJson()
     {
-        var cartKey = GetCartKey();
-        var cartData = await _redis.StringGetAsync(cartKey);
-        var cart = string.IsNullOrEmpty(cartData) ? []
-            : JsonSerializer.Deserialize<List<CartItemViewModel>>(cartData!) ?? [];
+        var cart = await cartService.GetCartAsync(GetUserId(), GetUserName());
         return Json(cart);
     }
 }

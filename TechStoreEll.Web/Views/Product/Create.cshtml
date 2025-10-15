@@ -1,4 +1,5 @@
-@model TechStoreEll.Web.Models.ProductCreateViewModel
+@using TechStoreEll.Core.Models
+@model TechStoreEll.Core.Models.ProductCreateViewModel
 
 @{
 ViewData["Title"] = "Добавление товара";
@@ -107,7 +108,7 @@ ViewData["Title"] = "Добавление товара";
                                 @* Если нет вариантов, рендерим один пустой по-умолчанию *@
                                 @if (Model.Variants.Count == 0)
                                 {
-                                @await Html.PartialAsync("_VariantEditor", new TechStoreEll.Web.Models.ProductVariantCreateModel(), new ViewDataDictionary(ViewData) { { "Index", 0 } })
+                                @await Html.PartialAsync("_VariantEditor", new ProductVariantCreateModel(), new ViewDataDictionary(ViewData) { { "Index", 0 } })
                                 }
                             </div>
                         </div>
@@ -131,7 +132,7 @@ ViewData["Title"] = "Добавление товара";
 
             @* Клиентский шаблон для добавления нового варианта (с placeholder __index__) *@
             <template id="variant-template">
-                @Html.Raw(await Html.PartialAsync("_VariantEditor", new TechStoreEll.Web.Models.ProductVariantCreateModel(), new ViewDataDictionary(ViewData) { { "Index", "__index__" } }))
+                @Html.Raw(await Html.PartialAsync("_VariantEditor", new ProductVariantCreateModel(), new ViewDataDictionary(ViewData) { { "Index", "__index__" } }))
             </template>
         </div>
     </div>

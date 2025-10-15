@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using TechStoreEll.Api.Entities;
+using TechStoreEll.Core.Entities;
 
-namespace TechStoreEll.Web.Models;
+namespace TechStoreEll.Core.Models;
 
 public class ProductCreateViewModel
 {

@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 using System.Text.Json;
-using TechStoreEll.Api.Attributes;
-using TechStoreEll.Api.Entities;
-using TechStoreEll.Api.Infrastructure.Data;
-using TechStoreEll.Web.Models;
-using Order = TechStoreEll.Api.Entities.Order;
+using TechStoreEll.Core.Entities;
+using TechStoreEll.Core.Infrastructure.Data;
+using TechStoreEll.Core.Models;
+using TechStoreEll.Web.Helpers;
+using Order = TechStoreEll.Core.Entities.Order;
 
 namespace TechStoreEll.Web.Controllers;
 

@@ -75,7 +75,7 @@
                     @if (User.Identity is { IsAuthenticated: true })
                     {
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Account" asp-action="Profile">Профиль</a>
+                            <a class="nav-link" asp-controller="Profile" asp-action="Index">Профиль</a>
                         </li>
                         @if (User.IsInRole("Customer"))
                         {

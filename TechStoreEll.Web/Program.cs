@@ -2,9 +2,10 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
-using TechStoreEll.Api.Infrastructure.Data;
-using TechStoreEll.Api.Services;
+using TechStoreEll.Core.Infrastructure.Data;
 using TechStoreEll.Core.Services;
+using TechStoreEll.Core.Services.IServices;
+using TechStoreEll.Web.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,6 +64,9 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<AuditLogService>();
 builder.Services.AddScoped<AnalyticsService>();
 builder.Services.AddScoped<IMinioService, MinioService>();
+builder.Services.AddScoped<AddressService>();
+builder.Services.AddScoped<ICartService, RedisCartService>();
+builder.Services.AddScoped<IRestockService, RestockService>();
 
 var app = builder.Build();
 

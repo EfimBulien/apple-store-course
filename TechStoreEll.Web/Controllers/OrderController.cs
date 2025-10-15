@@ -1,10 +1,10 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using TechStoreEll.Api.Attributes;
-using TechStoreEll.Api.Entities;
-using TechStoreEll.Api.Infrastructure.Data;
-using TechStoreEll.Web.Models;
+using TechStoreEll.Core.Entities;
+using TechStoreEll.Core.Infrastructure.Data;
+using TechStoreEll.Core.Models;
+using TechStoreEll.Web.Helpers;
 
 namespace TechStoreEll.Web.Controllers;
 

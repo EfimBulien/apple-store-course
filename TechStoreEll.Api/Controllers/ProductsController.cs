@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TechStoreEll.Api.Attributes;
-using TechStoreEll.Api.DTOs;
-using TechStoreEll.Api.Infrastructure.Data;
-using TechStoreEll.Api.Services;
+using TechStoreEll.Core.DTOs;
+using TechStoreEll.Core.Infrastructure.Data;
+using TechStoreEll.Core.Services;
 
 namespace TechStoreEll.Api.Controllers;
 

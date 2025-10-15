@@ -42,15 +42,19 @@
 }
 
 function showHotkeysHint() {
-    
+    // Если пользователь уже закрыл подсказку — не показываем снова
+    if (localStorage.getItem('hotkeysHintClosed') === 'true') {
+        return;
+    }
+
     const existingHint = document.querySelector('.hotkeys-hint');
     if (existingHint) {
         existingHint.remove();
     }
-    
+
     const hint = document.createElement('div');
     hint.className = 'hotkeys-hint alert alert-info alert-dismissible fade show position-fixed';
-    
+
     hint.style.cssText = `
         top: 80px;
         left: 20px;
@@ -75,9 +79,15 @@ function showHotkeysHint() {
             <div><kbd>Ctrl+0</kbd> - Смена темы</div>
         </div>
     `;
-    
+
+    // При нажатии на крестик — запоминаем, что пользователь закрыл подсказку
+    hint.querySelector('.btn-close').addEventListener('click', () => {
+        localStorage.setItem('hotkeysHintClosed', 'true');
+    });
+
     document.body.appendChild(hint);
-    
+
+    // Автоматическое скрытие через 8 секунд (если не закрыл вручную)
     setTimeout(() => {
         if (hint.parentNode) {
             const bsAlert = new bootstrap.Alert(hint);
@@ -93,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'ctrl+2': '/Home/Index',          
         'ctrl+3': '/Cart/Index',          
         'ctrl+4': '/Order/Index',         
-        'ctrl+5': '/Account/Profile',     
+        'ctrl+5': '/Profile/Index',     
         'ctrl+6': '/Address/Index',       
         'ctrl+7': '/Admin/Index',         
         'ctrl+0': toggleTheme             
@@ -157,9 +167,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-    
+
     setTimeout(showHotkeysHint, 1000);
-    
+
     addHotkeysButtonToNav();
     
     document.body.setAttribute('data-authenticated', isAuthenticated.toString());

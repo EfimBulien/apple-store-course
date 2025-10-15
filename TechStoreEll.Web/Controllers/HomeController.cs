@@ -1,9 +1,9 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using TechStoreEll.Api.Entities;
-using TechStoreEll.Api.Infrastructure.Data;
-using TechStoreEll.Web.Models;
+using TechStoreEll.Core.Entities;
+using TechStoreEll.Core.Infrastructure.Data;
+using TechStoreEll.Core.Models;
 
 namespace TechStoreEll.Web.Controllers;
 
@@ -13,10 +13,10 @@ public class HomeController(AppDbContext context) : Controller
     {
         var variant = await context.ProductVariants
             .Include(v => v.Product)
-                .ThenInclude(p => p.Category)
+            .ThenInclude(p => p.Category)
             .Include(v => v.Product)
-                .ThenInclude(p => p.Reviews)
-                    .ThenInclude(r => r.User)
+            .ThenInclude(p => p.Reviews)
+            .ThenInclude(r => r.User)
             .Include(v => v.ProductImages)
             .FirstOrDefaultAsync(v => v.Id == id);
 

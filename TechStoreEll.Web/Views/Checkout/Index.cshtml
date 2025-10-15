@@ -1,4 +1,5 @@
-@model TechStoreEll.Web.Models.CheckoutModel
+@using TechStoreEll.Core.Entities
+@model TechStoreEll.Core.Models.CheckoutModel
 
 @{
     ViewData["Title"] = "Оформление заказа";
@@ -12,7 +13,7 @@
     <h4>Адрес доставки</h4>
     <select asp-for="ShippingAddressId" class="form-control mb-3" required>
         <option value="">Выберите адрес</option>
-        @foreach (var addr in (ViewBag.Addresses as List<TechStoreEll.Api.Entities.Address>)!)
+        @foreach (var addr in (ViewBag.Addresses as List<Address>)!)
         {
             <option value="@addr.Id">@addr.City, @addr.Street @addr.House @(addr.Apartment != null 
                 ? $"кв. {addr.Apartment}" : "")</option>
@@ -28,7 +29,7 @@
         <h4>Платёжный адрес</h4>
         <select asp-for="BillingAddressId" class="form-control mb-3">
             <option value="">Выберите адрес</option>
-            @foreach (var addr in (ViewBag.Addresses as List<TechStoreEll.Api.Entities.Address>)!)
+            @foreach (var addr in (ViewBag.Addresses as List<Address>)!)
             {
                 <option value="@addr.Id">@addr.City, @addr.Street @addr.House @(addr.Apartment != null 
                     ? $"кв. {addr.Apartment}" : "")</option>
