@@ -26,4 +26,8 @@
         <ProjectReference Include="..\TechStoreEll.Core\TechStoreEll.Core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="wwwroot\backups\" />
+    </ItemGroup>
+
 </Project>

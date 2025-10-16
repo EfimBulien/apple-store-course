@@ -10,9 +10,6 @@ CREATE TABLE warehouses (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
-INSERT INTO roles (id, name) VALUES (1, 'Admin'), (3, 'Customer') ON CONFLICT (id) DO NOTHING;
-INSERT INTO warehouses (name) VALUES ('Москва'), ('Санкт-Петербург') ON CONFLICT (name) DO NOTHING;
-
 -- 2) Пользователи (только аутентификация)
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -604,94 +601,133 @@ CREATE OR REPLACE FUNCTION export_audit(p_from TIMESTAMPTZ, p_to TIMESTAMPTZ) RE
   SELECT coalesce(jsonb_agg(row_to_json(a)), '[]'::jsonb) FROM (SELECT * FROM audit_log WHERE changed_at BETWEEN p_from AND p_to ORDER BY changed_at) a;
 $$;
 
--- ========== РАНДоМНЫЕ ТЕСТОВЫЕ ДАННЫЕ ==========
--- заполнение пользователей
-INSERT INTO users (username, email, password_hash, first_name, last_name, middle_name, phone, role_id)
+-- ========== ТЕСТОВЫЕ ДАННЫЕ ==========
+
+INSERT INTO roles
+    (id, name)
 VALUES
-('admin', 'admin@example.com', 'HASH_PLACEHOLDER', 'Андрей', 'Иванов', 'Петрович', '+79161234567', 1)
+    (1, 'Admin'), (3, 'Customer')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO warehouses
+    (name)
+VALUES
+    ('Москва'), ('Санкт-Петербург')
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO users
+    (username, email, password_hash, first_name, last_name, middle_name, phone, role_id)
+VALUES
+    ('admin', 'admin@example.com', 'HASH_PLACEHOLDER', 'Андрей', 'Иванов', 'Петрович', '+79161234567', 1)
 ON CONFLICT (username) DO NOTHING;
 
-INSERT INTO users (username, email, password_hash, first_name, last_name, middle_name, phone, role_id)
+INSERT INTO users
+    (username, email, password_hash, first_name, last_name, middle_name, phone, role_id)
 VALUES
-('customer1', 'cust1@example.com', 'HASH_PLACEHOLDER', 'Иван', 'Петров', 'Сергеевич', '+79161234568', 3)
+    ('customer1', 'cust1@example.com', 'HASH_PLACEHOLDER', 'Иван', 'Петров', 'Сергеевич', '+79161234568', 3)
 ON CONFLICT (username) DO NOTHING;
 
---адрес покупателя
-INSERT INTO addresses (user_id, label, country, region, city, street, house, apartment, postcode)
+INSERT INTO addresses
+    (user_id, label, country, region, city, street, house, apartment, postcode)
 SELECT u.id, 'Дом', 'Россия', 'Московская область', 'Москва', 'Ленинский проспект', '42', '15', '119334'
 FROM users u WHERE u.username = 'customer1'
 ON CONFLICT DO NOTHING;
 
--- Покупатель
-INSERT INTO customers (user_id, shipping_address_id, billing_address_id, loyalty_points)
+INSERT INTO customers
+    (user_id, shipping_address_id, billing_address_id, loyalty_points)
 SELECT u.id, a.id, a.id, 100
 FROM users u
 JOIN addresses a ON a.user_id = u.id
 WHERE u.username = 'customer1'
 ON CONFLICT (user_id) DO NOTHING;
--- Категории и товары
-INSERT INTO categories (name) VALUES ('iPhone') ON CONFLICT (name) DO NOTHING;
-INSERT INTO categories (name) VALUES ('MacBook') ON CONFLICT (name) DO NOTHING;
 
-INSERT INTO products (sku, name, category_id, description)
+INSERT INTO categories
+    (name)
 VALUES
-('IP16', 'iPhone 16', (SELECT id FROM categories WHERE name='iPhone'), 'Самый последний крутой Айфон')
+    ('iPhone')
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO categories
+    (name)
+VALUES
+    ('MacBook')
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO products
+    (sku, name, category_id, description)
+VALUES
+    ('IP16', 'iPhone 16', (SELECT id FROM categories WHERE name='iPhone'), 'Самый последний крутой Айфон')
 ON CONFLICT (sku) DO NOTHING;
 
-INSERT INTO products (sku, name, category_id, description)
+INSERT INTO products
+    (sku, name, category_id, description)
 VALUES
-('MBP16', 'MacBook Pro 16 M3 Pro', (SELECT id FROM categories WHERE name='MacBook'), 'Мощный ноутбук для профессиональной работы')
+    ('MBP16', 'MacBook Pro 16 M3 Pro', (SELECT id FROM categories WHERE name='MacBook'), 'Мощный ноутбук для профессиональной работы')
 ON CONFLICT (sku) DO NOTHING;
 
-INSERT INTO product_variants (product_id, variant_code, price, color, storage_gb)
+INSERT INTO product_variants
+    (product_id, variant_code, price, color, storage_gb)
 VALUES
-( (SELECT id FROM products WHERE sku='IP16'), 'IPH16-BLK-128', 79999.99, 'Чёрный', 128 )
+    ((SELECT id FROM products WHERE sku='IP16'), 'IPH16-BLK-128', 79999.99, 'Чёрный', 128 )
 ON CONFLICT (product_id, variant_code) DO NOTHING;
 
-INSERT INTO product_variants (product_id, variant_code, price, color, storage_gb)
+INSERT INTO product_variants
+    (product_id, variant_code, price, color, storage_gb)
 VALUES
-( (SELECT id FROM products WHERE sku='IP16'), 'IPH16-WHT-256', 89999.99, 'Белый', 256 )
+    ((SELECT id FROM products WHERE sku='IP16'), 'IPH16-WHT-256', 89999.99, 'Белый', 256 )
 ON CONFLICT (product_id, variant_code) DO NOTHING;
 
-INSERT INTO product_variants (product_id, variant_code, price, color, storage_gb)
+INSERT INTO product_variants
+    (product_id, variant_code, price, color, storage_gb)
 VALUES
-( (SELECT id FROM products WHERE sku='MBP16'), 'MBP16-SIL-512', 199999.00, 'Серебристый', 512 )
+    ((SELECT id FROM products WHERE sku='MBP16'), 'MBP16-SIL-512', 199999.00, 'Серебристый', 512 )
 ON CONFLICT (product_id, variant_code) DO NOTHING;
 
---настрокйки пользователкей
-INSERT INTO user_settings (user_id, theme, items_per_page, date_format, number_format)
+INSERT INTO user_settings
+    (user_id, theme, items_per_page, date_format, number_format)
 SELECT id, 'light', 20, 'DD.MM.YYYY', 'ru_RU'
 FROM users WHERE username = 'customer1'
 ON CONFLICT (user_id) DO NOTHING;
 
-INSERT INTO product_images (product_variant_id, image_url, alt_text, sort_order, is_primary)
+INSERT INTO product_images
+    (product_variant_id, image_url, alt_text, sort_order, is_primary)
 VALUES
-(
+    (
     1,
-    'https://minio.com/images/iphone-16-black-128gb-1.jpg', -- условная ссылка на bucket
-    'iPhone 16 Black 128GB - вид спереди',
+    'http://localhost:9000/storage/iphone-16-black-128gb-1.png',
+    'iPhone 16 Black 128GB',
     0,
     TRUE
-),
-(
+    ),
+    (
     1,
-    'https://minio.com/images/iphone-16-black-128gb-2.jpg', -- условная ссылка на bucket
-    'iPhone 16 Black 128GB - вид сзади',
+    'http://localhost:9000/storage/iphone-16-black-128gb-1.png',
+    'iPhone 16 Black 128GB',
     1,
     FALSE
-)
+    ),
+    (
+    2,
+    'http://localhost:9000/storage/iphone-16-white-256gb-1.png.jpg',
+    'iPhone 16 White 256GB',
+    0,
+    TRUE
+    ),
+    (
+    3,
+    'http://localhost:9000/storage/mbp16-silver-gallery2-202310.jpeg',
+    'MacBook Pro 16 Silver',
+    0,
+    TRUE
+    )
 ON CONFLICT DO NOTHING;
 
--- НАПОЛНЯЕМ СКЛАД
 CALL sp_restock(1, '[{"variant_id":1,"warehouse_name":"Москва","qty":25}, {"variant_id":2,"warehouse_name":"Москва","qty":15}, {"variant_id":3,"warehouse_name":"Санкт-Петербург","qty":8}]'::jsonb);
 
---проверка наличия через представление
 SELECT * FROM vw_product_stock ORDER BY variant_id;
 
--- создание заказа
 CALL sp_create_order(2, '[{"variant_id": 1, "quantity": 1}]'::jsonb, NULL);
 
--- завершение заказа (чтобы можно было оставить отзыв)
 DO $$
 DECLARE
     v_order_id INT;
@@ -703,21 +739,21 @@ BEGIN
     END IF;
 END $$;
 
---оставляем отзыв
-INSERT INTO reviews (product_id, user_id, rating, comment)
-VALUES (
-    (SELECT id FROM products WHERE sku='IP16'),
+
+INSERT INTO reviews
+    (product_id, user_id, rating, comment)
+VALUES
+    ((SELECT id FROM products WHERE sku='IP16'),
     (SELECT id FROM users WHERE username='customer1'),
     5,
     'Отличный телефон, рекомендую!'
-)
+    )
 ON CONFLICT DO NOTHING;
 
---проверка рейтинга
-SELECT name, avg_rating, reviews_count FROM products WHERE sku = 'IP16';
+
+SELECT name, avg_rating, reviews_count FROM products;
 
 -- ========== ТЕСТ: НОВЫЙ ПОКУПАТЕЛЬ ==========
-
 DO $$
 DECLARE
     v_new_user_id INT;
@@ -727,8 +763,10 @@ DECLARE
 BEGIN
     PERFORM set_config('app.current_user_id', (SELECT id::text FROM users WHERE username = 'admin'), true);
 
-    INSERT INTO users (username, email, password_hash, first_name, last_name, middle_name, phone, role_id)
-    VALUES ('customer_ru', 'customer_ru@example.com', 'HASH_PLACEHOLDER', 'Мария', 'Сидорова', 'Ивановна', '+79161234569', 3)
+    INSERT INTO users
+        (username, email, password_hash, first_name, last_name, middle_name, phone, role_id)
+    VALUES
+        ('customer_ru', 'customer_ru@example.com', 'HASH_PLACEHOLDER', 'Мария', 'Сидорова', 'Ивановна', '+79161234569', 3)
     ON CONFLICT (username) DO NOTHING
     RETURNING id INTO v_new_user_id;
 
@@ -738,37 +776,40 @@ BEGIN
 
     PERFORM set_config('app.current_user_id', v_new_user_id::text, true);
 
-    -- Санкт-Петербург
-    INSERT INTO addresses (user_id, label, country, region, city, street, house, apartment, postcode)
-    VALUES (v_new_user_id, 'Квартира', 'Россия', 'Ленинградская область', 'Санкт-Петербург', 'Невский проспект', '25', '7', '191186')
+    INSERT INTO addresses
+        (user_id, label, country, region, city, street, house, apartment, postcode)
+    VALUES
+        (v_new_user_id, 'Квартира', 'Россия', 'Ленинградская область', 'Санкт-Петербург', 'Невский проспект', '25', '7', '191186')
     RETURNING id INTO v_new_address_id;
 
-    -- новые настройки
-    INSERT INTO user_settings (user_id, theme, items_per_page, date_format, number_format)
-    VALUES (v_new_user_id, 'dark', 30, 'DD.MM.YYYY', 'ru_RU')
+    INSERT INTO user_settings
+        (user_id, theme, items_per_page, date_format, number_format)
+    VALUES
+        (v_new_user_id, 'dark', 30, 'DD.MM.YYYY', 'ru_RU')
     ON CONFLICT (user_id) DO NOTHING;
 
-    INSERT INTO customers (user_id, shipping_address_id, billing_address_id, loyalty_points)
-    VALUES (v_new_user_id, v_new_address_id, v_new_address_id, 50)
+    INSERT INTO customers
+        (user_id, shipping_address_id, billing_address_id, loyalty_points)
+    VALUES
+        (v_new_user_id, v_new_address_id, v_new_address_id, 50)
     ON CONFLICT (user_id) DO NOTHING;
 
     SELECT id INTO v_product_id FROM products WHERE sku = 'MBP16';
 
     CALL sp_create_order(v_new_user_id, '[{"variant_id": 3, "quantity": 1}]'::jsonb, v_order_id);
 
-
-    -- оставить отзыв без этого не получится
-    UPDATE orders SET status = 'shipped' WHERE id = v_order_id;
-    CALL sp_complete_order(v_new_user_id, v_order_id);
-    
-    -- правда оплата так и остается пустой и ожидает оплаты
-
-    INSERT INTO reviews (product_id, user_id, rating, comment)
-    VALUES (v_product_id, v_new_user_id, 5, 'Прекрасный ноутбук! Быстрый, экран отличный. Идеален для работы и творчества.')
+    INSERT INTO reviews
+        (product_id, user_id, rating, comment)
+    VALUES
+        (v_product_id, v_new_user_id, 5, 'Прекрасный ноутбук! Быстрый, экран отличный. Идеален для работы и творчества.')
     ON CONFLICT DO NOTHING;
+
+    UPDATE orders SET status = 'shipped' WHERE id = v_order_id;
+
+    CALL sp_complete_order(v_new_user_id, v_order_id);
 END $$;
 
--- Финальная проверка
+-- Сделать отдельным представлением
 SELECT u.username, r.rating, r.comment, o.status as last_order_status
 FROM reviews r
 JOIN users u ON u.id = r.user_id
@@ -777,16 +818,8 @@ JOIN orders o ON o.id = oi.order_id AND o.user_id = r.user_id
 WHERE r.product_id = (SELECT id FROM products WHERE sku = 'IP16')
 ORDER BY r.created_at DESC;
 
--- доп проверка
-SELECT
-    u.first_name,
-    u.last_name,
-    a.country,
-    a.city,
-    a.street,
-    a.house,
-    a.apartment
+-- Сделать отдельным представлением
+SELECT u.first_name, u.last_name, a.country, a.city, a.street, a.house, a.apartment
 FROM addresses a
 JOIN users u ON u.id = a.user_id
 WHERE a.country = 'Россия';
-
