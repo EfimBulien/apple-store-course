@@ -20,8 +20,8 @@ public class ProductService(AppDbContext context)
                 Color = v.Color,
                 StorageGb = v.StorageGb,
                 Ram = v.Ram,
-                ProductSku = v.Product.Sku,
-                ProductName = v.Product.Name,
+                ProductSku = v.Product.Sku!,
+                ProductName = v.Product.Name!,
                 CategoryId = v.Product.CategoryId,
                 ProductDescription = v.Product.Description,
                 ProductActive = v.Product.Active,
@@ -40,15 +40,14 @@ public class ProductService(AppDbContext context)
             .Include(v => v.Product)
             .Where(v => v.Product.Active);
         
-        // ничего не трогать
         if (!string.IsNullOrEmpty(searchTerm))
         {
             query = query.Where(v => 
-                v.Product.Name.Contains(searchTerm) || 
-                v.Product.Sku.Contains(searchTerm) ||
+                v.Product.Name!.Contains(searchTerm) || 
+                v.Product.Sku!.Contains(searchTerm) ||
                 v.VariantCode.Contains(searchTerm) ||
-                v.Color.Contains(searchTerm) ||
-                v.Product.Description.Contains(searchTerm));
+                v.Color!.Contains(searchTerm) ||
+                v.Product.Description!.Contains(searchTerm));
         }
         else
         {
@@ -66,8 +65,8 @@ public class ProductService(AppDbContext context)
                 StorageGb = v.StorageGb,
                 Ram = v.Ram,
                     
-                ProductSku = v.Product.Sku,
-                ProductName = v.Product.Name,
+                ProductSku = v.Product.Sku!,
+                ProductName = v.Product.Name!,
                 CategoryId = v.Product.CategoryId,
                 ProductDescription = v.Product.Description,
                 ProductActive = v.Product.Active,

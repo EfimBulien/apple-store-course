@@ -2,7 +2,7 @@
 @model TechStoreEll.Core.Models.ProductCreateViewModel
 
 @{
-    ViewData["Title"] = "Добавление товара";
+ViewData["Title"] = "Добавление товара";
 }
 
 <div class="container py-5">
@@ -19,10 +19,10 @@
 
             @if (TempData["Success"] != null)
             {
-                <div class="alert alert-success alert-dismissible fade show rounded-3">
-                    <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
+            <div class="alert alert-success alert-dismissible fade show rounded-3">
+                <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
             }
 
             <div class="card shadow-sm border-0 rounded-4">
@@ -53,7 +53,7 @@
                                     <option value="">-- Выберите категорию --</option>
                                     @foreach (var category in Model.Categories)
                                     {
-                                        <option value="@category.Id" selected="@(Model.CategoryId == category.Id ? "selected" : null)">@category.Name</option>
+                                    <option value="@category.Id" selected="@(Model.CategoryId == category.Id ? "selected" : null)">@category.Name</option>
                                     }
                                 </select>
                                 <span asp-validation-for="CategoryId" class="text-danger small"></span>
@@ -61,7 +61,7 @@
 
                             <div class="col-12">
                                 <label asp-for="Name" class="form-label fw-semibold">
-                                    <i class="bi bi-card-text text-muted me-1"></i>Название товара 
+                                    <i class="bi bi-card-text text-muted me-1"></i>Название товара
                                 </label>
                                 <input asp-for="Name" class="form-control rounded-3" placeholder="Например: iPhone 16, MacBook Pro 16 M3 Pro" />
                                 <span asp-validation-for="Name" class="text-danger small"></span>
@@ -85,7 +85,6 @@
                             </div>
                         </div>
 
-                        <!-- Варианты -->
                         <div class="row g-4">
                             <div class="col-12 d-flex justify-content-between align-items-center mb-3">
                                 <h4 class="fw-bold text-primary mb-0">
@@ -101,17 +100,15 @@
                             <div id="variants-container">
                                 @for (var i = 0; i < Model.Variants.Count; i++)
                                 {
-                                    @await Html.PartialAsync("_VariantEditor", Model.Variants[i], new ViewDataDictionary(ViewData) { { "Index", i } })
+                                @await Html.PartialAsync("_VariantEditor", Model.Variants[i], new ViewDataDictionary(ViewData) { { "Index", i } })
                                 }
-
                                 @if (Model.Variants.Count == 0)
                                 {
-                                    @await Html.PartialAsync("_VariantEditor", new ProductVariantCreateModel(), new ViewDataDictionary(ViewData) { { "Index", 0 } })
+                                @await Html.PartialAsync("_VariantEditor", new ProductVariantCreateModel(), new ViewDataDictionary(ViewData) { { "Index", 0 } })
                                 }
                             </div>
                         </div>
 
-                        <!-- Кнопки -->
                         <div class="row mt-5">
                             <div class="col-12">
                                 <div class="d-flex gap-3 justify-content-end">
@@ -136,102 +133,129 @@
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+<partial name="_ValidationScriptsPartial" />
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const container = document.getElementById('variants-container');
-            const addBtn = document.getElementById('addVariantBtn');
-            const tpl = document.getElementById('variant-template');
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const container = document.getElementById('variants-container');
+        const addBtn = document.getElementById('addVariantBtn');
+        const tpl = document.getElementById('variant-template');
 
-            if (!container || !addBtn || !tpl) return;
+        if (!container || !addBtn || !tpl) return;
 
-            function updateIndices() {
-                container.querySelectorAll('.variant-block').forEach((variant, index) => {
-                    const title = variant.querySelector('.variant-title');
-                    if (title) title.textContent = `Вариант ${index + 1}`;
-                    
-                    variant.querySelectorAll('[name]').forEach(el => {
-                        el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
-                        el.id = el.id.replace(/_\d+_/, `_${index}_`);
-                    });
+        // Определяем текущую тему
+        const currentTheme = document.documentElement.getAttribute('data-bs-theme') || 'light';
+
+        // Применяем тему ко всем существующим блокам
+        container.querySelectorAll('.variant-block').forEach(block => {
+            block.classList.remove('theme-light', 'theme-dark');
+            block.classList.add(currentTheme === 'dark' ? 'theme-dark' : 'theme-light');
+        });
+
+        function updateIndices() {
+            container.querySelectorAll('.variant-block').forEach((variant, index) => {
+                const title = variant.querySelector('.variant-title');
+                if (title) title.textContent = `Вариант ${index + 1}`;
+                variant.querySelectorAll('[name]').forEach(el => {
+                    el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
+                    el.id = el.id.replace(/_\d+_/, `_${index}_`);
                 });
-            }
-
-            function createNodeFromTemplate(index) {
-                
-                const html = tpl.innerHTML.replace(/__index__/g, String(index));
-                const temp = document.createElement('div');
-                temp.innerHTML = html.trim();
-                
-                const node = temp.querySelector('.variant-block');
-                if (!node) {
-                    console.error('Шаблон пуст или в шаблоне нет .variant-block');
-                    return null;
-                }
-                
-                return node.cloneNode(true);
-            }
-
-            function addVariantFromTemplate() {
-                const currentCount = container.querySelectorAll('.variant-block').length;
-                const node = createNodeFromTemplate(currentCount);
-                if (!node) return;
-                container.appendChild(node);
-                updateIndices();
-            }
-
-            addBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-                addVariantFromTemplate();
             });
-            
-            container.addEventListener('click', function (e) {
-                const del = e.target.closest('.remove-variant');
-                if (!del) return;
-                e.preventDefault();
-                const blocks = container.querySelectorAll('.variant-block');
-                if (blocks.length <= 1) { alert('Должен остаться хотя бы один вариант товара'); return; }
-                const toRemove = del.closest('.variant-block');
-                toRemove.remove();
-                updateIndices();
-            });
-            
-            container.addEventListener('change', function (e) {
-                const input = e.target;
-                if (input && input.type === 'file') {
-                    const preview = input.closest('.image-upload')?.querySelector('.image-preview');
-                    if (!preview) return;
-                    preview.innerHTML = '';
-                    Array.from(input.files).forEach(file => {
-                        if (!file.type.startsWith('image/')) return;
-                        const reader = new FileReader();
-                        reader.onload = function (ev) {
-                            const img = document.createElement('img');
-                            img.src = ev.target.result;
-                            img.className = 'img-thumbnail me-2 mb-2';
-                            img.style.maxHeight = '100px';
-                            preview.appendChild(img);
-                        };
-                        reader.readAsDataURL(file);
-                    });
-                }
-            });
-            
+        }
+
+        function createNodeFromTemplate(index) {
+            const html = tpl.innerHTML.replace(/__index__/g, String(index));
+            const temp = document.createElement('div');
+            temp.innerHTML = html.trim();
+            const node = temp.querySelector('.variant-block');
+            if (!node) return null;
+
+            // Применяем текущую тему к новому блоку
+            node.classList.remove('theme-light', 'theme-dark');
+            node.classList.add(currentTheme === 'dark' ? 'theme-dark' : 'theme-light');
+
+            return node;
+        }
+
+        function addVariantFromTemplate() {
+            const currentCount = container.querySelectorAll('.variant-block').length;
+            const node = createNodeFromTemplate(currentCount);
+            if (!node) return;
+            container.appendChild(node);
+            updateIndices();
+        }
+
+        addBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            addVariantFromTemplate();
+        });
+
+        container.addEventListener('click', function (e) {
+            const del = e.target.closest('.remove-variant');
+            if (!del) return;
+            e.preventDefault();
+            const blocks = container.querySelectorAll('.variant-block');
+            if (blocks.length <= 1) {
+                alert('Должен остаться хотя бы один вариант товара');
+                return;
+            }
+            const toRemove = del.closest('.variant-block');
+            toRemove.remove();
             updateIndices();
         });
-    </script>
 
-    <style>
-        .variant-block { 
-            margin-bottom: 1.25rem; 
-            padding: 1rem;
-            border-radius: .5rem; border-left: 4px solid #0d6efd; background: #f8f9fa; 
-        }
-        .variant-block:hover { transform: translateY(-1px); transition: .12s; }
-        .image-preview img { transition: transform .15s ease-in-out; }
-        .image-preview img:hover { transform: scale(1.05); }
-    </style>
+        container.addEventListener('change', function (e) {
+            const input = e.target;
+            if (input && input.type === 'file') {
+                const preview = input.closest('.image-upload')?.querySelector('.image-preview');
+                if (!preview) return;
+                preview.innerHTML = '';
+                Array.from(input.files).forEach(file => {
+                    if (!file.type.startsWith('image/')) return;
+                    const reader = new FileReader();
+                    reader.onload = function (ev) {
+                        const img = document.createElement('img');
+                        img.src = ev.target.result;
+                        img.className = 'img-thumbnail me-2 mb-2';
+                        img.style.maxHeight = '100px';
+                        preview.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+
+        updateIndices();
+    });
+</script>
+
+<style>
+    .variant-block {
+        margin-bottom: 1.25rem;
+        padding: 1rem;
+        border-radius: .5rem;
+        border-left: 4px solid var(--bs-primary);
+        transition: background-color .2s ease, transform .12s ease;
+    }
+
+    .theme-light.variant-block {
+        background-color: #f8f9fa !important;
+    }
+
+    .theme-dark.variant-block {
+        background-color: #1c1f23 !important;
+    }
+
+    .variant-block:hover {
+        transform: translateY(-1px);
+    }
+
+    .image-preview img {
+        transition: transform .15s ease-in-out;
+    }
+
+    .image-preview img:hover {
+        transform: scale(1.05);
+    }
+</style>
 }
-
-

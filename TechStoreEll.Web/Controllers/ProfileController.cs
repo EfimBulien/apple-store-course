@@ -29,14 +29,12 @@ public class ProfileController(UserService userService) : Controller
             MiddleName = user.MiddleName
         };
 
-        var settingsDto = new UpdateUserSettingsDto
+        var settingsDto = new UpdateSettingsDto
         {
-            Theme = user.UserSetting?.Theme,
-            ItemsPerPage = user.UserSetting?.ItemsPerPage,
-            DateFormat = user.UserSetting?.DateFormat,
-            NumberFormat = user.UserSetting?.NumberFormat,
-            SavedFilters = user.UserSetting?.SavedFilters,
-            Hotkeys = user.UserSetting?.Hotkeys
+            Theme = user.UserSetting?.Theme ?? "light",
+            ItemsPerPage = user.UserSetting?.ItemsPerPage ?? 20,
+            DateFormat = user.UserSetting?.DateFormat ?? "YYYY-MM-DD",
+            NumberFormat = user.UserSetting?.NumberFormat ?? "ru_RU"
         };
 
         var model = new ProfileViewModel
@@ -46,6 +44,30 @@ public class ProfileController(UserService userService) : Controller
         };
 
         return View(model);
+    }
+    
+    [HttpGet]
+    public async Task<IActionResult> GetUserSettings()
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        var user = await userService.GetUserWithSettingsAsync(userId);
+    
+        if (user?.UserSetting == null)
+        {
+            return Json(new {
+                numberFormat = "ru_RU",
+                dateFormat = "YYYY-MM-DD",
+                theme = "light",
+                itemsPerPage = 20
+            });
+        }
+
+        return Json(new {
+            numberFormat = user.UserSetting.NumberFormat ?? "ru_RU",
+            dateFormat = user.UserSetting.DateFormat ?? "YYYY-MM-DD",
+            theme = user.UserSetting.Theme ?? "light",
+            itemsPerPage = user.UserSetting.ItemsPerPage ?? 20
+        });
     }
     
     [HttpPost]
@@ -89,10 +111,25 @@ public class ProfileController(UserService userService) : Controller
     [HttpPost]
     [AuthorizeRole("Customer", "Admin")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateSettings(UpdateUserSettingsDto dto)
+    public async Task<IActionResult> UpdateSettings(UpdateSettingsDto dto)
     {
+        if (!ModelState.IsValid)
+        {
+            TempData["ErrorMessage"] = "Неверные данные в настройках";
+            return RedirectToAction("Index");
+        }
+
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-        var result = await userService.UpdateUserSettingsAsync(userId, dto);
+    
+        var result = await userService.UpdateUserSettingsAsync(userId, new UpdateUserSettingsDto
+        {
+            Theme = dto.Theme,
+            ItemsPerPage = dto.ItemsPerPage,
+            DateFormat = dto.DateFormat,
+            NumberFormat = dto.NumberFormat,
+            SavedFilters = "[]",
+            Hotkeys = "[]"
+        });
 
         if (result)
         {

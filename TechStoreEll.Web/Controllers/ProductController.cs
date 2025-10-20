@@ -50,11 +50,11 @@ public class ProductController(
             for (var i = 0; i < model.Variants.Count; i++)
             {
                 logger.LogInformation("Variant #{Index}: Code='{Code}', Price={Price}, Images={ImagesCount}",
-                    i, model.Variants[i]?.VariantCode, model.Variants[i]?.Price, model.Variants[i]?.Images?.Count ?? 0);
+                    i, model.Variants[i].VariantCode, model.Variants[i].Price, model.Variants[i].Images?.Count ?? 0);
             }
         }
         
-        if (model.Variants == null || !model.Variants.Any(v => !string.IsNullOrWhiteSpace(v.VariantCode)))
+        if (model.Variants == null || model.Variants.All(v => string.IsNullOrWhiteSpace(v.VariantCode)))
         {
             ModelState.AddModelError("", "Нужно добавить хотя бы один вариант с кодом.");
             model.Categories = await context.Categories.OrderBy(c => c.Name).ToListAsync();
@@ -170,7 +170,7 @@ public class ProductController(
             }
             catch
             {
-                // ignored
+                //
             }
 
             foreach (var objectName in uploadedObjectNames)

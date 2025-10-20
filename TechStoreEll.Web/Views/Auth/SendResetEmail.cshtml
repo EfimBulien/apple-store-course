@@ -1,0 +1,67 @@
+@{
+    ViewData["Title"] = "Восстановление пароля";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title text-center">Отправка письма для восстановления</h2>
+                    <p class="text-center">Нажмите кнопку ниже, чтобы отправить письмо со ссылкой на сброс пароля.</p>
+
+                    <div class="text-center">
+                        <button id="sendEmailBtn" class="btn btn-success btn-lg">
+                            <i class="fas fa-paper-plane"></i> Отправить письмо
+                        </button>
+                    </div>
+
+                    <p id="statusMessage" class="mt-3 text-center"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/@@emailjs/browser@4/dist/email.min.js"></script>
+    <script>
+        emailjs.init('@ViewBag.PublicKey');
+
+        document.getElementById("sendEmailBtn").addEventListener("click", async () => {
+            const btn = document.getElementById("sendEmailBtn");
+            const statusMessage = document.getElementById("statusMessage");
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
+            
+            try {
+                const result = await emailjs.send('@ViewBag.ServiceID', '@ViewBag.TemplateID', {
+                    to_email: '@ViewBag.Email',
+                    reset_link: '@ViewBag.ResetLink',
+                    to_name: '@ViewBag.Email',
+                    from_name: 'TechStoreEll Support',
+                    subject: 'Восстановление пароля - TechStoreEll'
+                });
+                
+                console.log('Email sent successfully:', result);
+                statusMessage.innerHTML = '<div class="alert alert-success"><i class="fas fa-check-circle"></i> Письмо успешно отправлено! Проверьте вашу почту.</div>';
+                
+                setTimeout(() => {
+                    statusMessage.innerHTML += '<div class="alert alert-info mt-2"><small>Если письмо не пришло, проверьте папку "Спам" или попробуйте еще раз.</small></div>';
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error sending email:', error);
+                statusMessage.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Не удалось отправить письмо. Попробуйте еще раз.</div>';
+                
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Отправить письмо еще раз';
+            }
+        });
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('sendEmailBtn').click();
+        });
+    </script>
+}

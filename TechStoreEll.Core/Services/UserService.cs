@@ -13,6 +13,25 @@ public class UserService(AppDbContext context)
             .Include(u => u.UserSetting)
             .FirstOrDefaultAsync(u => u.Id == userId);
     }
+    
+    public async Task<UpdateUserSettingsDto?> GetUserSettingsAsync(int userId)
+    {
+        var userSetting = await context.UserSettings
+            .FirstOrDefaultAsync(us => us.Id == userId);
+    
+        if (userSetting == null)
+            return null;
+
+        return new UpdateUserSettingsDto
+        {
+            Theme = userSetting.Theme,
+            ItemsPerPage = userSetting.ItemsPerPage,
+            DateFormat = userSetting.DateFormat,
+            NumberFormat = userSetting.NumberFormat,
+            SavedFilters = userSetting.SavedFilters,
+            Hotkeys = userSetting.Hotkeys
+        };
+    }
 
     public async Task<bool> UpdateUserAsync(int userId, UpdateUserDto dto)
     {
@@ -21,7 +40,6 @@ public class UserService(AppDbContext context)
             var user = await context.Users.FindAsync(userId);
             if (user == null) return false;
 
-            // обновляем только нужные поля
             user.Email = dto.Email;
             user.Phone = dto.Phone;
             user.FirstName = dto.FirstName;
@@ -43,41 +61,49 @@ public class UserService(AppDbContext context)
     {
         try
         {
-            var userSettings = await context.UserSettings
+            Console.WriteLine($"Обновление настроек для пользователя {userId}:");
+            Console.WriteLine($"Theme: {dto.Theme}, ItemsPerPage: {dto.ItemsPerPage}, DateFormat: {dto.DateFormat}, NumberFormat: {dto.NumberFormat}");
+
+            var userSetting = await context.UserSettings
                 .FirstOrDefaultAsync(us => us.Id == userId);
 
-            if (userSettings == null)
+            if (userSetting == null)
             {
-                userSettings = new UserSetting
+                Console.WriteLine("Создание новых настроек");
+                // Создаем новые настройки
+                userSetting = new UserSetting
                 {
                     Id = userId,
                     Theme = dto.Theme,
-                    ItemsPerPage = dto.ItemsPerPage,
+                    ItemsPerPage = dto.ItemsPerPage ?? 20,
                     DateFormat = dto.DateFormat,
                     NumberFormat = dto.NumberFormat,
-                    SavedFilters = dto.SavedFilters,
-                    Hotkeys = dto.Hotkeys,
+                    SavedFilters = dto.SavedFilters ?? "[]",
+                    Hotkeys = dto.Hotkeys ?? "[]",
                     UpdatedAt = DateTime.UtcNow
                 };
-                context.UserSettings.Add(userSettings);
+                context.UserSettings.Add(userSetting);
             }
             else
             {
-                userSettings.Theme = dto.Theme;
-                userSettings.ItemsPerPage = dto.ItemsPerPage;
-                userSettings.DateFormat = dto.DateFormat;
-                userSettings.NumberFormat = dto.NumberFormat;
-                userSettings.SavedFilters = dto.SavedFilters;
-                userSettings.Hotkeys = dto.Hotkeys;
-                userSettings.UpdatedAt = DateTime.UtcNow;
+                userSetting.Theme = dto.Theme;
+                userSetting.ItemsPerPage = dto.ItemsPerPage ?? userSetting.ItemsPerPage;
+                userSetting.DateFormat = dto.DateFormat;
+                userSetting.NumberFormat = dto.NumberFormat;
+                userSetting.SavedFilters = dto.SavedFilters ?? userSetting.SavedFilters;
+                userSetting.Hotkeys = dto.Hotkeys ?? userSetting.Hotkeys;
+                userSetting.UpdatedAt = DateTime.UtcNow;
             }
 
-            await context.SaveChangesAsync();
-            return true;
+            var changes = await context.SaveChangesAsync();
+            Console.WriteLine($"Сохранено изменений: {changes}");
+
+            return changes > 0;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка при обновлении настроек пользователя: {ex.Message}");
+            Console.WriteLine($"Ошибка при обновлении настроек: {ex.Message}");
+            Console.WriteLine($"StackTrace: {ex.StackTrace}");
             return false;
         }
     }

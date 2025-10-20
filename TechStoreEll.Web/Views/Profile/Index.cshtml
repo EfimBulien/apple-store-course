@@ -43,7 +43,7 @@
                             </h4>
                         </div>
                         <div class="card-body">
-                            <form asp-action="UpdateProfile" method="post">
+                            <form asp-action="UpdateProfile" method="post" id="profileForm">
                                 @Html.AntiForgeryToken()
                                 
                                 <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-3"></div>
@@ -53,7 +53,8 @@
                                         <label asp-for="User.Email" class="form-label fw-semibold">
                                             <i class="bi bi-envelope text-muted me-1"></i>Email
                                         </label>
-                                        <input asp-for="User.Email" class="form-control rounded-3" />
+                                        <input asp-for="User.Email" class="form-control rounded-3"
+                                               value="@Model.User.Email" />
                                         <span asp-validation-for="User.Email" class="text-danger small"></span>
                                     </div>
 
@@ -61,25 +62,31 @@
                                         <label asp-for="User.Phone" class="form-label fw-semibold">
                                             <i class="bi bi-telephone text-muted me-1"></i>Телефон
                                         </label>
-                                        <input asp-for="User.Phone" class="form-control rounded-3" />
+                                        <input asp-for="User.Phone" class="form-control rounded-3" 
+                                               value="@Model.User.Phone" />
                                         <span asp-validation-for="User.Phone" class="text-danger small"></span>
                                     </div>
 
                                     <div class="col-md-6">
                                         <label asp-for="User.LastName" class="form-label fw-semibold">Фамилия</label>
-                                        <input asp-for="User.LastName" class="form-control rounded-3" />
+                                        <input asp-for="User.LastName" class="form-control rounded-3" 
+                                               value="@Model.User.LastName" />
                                         <span asp-validation-for="User.LastName" class="text-danger small"></span>
                                     </div>
 
                                     <div class="col-md-6">
                                         <label asp-for="User.FirstName" class="form-label fw-semibold">Имя</label>
-                                        <input asp-for="User.FirstName" class="form-control rounded-3"/>
+                                        <input asp-for="User.FirstName" class="form-control rounded-3" 
+                                               value="@Model.User.FirstName" />
                                         <span asp-validation-for="User.FirstName" class="text-danger small"></span>
                                     </div>
 
                                     <div class="col-12">
-                                        <label asp-for="User.MiddleName" class="form-label fw-semibold">Отчество</label>
-                                        <input asp-for="User.MiddleName" class="form-control rounded-3" />
+                                        <label asp-for="User.MiddleName" class="form-label fw-semibold">
+                                            Отчество
+                                        </label>
+                                        <input asp-for="User.MiddleName" class="form-control rounded-3" 
+                                               value="@Model.User.MiddleName" />
                                         <span asp-validation-for="User.MiddleName" class="text-danger small"></span>
                                     </div>
 
@@ -102,50 +109,73 @@
                             </h4>
                         </div>
                         <div class="card-body">
-                            <form asp-action="UpdateSettings" method="post">
+                            <form asp-action="UpdateSettings" method="post" id="settingsForm">
                                 @Html.AntiForgeryToken()
                                 
                                 <div class="row g-3">
                                     <div class="col-12">
-                                        <label asp-for="Settings.Theme" class="form-label fw-semibold">
+                                        <label for="Theme" class="form-label fw-semibold">
                                             <i class="bi bi-palette text-muted me-1"></i>Тема оформления
                                         </label>
-                                        <select asp-for="Settings.Theme" class="form-select rounded-3">
-                                            <option value="">Системная</option>
-                                            <option value="light">Светлая</option>
-                                            <option value="dark">Темная</option>
+                                        <select name="Theme" id="Theme" class="form-select rounded-3">
+                                            <option value="light" selected="@(Model.Settings.Theme == "light")">
+                                                Светлая
+                                            </option>
+                                            <option value="dark" selected="@(Model.Settings.Theme == "dark")">
+                                                Темная
+                                            </option>
                                         </select>
+                                        <span class="text-danger small"
+                                              data-valmsg-for="Theme" data-valmsg-replace="true"></span>
                                     </div>
 
                                     <div class="col-12">
-                                        <label asp-for="Settings.ItemsPerPage" class="form-label fw-semibold">
+                                        <label for="ItemsPerPage" class="form-label fw-semibold">
                                             <i class="bi bi-list-ol text-muted me-1"></i>Элементов на странице
                                         </label>
-                                        <input asp-for="Settings.ItemsPerPage" type="number" 
-                                               class="form-control rounded-3" min="5" max="200" />
+                                        <input type="number" name="ItemsPerPage" id="ItemsPerPage" 
+                                               class="form-control rounded-3" min="5" max="200" 
+                                               value="@Model.Settings.ItemsPerPage" />
+                                        <span class="text-danger small" 
+                                              data-valmsg-for="ItemsPerPage" data-valmsg-replace="true"></span>
                                     </div>
 
                                     <div class="col-12">
-                                        <label asp-for="Settings.DateFormat" class="form-label fw-semibold">
+                                        <label for="DateFormat" class="form-label fw-semibold">
                                             <i class="bi bi-calendar text-muted me-1"></i>Формат даты
                                         </label>
-                                        <select asp-for="Settings.DateFormat" class="form-select rounded-3">
-                                            <option value="">Автоматически</option>
-                                            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                                            <option value="DD.MM.YYYY">DD.MM.YYYY</option>
-                                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                        <select name="DateFormat" id="DateFormat" class="form-select rounded-3">
+                                            <option value="YYYY-MM-DD" 
+                                                    selected="@(Model.Settings.DateFormat == "YYYY-MM-DD")">
+                                                YYYY-MM-DD
+                                            </option>
+                                            <option value="DD.MM.YYYY" 
+                                                    selected="@(Model.Settings.DateFormat == "DD.MM.YYYY")">
+                                                DD.MM.YYYY
+                                            </option>
+                                            <option value="MM/DD/YYYY" 
+                                                    selected="@(Model.Settings.DateFormat == "MM/DD/YYYY")">
+                                                MM/DD/YYYY
+                                            </option>
                                         </select>
+                                        <span class="text-danger small" 
+                                              data-valmsg-for="DateFormat" data-valmsg-replace="true"></span>
                                     </div>
 
                                     <div class="col-12">
-                                        <label asp-for="Settings.NumberFormat" class="form-label fw-semibold">
+                                        <label for="NumberFormat" class="form-label fw-semibold">
                                             <i class="bi bi-123 text-muted me-1"></i>Формат чисел
                                         </label>
-                                        <select asp-for="Settings.NumberFormat" class="form-select rounded-3">
-                                            <option value="">Автоматически</option>
-                                            <option value="en_US">Английский (1,000.00)</option>
-                                            <option value="ru_RU">Русский (1 000,00)</option>
+                                        <select name="NumberFormat" id="NumberFormat" class="form-select rounded-3">
+                                            <option value="en_US" selected="@(Model.Settings.NumberFormat == "en_US")">
+                                                Английский (1,000.00)
+                                            </option>
+                                            <option value="ru_RU" selected="@(Model.Settings.NumberFormat == "ru_RU")">
+                                                Русский (1 000,00)
+                                            </option>
                                         </select>
+                                        <span class="text-danger small" data-valmsg-for="NumberFormat" 
+                                              data-valmsg-replace="true"></span>
                                     </div>
                                     
                                     <div class="col-12 mt-4">
@@ -199,7 +229,134 @@
         </div>
     </div>
 </div>
-
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        function initializeSelects() {
+            const themeSelect = document.getElementById('Theme');
+            if (themeSelect) {
+                themeSelect.value = '@Model.Settings.Theme';
+            }
+
+            const dateFormatSelect = document.getElementById('DateFormat');
+            if (dateFormatSelect) {
+                dateFormatSelect.value = '@Model.Settings.DateFormat';
+            }
+
+            const numberFormatSelect = document.getElementById('NumberFormat');
+            if (numberFormatSelect) {
+                numberFormatSelect.value = '@Model.Settings.NumberFormat';
+            }
+        }
+        
+        function setupFormLogging() {
+            const settingsForm = document.getElementById('settingsForm');
+            if (settingsForm) {
+                settingsForm.addEventListener('submit', function(e) {
+                    console.log('Данные формы настроек:');
+                    console.log('Theme:', document.getElementById('Theme').value);
+                    console.log('ItemsPerPage:', document.getElementById('ItemsPerPage').value);
+                    console.log('DateFormat:', document.getElementById('DateFormat').value);
+                    console.log('NumberFormat:', document.getElementById('NumberFormat').value);
+                    
+                    const newSettings = {
+                        theme: document.getElementById('Theme').value,
+                        itemsPerPage: parseInt(document.getElementById('ItemsPerPage').value),
+                        dateFormat: document.getElementById('DateFormat').value,
+                        numberFormat: document.getElementById('NumberFormat').value
+                    };
+                    
+                    localStorage.setItem('userSettings', JSON.stringify(newSettings));
+                    console.log('Настройки сохранены в localStorage:', newSettings);
+                    
+                    window.dispatchEvent(new StorageEvent('storage', {
+                        key: 'userSettings',
+                        newValue: JSON.stringify(newSettings)
+                    }));
+                });
+            }
+        }
+
+        function updateAllPagesWithNewSettings(settings) {
+            localStorage.setItem('userSettings', JSON.stringify(settings));
+            
+            if (typeof BroadcastChannel !== 'undefined') {
+                const channel = new BroadcastChannel('user_settings');
+                channel.postMessage(settings);
+            }
+            
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'userSettings',
+                newValue: JSON.stringify(settings)
+            }));
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSelects();
+            setupFormLogging();
+            
+            const inputs = document.querySelectorAll('#settingsForm input, #settingsForm select');
+            inputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    console.log('Изменено поле:', this.name, 'Значение:', this.value);
+                });
+            });
+
+            if (typeof BroadcastChannel !== 'undefined') {
+                const channel = new BroadcastChannel('user_settings');
+                channel.onmessage = function(event) {
+                    console.log('Получены новые настройки через BroadcastChannel:', event.data);
+                    localStorage.setItem('userSettings', JSON.stringify(event.data));
+                };
+            }
+        });
+
+        $(document).ready(function () {
+            $('#settingsForm').validate({
+                rules: {
+                    Theme: {
+                        required: true
+                    },
+                    ItemsPerPage: {
+                        required: true,
+                        range: [5, 200]
+                    },
+                    DateFormat: {
+                        required: true
+                    },
+                    NumberFormat: {
+                        required: true
+                    }
+                },
+                messages: {
+                    Theme: {
+                        required: "Выберите тему оформления"
+                    },
+                    ItemsPerPage: {
+                        required: "Введите количество элементов",
+                        range: "Количество элементов должно быть от 5 до 200"
+                    },
+                    DateFormat: {
+                        required: "Выберите формат даты"
+                    },
+                    NumberFormat: {
+                        required: "Выберите формат чисел"
+                    }
+                },
+                errorElement: 'span',
+                errorClass: 'text-danger',
+                errorPlacement: function (error, element) {
+                    error.addClass('small');
+                    error.insertAfter(element);
+                },
+                highlight: function (element) {
+                    $(element).addClass('is-invalid').removeClass('is-valid');
+                },
+                unhighlight: function (element) {
+                    $(element).removeClass('is-invalid').addClass('is-valid');
+                }
+            });
+        });
+    </script>
 }

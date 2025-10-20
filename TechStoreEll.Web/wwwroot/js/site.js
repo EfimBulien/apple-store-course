@@ -1,5 +1,4 @@
 ﻿function showThemeNotification(theme) {
-    
     const existingNotification = document.querySelector('.theme-notification');
     if (existingNotification) {
         existingNotification.remove();
@@ -7,7 +6,7 @@
 
     const notification = document.createElement('div');
     notification.className = `theme-notification alert alert-${theme === 'dark' ? 'dark' : 'info'} alert-dismissible fade show position-fixed`;
-    
+
     notification.style.cssText = `
         top: 200px;
         left: 20px;
@@ -32,7 +31,7 @@
     `;
 
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
         if (notification.parentNode) {
             const bsAlert = new bootstrap.Alert(notification);
@@ -42,7 +41,10 @@
 }
 
 function showHotkeysHint() {
-    // Если пользователь уже закрыл подсказку — не показываем снова
+    if (localStorage.getItem('hotkeysHintClosed') === null) {
+        localStorage.setItem('hotkeysHintClosed', 'false');
+    }
+
     if (localStorage.getItem('hotkeysHintClosed') === 'true') {
         return;
     }
@@ -80,14 +82,12 @@ function showHotkeysHint() {
         </div>
     `;
 
-    // При нажатии на крестик — запоминаем, что пользователь закрыл подсказку
     hint.querySelector('.btn-close').addEventListener('click', () => {
         localStorage.setItem('hotkeysHintClosed', 'true');
     });
 
     document.body.appendChild(hint);
 
-    // Автоматическое скрытие через 8 секунд (если не закрыл вручную)
     setTimeout(() => {
         if (hint.parentNode) {
             const bsAlert = new bootstrap.Alert(hint);
@@ -97,38 +97,38 @@ function showHotkeysHint() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    
+    const isAuthenticated = document.body.getAttribute('data-authenticated') === 'true';
+
     const hotkeys = {
-        'ctrl+1': '/',                    
-        'ctrl+2': '/Home/Index',          
-        'ctrl+3': '/Cart/Index',          
-        'ctrl+4': '/Order/Index',         
-        'ctrl+5': '/Profile/Index',     
-        'ctrl+6': '/Address/Index',       
-        'ctrl+7': '/Admin/Index',         
-        'ctrl+0': toggleTheme             
+        'ctrl+1': '/',
+        'ctrl+2': '/Home/Index',
+        'ctrl+3': '/Cart/Index',
+        'ctrl+4': '/Order/Index',
+        'ctrl+5': '/Profile/Index',
+        'ctrl+6': '/Address/Index',
+        'ctrl+7': '/Admin/Index',
+        'ctrl+0': toggleTheme
     };
-    
+
     function toggleTheme() {
         const htmlElement = document.documentElement;
         const themeSwitch = document.getElementById("themeSwitch");
         const currentTheme = htmlElement.getAttribute("data-bs-theme") || "light";
         const newTheme = currentTheme === "light" ? "dark" : "light";
-        
+
         htmlElement.setAttribute("data-bs-theme", newTheme);
         if (themeSwitch) {
             themeSwitch.checked = (newTheme === "dark");
         }
         localStorage.setItem("theme", newTheme);
-        
-        const isAuthenticated = document.body.getAttribute('data-authenticated') === 'true';
+
         if (isAuthenticated) {
             saveThemeToServer(newTheme);
         }
-        
+
         showThemeNotification(newTheme);
     }
-    
+
     async function saveThemeToServer(theme) {
         try {
             const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
@@ -144,25 +144,21 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("Failed to update theme on server:", error);
         }
     }
-    
+
     document.addEventListener('keydown', function(e) {
-        
         let combination = '';
         if (e.ctrlKey) combination += 'ctrl+';
         if (e.altKey) combination += 'alt+';
-        
+
         const key = e.key.toLowerCase();
         combination += key;
 
-        
         if (hotkeys[combination]) {
             e.preventDefault();
 
             if (typeof hotkeys[combination] === 'function') {
-                
                 hotkeys[combination]();
             } else {
-                
                 window.location.href = hotkeys[combination];
             }
         }
@@ -171,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(showHotkeysHint, 1000);
 
     addHotkeysButtonToNav();
-    
+
     document.body.setAttribute('data-authenticated', isAuthenticated.toString());
 });
 
@@ -188,3 +184,22 @@ function addHotkeysButtonToNav() {
         nav.appendChild(hotkeysItem);
     }
 }
+
+function clearUserSettingsOnLogout() {
+    const logoutForms = document.querySelectorAll('form[action*="Logout"], form[action*="logout"]');
+
+    logoutForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            localStorage.removeItem('hotkeysHintClosed');
+            localStorage.removeItem('theme');
+            localStorage.removeItem('theme_synced');
+            localStorage.removeItem('userSettings');
+
+            console.log('Настройки пользователя очищены из localStorage');
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    clearUserSettingsOnLogout();
+});

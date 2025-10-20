@@ -17,3 +17,6 @@ TechStoreEll.Web/node_modules
 TechStoreEll.Core/bin
 TechStoreEll.Core/obj
 TechStoreEll.Core/*.json
+TechStoreEll.Tests/bin
+TechStoreEll.Tests/obj
+TechStoreEll.Tests/bin

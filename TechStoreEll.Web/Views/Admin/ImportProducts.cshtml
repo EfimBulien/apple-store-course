@@ -1,0 +1,15 @@
+@{
+    ViewData["Title"] = "Импорт товаров";
+}
+
+<h2>Импорт каталога товаров из CSV</h2>
+<form asp-action="ImportProducts" method="post" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label class="form-label">Файл CSV (разделитель — точка с запятой)</label>
+        <input type="file" name="file" class="form-control" accept=".csv" required />
+        <div class="form-text">
+            Ожидаемые колонки: Название;Артикул;Категория;Цена;Остаток;Активен (Да/Нет)
+        </div>
+    </div>
+    <button type="submit" class="btn btn-success">Импортировать</button>
+</form>

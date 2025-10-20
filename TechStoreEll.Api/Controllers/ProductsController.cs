@@ -10,7 +10,6 @@ namespace TechStoreEll.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-// [Authorize]
 public class ProductsController(ProductService productService, AppDbContext context) : ControllerBase
 {
     [HttpGet("search")]
@@ -52,7 +51,7 @@ public class ProductsController(ProductService productService, AppDbContext cont
     }
     
     [HttpGet("{id:int}")]
-    [Authorize] // требует авторизации
+    [Authorize]
     public async Task<IActionResult> GetProductById(int id)
     {
         try
@@ -71,7 +70,7 @@ public class ProductsController(ProductService productService, AppDbContext cont
     }
     
     [HttpGet("category/{categoryId:int}")]
-    [AuthorizeRole("Admin", "Customer")] // админ (1) и покупатель (3)
+    [AuthorizeRole("Admin", "Customer")]
     public async Task<IActionResult> GetProductsByCategory(int categoryId)
     {
         try
@@ -132,7 +131,7 @@ public class ProductsController(ProductService productService, AppDbContext cont
             if (storage.HasValue)
                 query = query.Where(v => v.StorageGb == storage);
 
-            var result = await query.Select(v => new ProductFullDto()
+            var result = await query.Select(v => new ProductFullDto
             {
                 Id = v.Id,
                 ProductId = v.ProductId,
@@ -141,8 +140,8 @@ public class ProductsController(ProductService productService, AppDbContext cont
                 Color = v.Color,
                 StorageGb = v.StorageGb,
                 Ram = v.Ram,
-                ProductSku = v.Product.Sku,
-                ProductName = v.Product.Name,
+                ProductSku = v.Product.Sku!,
+                ProductName = v.Product.Name!,
                 CategoryId = v.Product.CategoryId,
                 ProductDescription = v.Product.Description,
                 ProductActive = v.Product.Active,

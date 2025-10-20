@@ -28,7 +28,7 @@ public class OrderController(AppDbContext context) : Controller
                 PaymentStatus = o.Payments.FirstOrDefault() != null ? o.Payments.First().Status : "Не оплачён",
                 Items = o.OrderItems.Select(oi => new OrderItemSummary
                 {
-                    ProductName = oi.ProductVariant.Product.Name,
+                    ProductName = oi.ProductVariant.Product.Name!,
                     VariantInfo = GetVariantInfo(oi.ProductVariant),
                     Quantity = oi.Quantity,
                     UnitPrice = oi.UnitPrice,
@@ -81,7 +81,7 @@ public class OrderController(AppDbContext context) : Controller
 
             Items = order.OrderItems.Select(oi => new OrderItemSummary
             {
-                ProductName = oi.ProductVariant.Product.Name,
+                ProductName = oi.ProductVariant.Product.Name!,
                 VariantInfo = GetVariantInfo(oi.ProductVariant),
                 Quantity = oi.Quantity,
                 UnitPrice = oi.UnitPrice,
@@ -92,7 +92,7 @@ public class OrderController(AppDbContext context) : Controller
 
             Reviews = order.OrderItems.Select(oi => new OrderItemWithReview
             {
-                ProductName = oi.ProductVariant.Product.Name,
+                ProductName = oi.ProductVariant.Product.Name!,
                 VariantInfo = GetVariantInfo(oi.ProductVariant),
                 Quantity = oi.Quantity,
                 UnitPrice = oi.UnitPrice,

@@ -25,6 +25,41 @@
             </form>
         </div>
     </div>
+    
+    <h2>Экспорт и импорт данных</h2>
+
+    <div class="row g-3 mt-3">
+        <div class="col-md-6">
+            <a class="btn btn-outline-primary w-100" asp-action="ExportProductsCsv">
+                📤 Экспорт товаров в CSV
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a class="btn btn-outline-primary w-100" asp-action="ExportOrdersCsv">
+                📤 Экспорт заказов в CSV
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a class="btn btn-outline-primary w-100" asp-action="ExportInventoryCsv">
+                📤 Экспорт склада в CSV
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a class="btn btn-outline-secondary w-100" asp-action="ImportProducts">
+                📥 Импорт каталога товаров
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a class="btn btn-danger w-100" asp-action="BackupDatabase">
+                💾 Создать SQL-дамп (резервная копия)
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success mt-3">@TempData["Message"]</div>
+    }
 
     <div class="card shadow-sm border-0 rounded-4">
         <div class="card-body">

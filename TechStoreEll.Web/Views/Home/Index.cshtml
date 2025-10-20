@@ -74,7 +74,10 @@
                                            min="0" step="100" />
                                 </div>
                             </div>
-                            <small class="text-muted">Диапазон: @minPriceOverall.ToString("N0") - @maxPriceOverall.ToString("N0") ₽</small>
+                            <small class="text-muted price-range-display">
+                                Диапазон: <span class="min-price" data-price="@minPriceOverall">@minPriceOverall.ToString("N0")</span> - 
+                                <span class="max-price" data-price="@maxPriceOverall">@maxPriceOverall.ToString("N0")</span> ₽
+                            </small>
                         </div>
 
                         <div class="mb-4">
@@ -197,9 +200,6 @@
                         <option value="rating-desc" selected="@(currentSort == "rating-desc")">
                             По убыванию рейтинга
                         </option>
-                        <option value="stock-desc" selected="@(currentSort == "stock-desc")">
-                            Сначала в наличии
-                        </option>
                     </select>
                 </div>
             </div>
@@ -239,10 +239,6 @@
                                 <h5 class="card-title text-truncate">@product.Name</h5>
                                 
                                 <div class="mb-2">
-                                    @if (product.Ram > 0)
-                                    {
-                                        <small class="text-muted d-block">ОЗУ: @product.Ram ГБ</small>
-                                    }
                                     @if (product.StorageSize > 0)
                                     {
                                         <small class="text-muted d-block">Память: @product.StorageSize ГБ</small>
@@ -251,7 +247,9 @@
 
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span class="badge bg-primary">@product.CategoryName</span>
-                                    <span class="fw-bold">@(product.Price.HasValue ? $"{product.Price:N0} ₽" : "Н/Д")</span>
+                                    <span class="fw-bold price-display" data-price="@product.Price">
+                                        @(product.Price.HasValue ? $"{product.Price:N0} ₽" : "Н/Д")
+                                    </span>
                                 </div>
 
                                 <div class="mb-2">
@@ -274,7 +272,6 @@
                                 </div>
 
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <small class="text-body-secondary">Артикул: @product.Sku</small>
                                     <div class="text-warning">
                                         @if (product.AvgRating.HasValue)
                                         {
@@ -327,24 +324,125 @@
     }
 </style>
 
-<script>
-    function updateSort(sortValue) {
-        const url = new URL(window.location.href);
-        url.searchParams.set('sort', sortValue);
-        window.location.href = url.toString();
-    }
+@section Scripts {
+    <script>
+        function formatNumber(number, numberFormat) {
+            const num = parseFloat(number);
+            
+            if (isNaN(num)) return number;
 
-    document.addEventListener('DOMContentLoaded', function() {
-        const numberInputs = document.querySelectorAll('input[type="number"]');
-        let timeout;
-        
-        numberInputs.forEach(input => {
-            input.addEventListener('input', function() {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                    document.getElementById('filterForm').submit();
-                }, 1000);
+            const formatters = {
+                'ru_RU': new Intl.NumberFormat('ru-RU', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                }),
+                'en_US': new Intl.NumberFormat('en-US', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                })
+            };
+
+            const formatter = formatters[numberFormat] || formatters['ru_RU'];
+            return formatter.format(num) + ' ₽';
+        }
+
+        function formatAllPrices(numberFormat) {
+            console.log('Форматируем цены на главной в формате:', numberFormat);
+            
+            const priceElements = document.querySelectorAll('.price-display');
+            priceElements.forEach(element => {
+                const price = element.getAttribute('data-price');
+                if (price && price !== '0') {
+                    element.textContent = formatNumber(price, numberFormat);
+                }
+            });
+
+            const minPriceElement = document.querySelector('.min-price');
+            const maxPriceElement = document.querySelector('.max-price');
+            
+            if (minPriceElement) {
+                const minPrice = minPriceElement.getAttribute('data-price');
+                minPriceElement.textContent = formatNumber(minPrice, numberFormat).replace(' ₽', '');
+            }
+            if (maxPriceElement) {
+                const maxPrice = maxPriceElement.getAttribute('data-price');
+                maxPriceElement.textContent = formatNumber(maxPrice, numberFormat).replace(' ₽', '');
+            }
+        }
+
+        async function loadUserSettings() {
+            try {
+                const response = await fetch('/Profile/GetUserSettings');
+                
+                if (response.ok) {
+                    const settings = await response.json();
+                    localStorage.setItem('userSettings', JSON.stringify(settings));
+                    formatAllPrices(settings.numberFormat);
+                } else if (response.status === 401) {
+                    const defaultSettings = { numberFormat: 'ru_RU' };
+                    localStorage.setItem('userSettings', JSON.stringify(defaultSettings));
+                    formatAllPrices('ru_RU');
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            } catch (error) {
+                console.log('Ошибка загрузки настроек:', error, 'Используем настройки по умолчанию');
+                const defaultSettings = { numberFormat: 'ru_RU' };
+                localStorage.setItem('userSettings', JSON.stringify(defaultSettings));
+                formatAllPrices('ru_RU');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Главная страница загружена, инициализируем форматирование цен');
+            
+            const savedSettings = localStorage.getItem('userSettings');
+            
+            if (savedSettings) {
+                console.log('Настройки найдены в localStorage:', savedSettings);
+                const settings = JSON.parse(savedSettings);
+                formatAllPrices(settings.numberFormat);
+            } else {
+                console.log('Настроек в localStorage нет, загружаем с сервера');
+                loadUserSettings();
+            }
+
+            if (typeof BroadcastChannel !== 'undefined') {
+                const channel = new BroadcastChannel('user_settings');
+                channel.onmessage = function(event) {
+                    console.log('Получены новые настройки через BroadcastChannel:', event.data);
+                    localStorage.setItem('userSettings', JSON.stringify(event.data));
+                    formatAllPrices(event.data.numberFormat);
+                };
+            }
+        });
+
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'userSettings' && e.newValue) {
+                console.log('Обнаружено изменение настроек в localStorage');
+                const settings = JSON.parse(e.newValue);
+                formatAllPrices(settings.numberFormat);
+            }
+        });
+
+        function updateSort(sortValue) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('sort', sortValue);
+            window.location.href = url.toString();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const numberInputs = document.querySelectorAll('input[type="number"]');
+            let timeout;
+            
+            numberInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => {
+                        document.getElementById('filterForm').submit();
+                    }, 1000);
+                });
             });
         });
-    });
-</script>
+    </script>
+}

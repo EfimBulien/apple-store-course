@@ -62,7 +62,10 @@
         <div class="col-lg-6">
             <h1 class="h2 mb-3">@Model.Name</h1>
             <p class="text-muted">Артикул: @Model.Sku</p>
-            <div class="h3 text-primary mb-4">@Model.Price.ToString("C")</div>
+            <div class="h3 text-primary mb-4 price-display" 
+                 data-price="@Model.Price">
+                @Model.Price.ToString("N0") ₽
+            </div>
 
             <ul class="list-unstyled mb-4">
                 @if (!string.IsNullOrEmpty(Model.Color))
@@ -209,3 +212,107 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function formatNumber(number, numberFormat) {
+            console.log('Форматируем число:', number, 'в формате:', numberFormat);
+            
+            const num = parseFloat(number);
+            
+            if (isNaN(num)) return number;
+
+            const formatters = {
+                'ru_RU': new Intl.NumberFormat('ru-RU', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                }),
+                'en_US': new Intl.NumberFormat('en-US', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                })
+            };
+
+            const formatter = formatters[numberFormat] || formatters['ru_RU'];
+            const formatted = formatter.format(num) + ' ₽';
+            console.log('Результат форматирования:', formatted);
+            return formatted;
+        }
+
+        function formatAllPrices(numberFormat) {
+            console.log('Форматируем все цены в формате:', numberFormat);
+            
+            const priceElements = document.querySelectorAll('.price-display');
+            console.log('Найдено элементов с ценами:', priceElements.length);
+            
+            priceElements.forEach((element, index) => {
+                const price = element.getAttribute('data-price');
+                console.log(`Элемент ${index}:`, element, 'Цена:', price);
+                
+                if (price) {
+                    const formattedPrice = formatNumber(price, numberFormat);
+                    element.textContent = formattedPrice;
+                    console.log(`Обновлена цена: ${price} -> ${formattedPrice}`);
+                }
+            });
+        }
+
+        async function loadUserSettings() {
+            try {
+                console.log('Пытаемся загрузить настройки...');
+                const response = await fetch('/Profile/GetUserSettings');
+                
+                if (response.ok) {
+                    const settings = await response.json();
+                    console.log('Получены настройки:', settings);
+                    localStorage.setItem('userSettings', JSON.stringify(settings));
+                    formatAllPrices(settings.numberFormat);
+                } else if (response.status === 401) {
+                    console.log('Пользователь не авторизован, используем настройки по умолчанию');
+                    const defaultSettings = { numberFormat: 'ru_RU' };
+                    localStorage.setItem('userSettings', JSON.stringify(defaultSettings));
+                    formatAllPrices('ru_RU');
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            } catch (error) {
+                console.log('Ошибка загрузки настроек:', error, 'Используем настройки по умолчанию');
+                const defaultSettings = { numberFormat: 'ru_RU' };
+                localStorage.setItem('userSettings', JSON.stringify(defaultSettings));
+                formatAllPrices('ru_RU');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Страница загружена, инициализируем форматирование цен');
+            
+            const savedSettings = localStorage.getItem('userSettings');
+            
+            if (savedSettings) {
+                console.log('Настройки найдены в localStorage:', savedSettings);
+                const settings = JSON.parse(savedSettings);
+                formatAllPrices(settings.numberFormat);
+            } else {
+                console.log('Настроек в localStorage нет, загружаем с сервера');
+                loadUserSettings();
+            }
+
+            if (typeof BroadcastChannel !== 'undefined') {
+                const channel = new BroadcastChannel('user_settings');
+                channel.onmessage = function(event) {
+                    console.log('Получены новые настройки через BroadcastChannel:', event.data);
+                    localStorage.setItem('userSettings', JSON.stringify(event.data));
+                    formatAllPrices(event.data.numberFormat);
+                };
+            }
+        });
+
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'userSettings' && e.newValue) {
+                console.log('Обнаружено изменение настроек в localStorage');
+                const settings = JSON.parse(e.newValue);
+                formatAllPrices(settings.numberFormat);
+            }
+        });
+    </script>
+}

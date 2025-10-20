@@ -4,6 +4,29 @@
     ViewData["Title"] = "Пополнение склада";
 }
 
+<style>
+    .text-muted {
+        opacity: 0.8;
+    }
+    
+    .bi::before {
+        display: inline-block;
+    }
+    
+    .table {
+        --bs-table-bg: transparent;
+    }
+    
+    .card {
+        background: var(--bs-card-bg);
+    }
+    
+    .form-control::placeholder {
+        color: var(--bs-secondary-color) !important;
+        opacity: 0.8;
+    }
+</style>
+
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-12">
@@ -20,7 +43,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             }
-            
+
             <div class="card shadow-sm border-0 rounded-4 mb-5">
                 <div class="card-header bg-body-tertiary border-0 py-3">
                     <h4 class="mb-0 fw-bold">
@@ -44,7 +67,7 @@
                     </form>
                 </div>
             </div>
-            
+
             <div class="card shadow-sm border-0 rounded-4 mb-5">
                 <div class="card-header bg-body-tertiary border-0 py-3">
                     <h4 class="mb-0 fw-bold">
@@ -83,7 +106,7 @@
                                     <tr>
                                         <td class="ps-4 fw-semibold">@inv.ProductName</td>
                                         <td>
-                                            <span class="badge bg-secondary">@inv.VariantCode</span>
+                                            <span class="badge bg-secondary text-white">@inv.VariantCode</span>
                                         </td>
                                         <td>@inv.WarehouseName</td>
                                         <td class="text-center">
@@ -104,7 +127,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="card shadow-sm border-0 rounded-4">
                 <div class="card-header bg-body-tertiary border-0 py-3">
                     <h4 class="mb-0 fw-bold">
@@ -120,18 +143,21 @@
                                         <i class="bi bi-box text-muted me-2"></i>Товар
                                     </th>
                                     <th>
+                                        <i class="bi bi-code-slash text-muted me-2"></i>Вариант
+                                    </th>
+                                    <th>
                                         <i class="bi bi-building text-muted me-2"></i>Склад
                                     </th>
                                     <th class="text-center">
                                         <i class="bi bi-arrow-left-right text-muted me-2"></i>Изменение
                                     </th>
-                                    <th>
+                                    <th class="text-center">
                                         <i class="bi bi-chat-dots text-muted me-2"></i>Причина
                                     </th>
-                                    <th>
+                                    <th class="text-center">
                                         <i class="bi bi-person text-muted me-2"></i>Кем
                                     </th>
-                                    <th>
+                                    <th class="text-center">
                                         <i class="bi bi-calendar text-muted me-2"></i>Когда
                                     </th>
                                 </tr>
@@ -139,10 +165,10 @@
                             <tbody>
                                 @foreach (var m in Model.Movements)
                                 {
-                                    <tr class="@(m.ChangeQty > 0 ? "table-success" : "table-danger")">
-                                        <td class="ps-4">
-                                            <div class="fw-semibold">@m.ProductName</div>
-                                            <small class="text-muted">@m.VariantCode</small>
+                                    <tr>
+                                        <td class="ps-4 fw-semibold">@m.ProductName</td>
+                                        <td>
+                                            <span class="badge bg-secondary text-white">@m.VariantCode</span>
                                         </td>
                                         <td>@m.WarehouseName</td>
                                         <td class="text-center">
@@ -150,25 +176,24 @@
                                                 @(m.ChangeQty > 0 ? "+" : "")@m.ChangeQty
                                             </span>
                                         </td>
-                                        <td>
+                                        <td class="text-center">
                                             @{
-                                                var (reasonText, reasonIcon) = m.Reason switch
+                                                var reasonText = m.Reason switch
                                                 {
-                                                    "restock" => ("Пополнение склада", "bi-box-arrow-in-down"),
-                                                    "sale" => ("Продажа", "bi-cart-check"),
-                                                    "return" => ("Возврат", "bi-arrow-counterclockwise"),
-                                                    "adjustment" => ("Корректировка", "bi-sliders"),
-                                                    _ => (m.Reason, "bi-question-circle")
+                                                    "restock" => "Пополнение склада",
+                                                    "sale" => "Продажа",
+                                                    "return" => "Возврат",
+                                                    "adjustment" => "Корректировка",
+                                                    _ => m.Reason
                                                 };
                                             }
-                                            <i class="bi @reasonIcon me-1 text-muted"></i>
-                                            @reasonText
+                                            <span class="badge @(m.ChangeQty > 0 ? "bg-success" : "bg-danger") text-white">@reasonText</span>
                                         </td>
-                                        <td>
-                                            <span class="badge bg-body-tertiary text-dark">@m.CreatedBy</span>
+                                        <td class="text-center">
+                                            <span class="fw-bold text-primary">@m.CreatedBy</span>
                                         </td>
-                                        <td>
-                                            <small class="text-muted">@m.CreatedAt.ToString("g")</small>
+                                        <td class="text-center">
+                                            <span class="fw-bold text-info">@m.CreatedAt.ToString("g")</span>
                                         </td>
                                     </tr>
                                 }
@@ -183,83 +208,115 @@
 
 @section Scripts {
 <script>
-function addRow() {
-    const container = document.getElementById('items-container');
-    const index = container.children.length;
+    function addRow() {
+        try {
+            const container = document.getElementById('items-container');
+            if (!container) {
+                console.error('Контейнер items-container не найден');
+                return;
+            }
 
-    const warehouses = @Html.Raw(Json.Serialize(ViewBag.Warehouses));
-    const variants = @Html.Raw(Json.Serialize(ViewBag.Variants));
+            const index = container.children.length;
+            
+            const warehouses = @Html.Raw(Json.Serialize(ViewBag.Warehouses ?? new List<string>()));
+            const variants = @Html.Raw(Json.Serialize(ViewBag.Variants ?? new List<object>()));
+            
+            console.log('Warehouses:', warehouses);
+            console.log('Variants:', variants);
 
-    let warehouseOptions = warehouses.map(w => `<option value="${w}">${w}</option>`).join('');
-    let variantOptions = variants.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+            let warehouseOptions = '<option value="">Выберите склад...</option>';
+            let variantOptions = '<option value="">Выберите товар...</option>';
+            
+            if (Array.isArray(warehouses) && warehouses.length > 0) {
+                warehouseOptions += warehouses.map(w => 
+                    w ? `<option value="${w}">${w}</option>` : '<option value="">Неверный склад</option>'
+                ).join('');
+            } else {
+                warehouseOptions = '<option value="">Нет доступных складов</option>';
+            }
+            
+            if (Array.isArray(variants) && variants.length > 0) {
+                variantOptions += variants.map(v => {
+                    const id = v && v.id ? v.id : '';
+                    const name = v && v.name ? v.name : 'Без названия';
+                    return `<option value="${id}">${name}</option>`;
+                }).join('');
+            } else {
+                variantOptions = '<option value="">Нет доступных товаров</option>';
+            }
 
-    const row = `
-        <div class="row g-3 p-4 border-bottom bg-body-tertiary rounded-3 mb-3 inventory-row">
-            <div class="col-md-5">
-                <label class="form-label fw-semibold">
-                    <i class="bi bi-box text-muted me-1"></i>Товар
-                </label>
-                <select name="Items[${index}].ProductVariantId" class="form-select rounded-3" required>
-                    <option value="">Выберите товар...</option>
-                    ${variantOptions}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">
-                    <i class="bi bi-building text-muted me-1"></i>Склад
-                </label>
-                <select name="Items[${index}].WarehouseName" class="form-select rounded-3" required>
-                    <option value="">Выберите склад...</option>
-                    ${warehouseOptions}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">
-                    <i class="bi bi-123 text-muted me-1"></i>Количество
-                </label>
-                <input type="number" name="Items[${index}].Quantity" class="form-control rounded-3" 
-                       min="1" max="1000" required placeholder="Введите количество" />
-            </div>
-            <div class="col-md-1 d-flex align-items-end">
-                <button type="button" class="btn btn-outline-danger rounded-3 w-100" 
-                        onclick="this.closest('.inventory-row').remove()" 
-                        title="Удалить строку">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-        </div>
-    `;
-    container.insertAdjacentHTML('beforeend', row);
-}
+            const row = `
+                <div class="row g-3 p-4 border-bottom bg-body-tertiary rounded-3 mb-3 inventory-row">
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-box text-muted me-1"></i>Товар
+                        </label>
+                        <select name="Items[${index}].ProductVariantId" class="form-select rounded-3" required>
+                            ${variantOptions}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-building text-muted me-1"></i>Склад
+                        </label>
+                        <select name="Items[${index}].WarehouseName" class="form-select rounded-3" required>
+                            ${warehouseOptions}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-123 text-muted me-1"></i>Количество
+                        </label>
+                        <input type="number" name="Items[${index}].Quantity" 
+                               class="form-control rounded-3" 
+                               min="1" max="10000" required 
+                               placeholder="Введите количество"
+                               value="1" />
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-danger rounded-3 w-100" 
+                                onclick="this.closest('.inventory-row').remove()" 
+                                title="Удалить строку">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', row);
+            
+        } catch (error) {
+            console.error('Ошибка при добавлении строки:', error);
+            alert('Произошла ошибка при добавлении товара. Проверьте консоль для подробностей.');
+        }
+    }
 
-document.addEventListener('DOMContentLoaded', function() {
-    addRow();
-});
+    function reindexRows() {
+        const container = document.getElementById('items-container');
+        const rows = container.querySelectorAll('.inventory-row');
+        
+        rows.forEach((row, index) => {
+            const variantSelect = row.querySelector('select[name*="ProductVariantId"]');
+            const warehouseSelect = row.querySelector('select[name*="WarehouseName"]');
+            const quantityInput = row.querySelector('input[name*="Quantity"]');
+            
+            if (variantSelect) variantSelect.name = `Items[${index}].ProductVariantId`;
+            if (warehouseSelect) warehouseSelect.name = `Items[${index}].WarehouseName`;
+            if (quantityInput) quantityInput.name = `Items[${index}].Quantity`;
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('items-container');
+        if (container && container.children.length === 0) {
+            addRow();
+        }
+        
+        container.addEventListener('DOMNodeRemoved', function(e) {
+            if (e.target.classList.contains('inventory-row')) {
+                setTimeout(reindexRows, 0);
+            }
+        });
+    });
 </script>
-@* *@
-@* <style> *@
-@*     .inventory-row { *@
-@*         transition: all 0.2s ease-in-out; *@
-@*         border-left: 4px solid #0d6efd; *@
-@*     } *@
-@*      *@
-@*     .inventory-row:hover { *@
-@*         background-color: #f8f9fa !important; *@
-@*         transform: translateX(2px); *@
-@*     } *@
-@*      *@
-@*     .table th { *@
-@*         border-top: none; *@
-@*         font-weight: 600; *@
-@*         color: #6c757d; *@
-@*     } *@
-@*      *@
-@*     .card { *@
-@*         transition: all 0.2s ease-in-out; *@
-@*     } *@
-@*      *@
-@*     .card:hover { *@
-@*         box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15) !important; *@
-@*     } *@
-@* </style> *@
 }

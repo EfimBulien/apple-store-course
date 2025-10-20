@@ -7,9 +7,7 @@ using TechStoreEll.Web.Helpers;
 namespace TechStoreEll.Web.Controllers;
 
 [AuthorizeRole("Admin")]
-public class RoleController(IGenericRepository<Role> repository,
-ILogger<RoleController> logger)
-: Controller
+public class RoleController(IGenericRepository<Role> repository, ILogger<RoleController> logger) : Controller
 {
     public async Task<IActionResult> Index()
     {
