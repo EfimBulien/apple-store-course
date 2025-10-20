@@ -4,120 +4,150 @@
     ViewData["Title"] = "Редактирование товара";
 }
 
-<h2>Редактирование товара</h2>
+<style>
+    .variant-card {
+        transition: box-shadow 0.2s;
+    }
+    .variant-card:hover {
+        box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.08);
+    }
+    .form-label {
+        font-weight: 500;
+    }
+</style>
 
-<form asp-action="EditProduct" method="post">
-    <input type="hidden" asp-for="Id" />
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Редактирование товара</h2>
+    </div>
 
-    <div class="row">
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label asp-for="Name" class="form-label">Название *</label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
+    <form asp-action="EditProduct" method="post" class="needs-validation" novalidate>
+        <input type="hidden" asp-for="Id" />
 
-            <div class="mb-3">
-                <label asp-for="Sku" class="form-label">Артикул (SKU) *</label>
-                <input asp-for="Sku" class="form-control" />
-                <span asp-validation-for="Sku" class="text-danger"></span>
-            </div>
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">Основная информация</h5>
 
-            <div class="mb-3">
-                <label asp-for="Description" class="form-label">Описание</label>
-                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="CategoryId" class="form-label">Категория *</label>
-                <select asp-for="CategoryId" asp-items="@(new SelectList(Model.Categories, "Id", "Name"))" class="form-select">
-                    <option value="0">— Выберите категорию —</option>
-                </select>
-                <span asp-validation-for="CategoryId" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3 form-check">
-                <input asp-for="Active" class="form-check-input" type="checkbox" />
-                <label asp-for="Active" class="form-check-label">Активен</label>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="ImageUrl" class="form-label">URL изображения (временно)</label>
-                <input asp-for="ImageUrl" class="form-control" placeholder="https://..." />
-                <div class="form-text">
-                    В будущем будет загрузка через MinIO. Пока можно вставить URL вручную.
-                </div>
-                <span asp-validation-for="ImageUrl" class="text-danger"></span>
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <h5>Варианты товара</h5>
-            <div id="variants-container">
-                @for (int i = 0; i < Model.Variants.Count; i++)
-                {
-                    <div class="border rounded p-3 mb-3">
-                        <input type="hidden" asp-for="Variants[i].Id" />
-                        <input type="hidden" asp-for="Variants[i].ProductId" />
-
-                        <div class="row g-2">
-                            <div class="col-md-3">
-                                <label asp-for="Variants[i].VariantCode" class="form-label">Код</label>
-                                <input asp-for="Variants[i].VariantCode" class="form-control form-control-sm" />
-                            </div>
-                            <div class="col-md-3">
-                                <label asp-for="Variants[i].Price" class="form-label">Цена</label>
-                                <input asp-for="Variants[i].Price" class="form-control form-control-sm" />
-                            </div>
-                            <div class="col-md-2">
-                                <label asp-for="Variants[i].Color" class="form-label">Цвет</label>
-                                <input asp-for="Variants[i].Color" class="form-control form-control-sm" />
-                            </div>
-                            <div class="col-md-2">
-                                <label asp-for="Variants[i].StorageGb" class="form-label">Память (ГБ)</label>
-                                <input asp-for="Variants[i].StorageGb" class="form-control form-control-sm" />
-                            </div>
-                            <div class="col-md-2">
-                                <label asp-for="Variants[i].Ram" class="form-label">ОЗУ (ГБ)</label>
-                                <input asp-for="Variants[i].Ram" class="form-control form-control-sm" />
-                            </div>
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">Название *</label>
+                            <input asp-for="Name" class="form-control" required />
+                            <span asp-validation-for="Name" class="text-danger"></span>
                         </div>
 
-                        <div class="mt-2">
-                            <h6>Изображения варианта</h6>
-                            @for (int j = 0; j < Model.Variants[i].Images.Count; j++)
-                            {
-                                <div class="input-group mb-2">
-                                    <input type="hidden" asp-for="Variants[i].Images[j].Id" />
-                                    <input asp-for="Variants[i].Images[j].ImageUrl" class="form-control form-control-sm" placeholder="URL изображения" />
-                                    <input asp-for="Variants[i].Images[j].AltText" class="form-control form-control-sm" placeholder="Alt текст" />
-                                    <input asp-for="Variants[i].Images[j].SortOrder" type="number" class="form-control form-control-sm" style="width:80px;" />
-                                    <div class="form-check" style="margin: 0 10px;">
-                                        <input type="hidden" asp-for="Variants[i].Images[j].IsPrimary" value="false" />
-                                        <input asp-for="Variants[i].Images[j].IsPrimary" class="form-check-input" />
-                                    </div>
-                                    <button type="button" class="btn btn-sm btn-danger" onclick="this.closest('.input-group').remove()">×</button>
-                                </div>
-                            }
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addImage(this, @i)">
-                                + Добавить изображение
-                            </button>
+                        <div class="mb-3">
+                            <label asp-for="Sku" class="form-label">Артикул (SKU) *</label>
+                            <input asp-for="Sku" class="form-control" required />
+                            <span asp-validation-for="Sku" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Описание</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CategoryId" class="form-label">Категория *</label>
+                            <select asp-for="CategoryId" asp-items="@(new SelectList(Model.Categories, "Id", "Name"))" class="form-select" required>
+                                <option value="">— Выберите категорию —</option>
+                            </select>
+                            <span asp-validation-for="CategoryId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3 form-check form-switch">
+                            <input asp-for="Active" class="form-check-input" type="checkbox" id="ActiveSwitch" />
+                            <label asp-for="Active" class="form-check-label" for="ActiveSwitch">Активен</label>
                         </div>
                     </div>
-                }
+                </div>
             </div>
+            
+            <div class="col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Варианты товара</h5>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="addVariant()">
+                                <i class="bi bi-plus-circle me-1"></i>Добавить вариант
+                            </button>
+                        </div>
 
-            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addVariant()">
-                + Добавить вариант
-            </button>
+                        <div id="variants-container">
+                            @for (int i = 0; i < Model.Variants.Count; i++)
+                            {
+                                <div class="variant-card border rounded p-3 mb-3">
+                                    <input type="hidden" asp-for="Variants[i].Id" />
+                                    <input type="hidden" asp-for="Variants[i].ProductId" />
+
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-3">
+                                            <label asp-for="Variants[i].VariantCode" class="form-label small">Код</label>
+                                            <input asp-for="Variants[i].VariantCode" class="form-control form-control-sm" required />
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label asp-for="Variants[i].Price" class="form-label small">Цена</label>
+                                            <input asp-for="Variants[i].Price" type="number" step="0.01" class="form-control form-control-sm" required />
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label asp-for="Variants[i].Color" class="form-label small">Цвет</label>
+                                            <input asp-for="Variants[i].Color" class="form-control form-control-sm" />
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label asp-for="Variants[i].StorageGb" class="form-label small">Память (ГБ)</label>
+                                            <input asp-for="Variants[i].StorageGb" type="number" class="form-control form-control-sm" />
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label asp-for="Variants[i].Ram" class="form-label small">ОЗУ (ГБ)</label>
+                                            <input asp-for="Variants[i].Ram" type="number" class="form-control form-control-sm" />
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="mb-0 small">Изображения</h6>
+                                            <button type="button" class="btn btn-primary btn-sm" onclick="addImage(this, @i)">
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </div>
+
+                                        @for (int j = 0; j < Model.Variants[i].Images.Count; j++)
+                                        {
+                                            <div class="input-group mb-2">
+                                                <input type="hidden" asp-for="Variants[i].Images[j].Id" />
+                                                <input asp-for="Variants[i].Images[j].ImageUrl" class="form-control form-control-sm" placeholder="URL изображения" required />
+                                                <input asp-for="Variants[i].Images[j].AltText" class="form-control form-control-sm" placeholder="Alt текст" />
+                                                <input asp-for="Variants[i].Images[j].SortOrder" type="number" class="form-control form-control-sm" style="max-width:80px;" placeholder="Порядок" />
+
+                                                <div class="input-group-text" title="Основное изображение">
+                                                    <input type="hidden" asp-for="Variants[i].Images[j].IsPrimary" value="false" />
+                                                    <input asp-for="Variants[i].Images[j].IsPrimary" class="form-check-input m-0" type="checkbox" />
+                                                </div>
+
+                                                <button type="button" class="btn btn-sm btn-danger" onclick="this.closest('.input-group').remove()">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <div class="mt-3">
-        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
-        <a asp-action="Export" class="btn btn-secondary">Отмена</a>
-    </div>
-</form>
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-1"></i>Сохранить изменения
+            </button>
+            <a asp-action="Export" class="btn btn-warning">
+                <i class="bi bi-arrow-left me-1"></i>Отмена
+            </a>
+        </div>
+    </form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
@@ -127,40 +157,41 @@
         function addVariant() {
             const container = document.getElementById('variants-container');
             const html = `
-                <div class="border rounded p-3 mb-3">
+                <div class="variant-card border rounded p-3 mb-3">
                     <input type="hidden" name="Variants[${variantIndex}].Id" value="0" />
                     <input type="hidden" name="Variants[${variantIndex}].ProductId" value="@Model.Id" />
 
-                    <div class="row g-2">
+                    <div class="row g-2 mb-2">
                         <div class="col-md-3">
-                            <label class="form-label">Код</label>
+                            <label class="form-label small">Код</label>
                             <input name="Variants[${variantIndex}].VariantCode" class="form-control form-control-sm" required />
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Цена</label>
+                            <label class="form-label small">Цена</label>
                             <input name="Variants[${variantIndex}].Price" type="number" step="0.01" class="form-control form-control-sm" required />
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label">Цвет</label>
+                            <label class="form-label small">Цвет</label>
                             <input name="Variants[${variantIndex}].Color" class="form-control form-control-sm" />
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label">Память (ГБ)</label>
+                            <label class="form-label small">Память (ГБ)</label>
                             <input name="Variants[${variantIndex}].StorageGb" type="number" class="form-control form-control-sm" />
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label">ОЗУ (ГБ)</label>
+                            <label class="form-label small">ОЗУ (ГБ)</label>
                             <input name="Variants[${variantIndex}].Ram" type="number" class="form-control form-control-sm" />
                         </div>
                     </div>
 
-                    <div class="mt-2">
-                        <h6>Изображения варианта</h6>
-                        <div class="images-container-${variantIndex}">
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0 small">Изображения</h6>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addImageToNewVariant(${variantIndex})">
+                                <i class="bi bi-plus"></i>
+                            </button>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addImageToNewVariant(${variantIndex})">
-                            + Добавить изображение
-                        </button>
+                        <div class="images-container-${variantIndex}"></div>
                     </div>
                 </div>`;
             container.insertAdjacentHTML('beforeend', html);
@@ -168,19 +199,21 @@
         }
 
         function addImage(button, variantIndex) {
-            const container = button.previousElementSibling;
+            const container = button.closest('.variant-card').querySelector('.input-group:last-of-type')?.parentElement || button.closest('.variant-card').querySelector('.mt-3 > div:nth-child(2)');
             const imageIndex = container.querySelectorAll('.input-group').length;
             const html = `
                 <div class="input-group mb-2">
                     <input type="hidden" name="Variants[${variantIndex}].Images[${imageIndex}].Id" value="0" />
                     <input name="Variants[${variantIndex}].Images[${imageIndex}].ImageUrl" class="form-control form-control-sm" placeholder="URL изображения" required />
                     <input name="Variants[${variantIndex}].Images[${imageIndex}].AltText" class="form-control form-control-sm" placeholder="Alt текст" />
-                    <input name="Variants[${variantIndex}].Images[${imageIndex}].SortOrder" type="number" class="form-control form-control-sm" style="width:80px;" value="0" />
-                    <div class="form-check" style="margin: 0 10px;">
+                    <input name="Variants[${variantIndex}].Images[${imageIndex}].SortOrder" type="number" class="form-control form-control-sm" style="max-width:80px;" placeholder="Порядок" value="0" />
+                    <div class="input-group-text" title="Основное изображение">
                         <input type="hidden" name="Variants[${variantIndex}].Images[${imageIndex}].IsPrimary" value="false" />
-                        <input name="Variants[${variantIndex}].Images[${imageIndex}].IsPrimary" class="form-check-input" value="true" />
+                        <input name="Variants[${variantIndex}].Images[${imageIndex}].IsPrimary" class="form-check-input m-0" type="checkbox" />
                     </div>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="this.closest('.input-group').remove()">×</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.input-group').remove()">
+                        <i class="bi bi-trash"></i>
+                    </button>
                 </div>`;
             container.insertAdjacentHTML('beforeend', html);
         }
@@ -193,14 +226,32 @@
                     <input type="hidden" name="Variants[${variantIndex}].Images[${imageIndex}].Id" value="0" />
                     <input name="Variants[${variantIndex}].Images[${imageIndex}].ImageUrl" class="form-control form-control-sm" placeholder="URL изображения" required />
                     <input name="Variants[${variantIndex}].Images[${imageIndex}].AltText" class="form-control form-control-sm" placeholder="Alt текст" />
-                    <input name="Variants[${variantIndex}].Images[${imageIndex}].SortOrder" type="number" class="form-control form-control-sm" style="width:80px;" value="0" />
-                    <div class="form-check" style="margin: 0 10px;">
+                    <input name="Variants[${variantIndex}].Images[${imageIndex}].SortOrder" type="number" class="form-control form-control-sm" style="max-width:80px;" placeholder="Порядок" value="0" />
+                    <div class="input-group-text" title="Основное изображение">
                         <input type="hidden" name="Variants[${variantIndex}].Images[${imageIndex}].IsPrimary" value="false" />
-                        <input name="Variants[${variantIndex}].Images[${imageIndex}].IsPrimary" class="form-check-input" value="true" />
+                        <input name="Variants[${variantIndex}].Images[${imageIndex}].IsPrimary" class="form-check-input m-0" type="checkbox" />
                     </div>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="this.closest('.input-group').remove()">×</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.input-group').remove()">
+                        <i class="bi bi-trash"></i>
+                    </button>
                 </div>`;
             container.insertAdjacentHTML('beforeend', html);
         }
+
+        (function () {
+            'use strict';
+            window.addEventListener('load', function () {
+                const forms = document.querySelectorAll('.needs-validation');
+                Array.prototype.slice.call(forms).forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
     </script>
 }

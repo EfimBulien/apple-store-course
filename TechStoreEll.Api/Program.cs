@@ -4,8 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using TechStoreEll.Core.Infrastructure.Data;
+using TechStoreEll.Core.Interfaces;
 using TechStoreEll.Core.Services;
-using TechStoreEll.Core.Services.IServices;
 
 var builder = WebApplication.CreateBuilder(args);
 

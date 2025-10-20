@@ -1,6 +1,6 @@
 using TechStoreEll.Core.Entities;
 
-namespace TechStoreEll.Core.Services.IServices;
+namespace TechStoreEll.Core.Interfaces;
 
 public interface IGenericRepository<TEntity> where TEntity : class, IEntity
 {

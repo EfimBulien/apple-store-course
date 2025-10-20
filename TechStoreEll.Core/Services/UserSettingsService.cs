@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TechStoreEll.Core.Entities;
 using TechStoreEll.Core.Infrastructure.Data;
-using TechStoreEll.Core.Services.IServices;
+using TechStoreEll.Core.Interfaces;
 
 namespace TechStoreEll.Core.Services
 {

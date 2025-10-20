@@ -13,7 +13,7 @@ public class AuthorizeRoleAttribute(params string[] allowedRoles) : Attribute, I
 
         if (user.Identity is not { IsAuthenticated: true })
         {
-            context.Result = new RedirectToActionResult("SignIn", "Auth", null);
+            context.Result = new UnauthorizedResult();
             return;
         }
 

@@ -1,7 +1,7 @@
 using TechStoreEll.Core.DTOs;
 using TechStoreEll.Core.Models;
 
-namespace TechStoreEll.Core.Services.IServices;
+namespace TechStoreEll.Core.Interfaces;
 
 public interface IRestockService
 {

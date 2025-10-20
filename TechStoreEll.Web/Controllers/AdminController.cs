@@ -13,6 +13,7 @@ using TechStoreEll.Web.Models;
 
 namespace TechStoreEll.Web.Controllers;
 
+[AuthorizeRole("Admin")]
 public class AdminController(AuditLogService auditService, AnalyticsService analyticsService, AppDbContext context) : Controller
 {
     private int GetCurrentUserId()
@@ -141,19 +142,16 @@ public class AdminController(AuditLogService auditService, AnalyticsService anal
 
             if (product == null)
                 return NotFound();
-
-            // Обновляем основные данные товара
+            
             product.Name = model.Name;
             product.Sku = model.Sku;
             product.Description = model.Description;
             product.Active = model.Active;
             product.CategoryId = model.CategoryId == 0 ? null : model.CategoryId;
 
-            // Обработка вариантов
             var existingVariantIds = product.ProductVariants.Select(v => v.Id).ToHashSet();
             var incomingVariantIds = model.Variants.Where(v => v.Id > 0).Select(v => v.Id).ToHashSet();
 
-            // Удаление удалённых вариантов
             var variantsToRemove = product.ProductVariants
                 .Where(v => !incomingVariantIds.Contains(v.Id))
                 .ToList();
@@ -163,14 +161,12 @@ public class AdminController(AuditLogService auditService, AnalyticsService anal
                 context.ProductVariants.Remove(variant);
             }
 
-            // Обновление и добавление вариантов
             foreach (var variantModel in model.Variants)
             {
                 ProductVariant variant;
                 
                 if (variantModel.Id > 0)
                 {
-                    // Обновление существующего варианта
                     variant = product.ProductVariants.FirstOrDefault(v => v.Id == variantModel.Id);
                     if (variant != null)
                     {
@@ -183,7 +179,6 @@ public class AdminController(AuditLogService auditService, AnalyticsService anal
                 }
                 else
                 {
-                    // Создание нового варианта
                     variant = new ProductVariant
                     {
                         ProductId = product.Id,
@@ -198,7 +193,6 @@ public class AdminController(AuditLogService auditService, AnalyticsService anal
 
                 if (variant == null) continue;
 
-                // Обработка изображений
                 if (variantModel.Images != null && variantModel.Images.Any())
                 {
                     await ProcessVariantImages(variant, variantModel.Images);
@@ -226,7 +220,6 @@ public class AdminController(AuditLogService auditService, AnalyticsService anal
 
     private async Task ProcessVariantImages(ProductVariant variant, List<ProductImageEditModel> imageModels)
     {
-        // Для новых вариантов нужно сначала сохранить, чтобы получить ID
         if (variant.Id == 0)
         {
             await context.SaveChangesAsync();
@@ -235,7 +228,6 @@ public class AdminController(AuditLogService auditService, AnalyticsService anal
         var existingImageIds = variant.ProductImages.Select(img => img.Id).ToHashSet();
         var incomingImageIds = imageModels.Where(img => img.Id > 0).Select(img => img.Id).ToHashSet();
 
-        // Удаление изображений
         var imagesToRemove = variant.ProductImages
             .Where(img => !incomingImageIds.Contains(img.Id))
             .ToList();
@@ -245,12 +237,10 @@ public class AdminController(AuditLogService auditService, AnalyticsService anal
             context.ProductImages.Remove(img);
         }
 
-        // Обновление и добавление изображений
         foreach (var imgModel in imageModels)
         {
             if (imgModel.Id > 0)
             {
-                // Обновление существующего изображения
                 var existingImg = variant.ProductImages.FirstOrDefault(i => i.Id == imgModel.Id);
                 if (existingImg != null)
                 {
@@ -262,7 +252,6 @@ public class AdminController(AuditLogService auditService, AnalyticsService anal
             }
             else
             {
-                // Добавление нового изображения
                 var newImage = new ProductImage
                 {
                     ProductVariantId = variant.Id,
@@ -304,8 +293,7 @@ public class AdminController(AuditLogService auditService, AnalyticsService anal
         
         return RedirectToAction(nameof(ReviewModeration));
     }
-
-    [AuthorizeRole("Admin")]
+    
     public async Task<IActionResult> ReviewModeration(int page = 1, int pageSize = 20)
     {
         var reviews = await context.Reviews

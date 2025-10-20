@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using TechStoreEll.Core.Interfaces;
 using TechStoreEll.Core.Models;
-using TechStoreEll.Core.Services.IServices;
 using TechStoreEll.Web.Helpers;
 
 namespace TechStoreEll.Web.Controllers;

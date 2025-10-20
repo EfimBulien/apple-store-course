@@ -1,12 +1,12 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using TechStoreEll.Core.Interfaces;
 using TechStoreEll.Core.Models;
-using TechStoreEll.Core.Services.IServices;
 using TechStoreEll.Web.Helpers;
 
 namespace TechStoreEll.Web.Controllers;
 
-[AuthorizeRole("Customer", "Admin")]
+[AuthorizeRole("Customer")]
 public class CartController(ICartService cartService) : Controller
 {
     private string GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new NullReferenceException();

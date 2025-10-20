@@ -1,7 +1,7 @@
 using StackExchange.Redis;
 using System.Text.Json;
+using TechStoreEll.Core.Interfaces;
 using TechStoreEll.Core.Models;
-using TechStoreEll.Core.Services.IServices;
 using IDatabase = StackExchange.Redis.IDatabase;
 
 namespace TechStoreEll.Core.Services;

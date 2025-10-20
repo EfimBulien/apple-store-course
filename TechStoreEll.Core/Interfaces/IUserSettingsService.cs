@@ -1,4 +1,4 @@
-namespace TechStoreEll.Core.Services.IServices;
+namespace TechStoreEll.Core.Interfaces;
 
 public interface IUserSettingsService
 {

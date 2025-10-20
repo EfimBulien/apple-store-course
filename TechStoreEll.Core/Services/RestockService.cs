@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using TechStoreEll.Core.DTOs;
 using TechStoreEll.Core.Infrastructure.Data;
+using TechStoreEll.Core.Interfaces;
 using TechStoreEll.Core.Models;
-using TechStoreEll.Core.Services.IServices;
 
 namespace TechStoreEll.Core.Services;
 
@@ -38,7 +39,7 @@ public class RestockService(AppDbContext context) : IRestockService
             .Include(i => i.Warehouse)
             .Select(i => new InventoryViewModel
             {
-                ProductName = i.ProductVariant.Product.Name,
+                ProductName = i.ProductVariant.Product.Name!,
                 VariantCode = i.ProductVariant.VariantCode,
                 WarehouseName = i.Warehouse != null ? i.Warehouse.Name : "—",
                 Quantity = i.Quantity,
@@ -58,7 +59,7 @@ public class RestockService(AppDbContext context) : IRestockService
             .Take(take)
             .Select(m => new InventoryMovementViewModel
             {
-                ProductName = m.ProductVariant.Product.Name,
+                ProductName = m.ProductVariant.Product.Name!,
                 VariantCode = m.ProductVariant.VariantCode,
                 WarehouseName = m.Warehouse.Name,
                 ChangeQty = m.ChangeQty,

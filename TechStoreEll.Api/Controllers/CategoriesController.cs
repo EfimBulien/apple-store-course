@@ -1,7 +1,7 @@
 using TechStoreEll.Api.Attributes;
 using TechStoreEll.Core.Entities;
+using TechStoreEll.Core.Interfaces;
 using TechStoreEll.Core.Services;
-using TechStoreEll.Core.Services.IServices;
 
 namespace TechStoreEll.Api.Controllers;
 
