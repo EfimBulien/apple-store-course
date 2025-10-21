@@ -12,7 +12,7 @@ public class HashService
     public static string HashPassword(string input)
     {
         if (string.IsNullOrWhiteSpace(input))
-            throw new ArgumentException("Input can not be empty", nameof(input));
+            throw new ArgumentException(null, nameof(input));
 
         byte[] salt = new byte[SaltSize];
         using (var rng = RandomNumberGenerator.Create())

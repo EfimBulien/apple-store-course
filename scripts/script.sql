@@ -958,3 +958,42 @@ FROM vw_russian_users_addresses
 WHERE city = 'Москва';
 
 SELECT * FROM vw_product_reviews WHERE total_reviews > 0;
+
+
+DROP ROLE IF EXISTS app_admin, app_user, app_guest;
+
+CREATE ROLE app_admin LOGIN PASSWORD 'secure_admin_pass';
+CREATE ROLE app_user  LOGIN PASSWORD 'secure_user_pass';
+CREATE ROLE app_guest LOGIN PASSWORD 'guest_secure_pass';
+
+GRANT CONNECT ON DATABASE "TechStoreEll" TO app_admin, app_user, app_guest;
+GRANT USAGE ON SCHEMA public TO app_admin, app_user, app_guest;
+
+GRANT SELECT ON TABLE
+    products, product_variants, product_images,
+    categories, reviews, inventory
+TO app_guest;
+
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO app_user;
+
+GRANT INSERT, UPDATE, DELETE ON TABLE
+    addresses, customers, orders, order_items,
+    reviews, users, user_settings, audit_log, payments,
+    inventory, inventory_movements, products
+TO app_user;
+
+GRANT USAGE ON SEQUENCE
+    audit_log_id_seq,
+    orders_id_seq,
+    order_items_id_seq,
+    inventory_movements_id_seq,
+    payments_id_seq,
+    reviews_id_seq,
+    addresses_id_seq,
+    categories_id_seq,
+    users_id_seq
+TO app_user;
+
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO app_admin;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO app_admin;
+GRANT EXECUTE ON FUNCTION set_config(text, text, boolean) TO app_user, app_admin;

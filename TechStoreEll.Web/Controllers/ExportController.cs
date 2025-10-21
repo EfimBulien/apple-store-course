@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TechStoreEll.Core.Entities;
 using TechStoreEll.Core.Infrastructure.Data;
 
 namespace TechStoreEll.Web.Controllers;
@@ -11,8 +12,8 @@ public class ExportController(AppDbContext context, IWebHostEnvironment env) : C
     public async Task<IActionResult> ExportAudit(DateTime from, DateTime to)
     {
         from = DateTime.SpecifyKind(from, DateTimeKind.Utc);
-        to   = DateTime.SpecifyKind(to, DateTimeKind.Utc);
-        
+        to = DateTime.SpecifyKind(to, DateTimeKind.Utc);
+
         var jsonResult = await context.Database
             .SqlQueryRaw<string>("SELECT export_audit({0}, {1})::text AS \"Value\"", from, to)
             .FirstAsync();
@@ -22,37 +23,45 @@ public class ExportController(AppDbContext context, IWebHostEnvironment env) : C
 
         return File(bytes, "application/json", fileName);
     }
-    
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RequestBackup(string? note)
     {
         var userId = GetCurrentUserId();
-        
-        if (note == null)
-        {
-            return RedirectToAction("AdminPanel", "Admin");
-        }
-        
-        var backup = await context.Database
-            .SqlQueryRaw<BackupResult>("SELECT * FROM sp_request_backup({0}, {1})", userId, note)
-            .FirstAsync();
 
-        
+        if (note == null)
+            return RedirectToAction("BackupHistory");
+
+        var dbUser = "postgres";
+        var dbPassword = "1008";
+        var dbName = "TechStoreEll";
+        var dbHost = "localhost";
+        var dbPort = "5432";
+
         var backupFolder = Path.Combine(env.WebRootPath, "backups");
         Directory.CreateDirectory(backupFolder);
 
-        var cmd = backup.command.Replace("%DBNAME%", context.Database.GetDbConnection().Database);
-        var fullPath = Path.Combine(backupFolder, Path.GetFileName(cmd.Split(" -f ")[1]));
+        var fileName = $"backup_{DateTime.UtcNow:yyyyMMdd_HHmmss}.dump";
+        var fullPath = Path.Combine(backupFolder, fileName);
 
-        var psi = new System.Diagnostics.ProcessStartInfo("/Library/PostgreSQL/16/bin/pg_dump", $"-Fc -f \"{fullPath}\" -d {context.Database.GetDbConnection().Database} --no-owner --schema=public")
+        var command = $"-h {dbHost} -p {dbPort} -U {dbUser} -Fc -f \"{fullPath}\" -d {dbName} --no-owner --schema=public";
+
+        var psi = new System.Diagnostics.ProcessStartInfo
         {
+            FileName = "/Library/PostgreSQL/16/bin/pg_dump",
+            Arguments = command,
             RedirectStandardError = true,
-            RedirectStandardOutput = true
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            Environment =
+            {
+                ["PGPASSWORD"] = dbPassword
+            }
         };
 
-
-        var proc = System.Diagnostics.Process.Start(psi)!;
+        using var proc = System.Diagnostics.Process.Start(psi)!;
         await proc.WaitForExitAsync();
 
         if (proc.ExitCode != 0)
@@ -61,20 +70,51 @@ public class ExportController(AppDbContext context, IWebHostEnvironment env) : C
             return BadRequest($"Ошибка pg_dump: {err}");
         }
 
-        TempData["Success"] = $"Бэкап создан: {Path.GetFileName(fullPath)}";
+        var backup = new Backup
+        {
+            CreatedBy = userId,
+            CreatedAt = DateTime.UtcNow,
+            Filename = fileName,
+            Command = $"{psi.FileName} {command}",
+            Note = note
+        };
 
-        return RedirectToAction("AdminPanel", "Admin");
+        context.Backups.Add(backup);
+        await context.SaveChangesAsync();
+
+        TempData["Success"] = $"Бэкап успешно создан: {fileName}";
+        return RedirectToAction("BackupHistory");
     }
-    
+
+    [HttpGet]
+    public async Task<IActionResult> BackupHistory()
+    {
+        var backups = await context.Backups
+            .Include(b => b.CreatedByNavigation)
+            .OrderByDescending(b => b.CreatedAt)
+            .ToListAsync();
+
+        return View(backups);
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> DownloadBackup(int id)
+    {
+        var backup = await context.Backups.FindAsync(id);
+        if (backup == null)
+            return NotFound();
+
+        var filePath = Path.Combine(env.WebRootPath, "backups", backup.Filename ?? "");
+        if (!System.IO.File.Exists(filePath))
+            return NotFound("Файл не найден");
+
+        var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+        return File(fileBytes, "application/octet-stream", backup.Filename);
+    }
+
     private int GetCurrentUserId()
     {
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        return int.Parse(userIdClaim ?? "0");
+        return int.TryParse(userIdClaim, out var id) ? id : 0;
     }
-}
-
-public class BackupResult
-{
-    public int backup_id { get; set; }
-    public string command { get; set; } = "";
 }

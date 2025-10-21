@@ -83,9 +83,17 @@ public class HomeController(AppDbContext context) : Controller
     decimal? maxPrice = null,
     bool? inStock = null)
     {
-        var userId = GetCurrentUserId();
-        var userSettings = await context.UserSettings.FirstOrDefaultAsync(us => us.Id == userId);
-        var itemsPerPage = userSettings?.ItemsPerPage ?? 20;
+        int itemsPerPage;
+        try
+        {
+            var userId = GetCurrentUserId();
+            var userSettings = await context.UserSettings.FirstOrDefaultAsync(us => us.Id == userId);
+            itemsPerPage = userSettings?.ItemsPerPage ?? 20;
+        }
+        catch
+        {
+            itemsPerPage = 20;
+        }
         
         const int minTake = 10;
         const int maxTake = 100;

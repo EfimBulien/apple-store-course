@@ -1,0 +1,59 @@
+@model IEnumerable<TechStoreEll.Core.Entities.Backup>
+
+@{
+    ViewData["Title"] = "История резервных копий";
+}
+
+<div class="container py-5">
+    <h2 class="fw-bold mb-4">
+        <i class="bi bi-hdd-network me-2"></i>История резервных копий
+    </h2>
+
+    <form asp-action="RequestBackup" asp-controller="Export" method="post" class="mb-4">
+        @Html.AntiForgeryToken()
+        <div class="input-group">
+            <input type="text" name="note" class="form-control" placeholder="Примечание к резервной копии..." />
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-plus-circle me-1"></i>Создать новую копию
+            </button>
+        </div>
+    </form>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success mt-3">@TempData["Success"]</div>
+    }
+
+    <div class="row g-3 mt-4">
+        @foreach (var backup in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm border-0 rounded-4 h-100">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">
+                            💾 @backup.Filename
+                        </h5>
+                        <p class="card-text mb-1">
+                            <strong>Дата:</strong> @backup.CreatedAt.ToLocalTime().ToString("g")
+                        </p>
+                        <p class="card-text mb-1">
+                            <strong>Пользователь:</strong> @(backup.CreatedByNavigation?.Username ?? "Система")
+                        </p>
+                        @if (!string.IsNullOrWhiteSpace(backup.Note))
+                        {
+                            <p class="card-text"><strong>Заметка:</strong> @backup.Note</p>
+                        }
+
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <a asp-action="DownloadBackup"
+                               asp-route-id="@backup.Id"
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-download me-1"></i> Скачать
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

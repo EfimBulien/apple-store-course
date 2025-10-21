@@ -42,6 +42,9 @@ public class AddressService(AppDbContext context)
 
     public async Task SaveAddressAsync(AddressFormModel model, int userId)
     {
+        Console.WriteLine(userId);
+        await context.SetCurrentUserAsync(userId);
+        
         if (model.Id.HasValue)
         {
             var existing = await context.Addresses
@@ -80,6 +83,8 @@ public class AddressService(AppDbContext context)
 
     public async Task<bool> DeleteAddressAsync(int id, int userId)
     {
+        await context.SetCurrentUserAsync(userId);
+        
         var address = await context.Addresses
             .FirstOrDefaultAsync(a => a.Id == id && a.UserId == userId);
         if (address == null) return false;
@@ -95,6 +100,8 @@ public class AddressService(AppDbContext context)
 
     public async Task SetShippingAddressAsync(int userId, int addressId)
     {
+        await context.SetCurrentUserAsync(userId);
+        
         var address = await context.Addresses.FindAsync(addressId);
         if (address == null || address.UserId != userId)
             throw new InvalidOperationException("Invalid address");
@@ -115,6 +122,8 @@ public class AddressService(AppDbContext context)
 
     public async Task SetBillingAddressAsync(int userId, int addressId)
     {
+        await context.SetCurrentUserAsync(userId);
+        
         var address = await context.Addresses.FindAsync(addressId);
         if (address == null || address.UserId != userId)
             throw new InvalidOperationException("Invalid address");

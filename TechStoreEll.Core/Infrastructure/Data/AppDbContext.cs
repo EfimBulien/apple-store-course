@@ -49,9 +49,17 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<VwProductStock> VwProductStocks { get; set; }
 
     public virtual DbSet<Warehouse> Warehouses { get; set; }
+    
+    public async Task SetCurrentUserAsync(int userId)
+    {
+        await Database.ExecuteSqlRawAsync(
+            "SELECT set_config('app.current_user_id', {0}, false)",
+            userId.ToString()
+        );
+    }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseNpgsql("Host=localhost;Database=TechStoreEll;Username=postgres;Password=1008");
+    // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    //     => optionsBuilder.UseNpgsql("Host=localhost;Database=TechStoreEll;Username=postgres;Password=1008");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

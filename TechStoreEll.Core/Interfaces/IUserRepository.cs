@@ -1,4 +1,3 @@
-using TechStoreEll.Core.DTOs;
 using TechStoreEll.Core.Entities;
 
 namespace TechStoreEll.Core.Interfaces;

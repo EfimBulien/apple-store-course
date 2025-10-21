@@ -1,15 +1,64 @@
+using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using StackExchange.Redis;
 using TechStoreEll.Core.Infrastructure.Data;
 using TechStoreEll.Core.Interfaces;
 using TechStoreEll.Core.Services;
 using TechStoreEll.Web.Helpers;
-using Prometheus;
+//using Prometheus;
 using TechStoreEll.Core.Infrastructure.Data.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<AppDbContext>(sp =>
+{
+    var httpContext = sp.GetRequiredService<IHttpContextAccessor>().HttpContext;
+    var config = sp.GetRequiredService<IConfiguration>();
+
+    string? dbRole;
+    string? password;
+
+    if (httpContext?.User?.Identity?.IsAuthenticated == true)
+    {
+        var jwtRole = httpContext.User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(jwtRole) || !config.GetSection($"DbRoles:{jwtRole}").Exists())
+        {
+            Console.WriteLine(jwtRole);
+            throw new Exception("Invalid or unsupported user role");
+        }
+
+        dbRole = config[$"DbRoles:{jwtRole}:DbRole"];
+        password = config[$"DbRoles:{jwtRole}:Password"];
+    }
+    else
+    {
+        dbRole = config["DbRoles:Guest:DbRole"] ?? "app_guest";
+        password = config["DbRoles:Guest:Password"] ?? throw new Exception("Guest DB password not configured");
+    }
+
+    if (string.IsNullOrEmpty(dbRole) || string.IsNullOrEmpty(password))
+        throw new Exception("Database role or password missing");
+
+    var connectionString = new NpgsqlConnectionStringBuilder
+    {
+        Host = config["Db:Host"] ?? "localhost",
+        Port = int.Parse(config["Db:Port"] ?? "5432"),
+        Database = config["Db:Database"] ?? "TechStoreEll",
+        Username = dbRole,
+        Password = password,
+        Pooling = false
+    }.ToString();
+
+    var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
+    optionsBuilder.UseNpgsql(connectionString);
+    return new AppDbContext(optionsBuilder.Options);
+});
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
@@ -25,7 +74,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var key = Encoding.ASCII.GetBytes(jwtSettings["SecretKey"]!);
 
-builder.Services.AddDbContext<AppDbContext>();
+//builder.Services.AddDbContext<AppDbContext>();
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -70,7 +119,7 @@ builder.Services.AddScoped<ICartService, RedisCartService>();
 builder.Services.AddScoped<IRestockService, RestockService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddHostedService<MetricsService>();
+//builder.Services.AddHostedService<MetricsService>();
 
 
 var app = builder.Build();
@@ -81,8 +130,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpMetrics();
-app.MapMetrics();
+// app.UseHttpMetrics();
+// app.MapMetrics();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
