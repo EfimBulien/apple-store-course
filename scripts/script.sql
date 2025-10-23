@@ -96,7 +96,6 @@ CREATE TABLE inventory (
     id SERIAL PRIMARY KEY,
     product_variant_id INT NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
     warehouse_id INT REFERENCES warehouses(id) ON DELETE CASCADE,
-    --warehouse VARCHAR(100) NOT NULL,
     quantity INT NOT NULL DEFAULT 0 CHECK (quantity >= 0),
     reserve INT NOT NULL DEFAULT 0 CHECK (reserve >= 0),
     UNIQUE(product_variant_id, warehouse_id)
@@ -171,11 +170,11 @@ CREATE TABLE audit_log (
 -- 10) Настройки пользователя
 CREATE TABLE user_settings (
     user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    theme VARCHAR(20) DEFAULT 'light' CHECK (theme IN ('light','dark')) NOT NULL,
-    items_per_page INT DEFAULT 20 CHECK (items_per_page > 0 AND items_per_page <= 200) NOT NULL,
-    date_format VARCHAR(50) DEFAULT 'YYYY-MM-DD' NOT NULL,
-    number_format VARCHAR(50) DEFAULT 'ru_RU' NOT NULL,
-    saved_filters JSONB DEFAULT '[]'::jsonb NOT NULL,
+    theme VARCHAR(20) DEFAULT 'light' CHECK (theme IN ('light','dark')),
+    items_per_page INT DEFAULT 20 CHECK (items_per_page > 0 AND items_per_page <= 200),
+    date_format VARCHAR(50) DEFAULT 'YYYY-MM-DD',
+    number_format VARCHAR(50) DEFAULT 'ru_RU',
+    saved_filters JSONB DEFAULT '[]'::jsonb,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
@@ -622,40 +621,97 @@ BEGIN
 END;
 $$;
 
--- 5) recalc_product_rating - пересчет рейтинга продукта
-CREATE OR REPLACE FUNCTION recalc_product_rating(p_product_id INT) RETURNS VOID LANGUAGE plpgsql AS $$
+-- -- 5) recalc_product_rating - пересчет рейтинга продукта
+-- CREATE OR REPLACE FUNCTION recalc_product_rating(p_product_id INT) RETURNS VOID LANGUAGE plpgsql AS $$
+-- DECLARE
+--     v_avg NUMERIC(3,2);
+--     v_cnt INT;
+-- BEGIN
+--     BEGIN
+--         SELECT AVG(rating)::numeric(3,2), COUNT(*) INTO v_avg, v_cnt
+--         FROM reviews
+--         WHERE product_id = p_product_id AND is_moderated = FALSE;
+--
+--         UPDATE products SET avg_rating = v_avg, reviews_count = v_cnt
+--         WHERE id = p_product_id;
+--
+--         COMMIT;
+--     EXCEPTION
+--         WHEN OTHERS THEN
+--             ROLLBACK;
+--             RAISE;
+--     END;
+-- END;
+-- $$;
+--
+-- -- триггер на отзывы
+-- CREATE OR REPLACE FUNCTION trg_reviews_after() RETURNS trigger LANGUAGE plpgsql AS $$
+-- BEGIN
+--     PERFORM recalc_product_rating(COALESCE(NEW.product_id, OLD.product_id));
+--     RETURN NEW;
+-- END;
+-- $$;
+--
+DROP TRIGGER IF EXISTS trg_reviews_after ON reviews;
+DROP FUNCTION IF EXISTS trg_reviews_after();
+DROP FUNCTION IF EXISTS recalc_product_rating(int);
+DROP TRIGGER IF EXISTS trg_reviews_after ON reviews;
+-- CREATE TRIGGER trg_reviews_after AFTER INSERT OR UPDATE OR DELETE ON reviews FOR EACH ROW EXECUTE FUNCTION trg_reviews_after();
+CREATE OR REPLACE FUNCTION recalc_product_rating(p_product_id INT)
+RETURNS VOID
+LANGUAGE plpgsql AS $$
 DECLARE
     v_avg NUMERIC(3,2);
     v_cnt INT;
 BEGIN
-    -- Начало транзакции для обеспечения консистентности данных
-    BEGIN
-        SELECT AVG(rating)::numeric(3,2), COUNT(*) INTO v_avg, v_cnt
-        FROM reviews
-        WHERE product_id = p_product_id AND is_moderated = FALSE;
+    SELECT AVG(rating)::numeric(3,2), COUNT(*) INTO v_avg, v_cnt
+    FROM reviews
+    WHERE product_id = p_product_id AND is_moderated = TRUE;
 
-        UPDATE products SET avg_rating = v_avg, reviews_count = v_cnt
+    IF v_cnt = 0 THEN
+        UPDATE products
+        SET avg_rating = NULL,
+            reviews_count = 0
         WHERE id = p_product_id;
-
-        COMMIT;
-    EXCEPTION
-        WHEN OTHERS THEN
-            ROLLBACK;
-            RAISE;
-    END;
+    ELSE
+        UPDATE products
+        SET avg_rating = v_avg,
+            reviews_count = v_cnt
+        WHERE id = p_product_id;
+    END IF;
 END;
 $$;
 
--- триггер на отзывы
-CREATE OR REPLACE FUNCTION trg_reviews_after() RETURNS trigger LANGUAGE plpgsql AS $$
+
+-- Триггерная функция (вызывается после insert/update/delete)
+CREATE OR REPLACE FUNCTION trg_reviews_after()
+RETURNS trigger
+LANGUAGE plpgsql AS $$
+DECLARE
+    v_product_id INT;
 BEGIN
-    PERFORM recalc_product_rating(COALESCE(NEW.product_id, OLD.product_id));
+    -- для INSERT/UPDATE используем NEW, для DELETE — OLD
+    v_product_id := COALESCE(NEW.product_id, OLD.product_id);
+
+    -- защитимся: если product_id NULL — ничего не делаем
+    IF v_product_id IS NOT NULL THEN
+        PERFORM recalc_product_rating(v_product_id);
+    END IF;
+
+    -- Для AFTER триггера возвращаем NULL или NEW; возвращаем NEW чтобы стандартно работать для insert/update
     RETURN NEW;
 END;
 $$;
 
-DROP TRIGGER IF EXISTS trg_reviews_after ON reviews;
-CREATE TRIGGER trg_reviews_after AFTER INSERT OR UPDATE OR DELETE ON reviews FOR EACH ROW EXECUTE FUNCTION trg_reviews_after();
+
+-- Создаём AFTER-триггер, реагирующий на INSERT, UPDATE и DELETE
+CREATE TRIGGER trg_reviews_after
+AFTER INSERT OR UPDATE OR DELETE
+ON reviews
+FOR EACH ROW
+EXECUTE FUNCTION trg_reviews_after();
+
+
 
 -- ========== для BACKUP/RESTORE ==========
 CREATE OR REPLACE FUNCTION sp_request_backup(p_user_id INT, p_note TEXT DEFAULT NULL)
@@ -997,3 +1053,6 @@ TO app_user;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO app_admin;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO app_admin;
 GRANT EXECUTE ON FUNCTION set_config(text, text, boolean) TO app_user, app_admin;
+
+
+SELECT recalc_product_rating(id) FROM products;

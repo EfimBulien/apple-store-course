@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TechStoreEll.Api", "TechSto
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TechStoreEll.Core", "TechStoreEll.Core\TechStoreEll.Core.csproj", "{2F8C485A-BB44-4909-81E6-4517C8E80D2B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TechStoreEll.Tests", "TechStoreEll.Tests\TechStoreEll.Tests.csproj", "{0B8A6B5C-A7FE-466C-A3C8-7FB9B96C12C5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{2F8C485A-BB44-4909-81E6-4517C8E80D2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2F8C485A-BB44-4909-81E6-4517C8E80D2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2F8C485A-BB44-4909-81E6-4517C8E80D2B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0B8A6B5C-A7FE-466C-A3C8-7FB9B96C12C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B8A6B5C-A7FE-466C-A3C8-7FB9B96C12C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B8A6B5C-A7FE-466C-A3C8-7FB9B96C12C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B8A6B5C-A7FE-466C-A3C8-7FB9B96C12C5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

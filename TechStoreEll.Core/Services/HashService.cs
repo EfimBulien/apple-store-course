@@ -28,8 +28,18 @@ public class HashService
             numBytesRequested: HashSize);
 
         byte[] hashBytes = new byte[SaltSize + HashSize];
-        Array.Copy(salt, 0, hashBytes, 0, SaltSize);
-        Array.Copy(hash, 0, hashBytes, SaltSize, HashSize);
+        Array.Copy(
+            salt, 
+            0, 
+            hashBytes, 
+            0, 
+            SaltSize);
+        Array.Copy(
+            hash, 
+            0, 
+            hashBytes, 
+            SaltSize, 
+            HashSize);
 
         return Convert.ToBase64String(hashBytes);
     }
@@ -46,10 +56,20 @@ public class HashService
                 return false;
 
             byte[] salt = new byte[SaltSize];
-            Array.Copy(hashBytes, 0, salt, 0, SaltSize);
+            Array.Copy(
+                hashBytes, 
+                0, 
+                salt, 
+                0, 
+                SaltSize);
 
             byte[] storedHash = new byte[HashSize];
-            Array.Copy(hashBytes, SaltSize, storedHash, 0, HashSize);
+            Array.Copy(
+                hashBytes, 
+                SaltSize, 
+                storedHash, 
+                0, 
+                HashSize);
 
             byte[] computedHash = KeyDerivation.Pbkdf2(
                 password: input,
@@ -58,7 +78,9 @@ public class HashService
                 iterationCount: DefaultIterations,
                 numBytesRequested: HashSize);
 
-            return CryptographicOperations.FixedTimeEquals(computedHash, storedHash);
+            return CryptographicOperations.FixedTimeEquals(
+                computedHash, 
+                storedHash);
         }
         catch (FormatException)
         {

@@ -53,14 +53,22 @@ public class AuthService(AppDbContext context)
 
     public async Task<User?> Authenticate(LoginDto loginDto)
     {
-        var user = await context.Users
-            .Include(u => u.Role)
-            .FirstOrDefaultAsync(u => u.Username == loginDto.Username);
+        try
+        {
+            var user = await context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Username == loginDto.Username);
 
-        if (user == null)
-            return null;
+            if (user == null)
+                return null;
 
-        return !HashService.VerifyHash(loginDto.Password, user.PasswordHash) ? null : user;
+            return !HashService.VerifyHash(loginDto.Password, user.PasswordHash) ? null : user;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
     
     public async Task<User?> GetUserByEmailAsync(string email)
