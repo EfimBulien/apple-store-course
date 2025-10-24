@@ -5,7 +5,7 @@ using TechStoreEll.Core.DTOs;
 using TechStoreEll.Core.Entities;
 using TechStoreEll.Core.Services;
 
-namespace TechStoreEll.Tests;
+namespace TechStoreEll.Tests.Api;
 
 [TestFixture]
 public class AuthControllerTests

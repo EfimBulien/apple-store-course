@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using TechStoreEll.Core.DTOs;
 using TechStoreEll.Core.Infrastructure.Data;
+using TechStoreEll.Core.Interfaces;
 
 namespace TechStoreEll.Core.Services;
 
-public class ProductService(AppDbContext context)
+public class ProductService(AppDbContext context) : IProductService
 {
     public async Task<List<ProductFullDto>> GetAllProductVariantsAsync()
     {
@@ -215,5 +216,63 @@ public class ProductService(AppDbContext context)
             ProductAvgRating = v.Product.AvgRating,
             ProductReviewsCount = v.Product.ReviewsCount
         }).ToListAsync();
+    }
+    
+    public async Task<List<ProductFullDto>> FilterProductsAsync(
+        string? search,
+        int? categoryId,
+        decimal? minPrice,
+        decimal? maxPrice,
+        int? ram,
+        int? storage)
+    {
+        var query = context.ProductVariants
+            .Include(v => v.Product)
+            .Where(v => v.Product.Active);
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(v =>
+                EF.Functions.ToTsVector("russian",
+                        v.Product.Name + " " + v.Product.Description + " " + v.Product.Sku + " " + v.VariantCode + " " + v.Color)
+                    .Matches(EF.Functions.WebSearchToTsQuery("russian", search))
+            );
+        }
+
+        if (categoryId.HasValue)
+            query = query.Where(v => v.Product.CategoryId == categoryId);
+
+        if (minPrice.HasValue)
+            query = query.Where(v => v.Price >= minPrice);
+
+        if (maxPrice.HasValue)
+            query = query.Where(v => v.Price <= maxPrice);
+
+        if (ram.HasValue)
+            query = query.Where(v => v.Ram == ram);
+
+        if (storage.HasValue)
+            query = query.Where(v => v.StorageGb == storage);
+
+        var result = await query.Select(v => new ProductFullDto
+        {
+            Id = v.Id,
+            ProductId = v.ProductId,
+            VariantCode = v.VariantCode,
+            Price = v.Price,
+            Color = v.Color,
+            StorageGb = v.StorageGb,
+            Ram = v.Ram,
+            ProductSku = v.Product.Sku!,
+            ProductName = v.Product.Name!,
+            CategoryId = v.Product.CategoryId,
+            ProductDescription = v.Product.Description,
+            ProductActive = v.Product.Active,
+            ProductCreatedAt = v.Product.CreatedAt,
+            ProductAvgRating = v.Product.AvgRating,
+            ProductReviewsCount = v.Product.ReviewsCount
+        }).ToListAsync();
+
+        return result;
     }
 }

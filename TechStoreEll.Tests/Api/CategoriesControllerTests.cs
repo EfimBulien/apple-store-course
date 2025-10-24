@@ -5,7 +5,7 @@ using TechStoreEll.Api.Controllers;
 using TechStoreEll.Core.Entities;
 using TechStoreEll.Core.Interfaces;
 
-namespace TechStoreEll.Tests;
+namespace TechStoreEll.Tests.Api;
 
 [TestFixture]
 public class CategoriesControllerTests
