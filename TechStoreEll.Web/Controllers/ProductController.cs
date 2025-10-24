@@ -4,6 +4,7 @@ using TechStoreEll.Core.Entities;
 using TechStoreEll.Core.Infrastructure.Data;
 using TechStoreEll.Core.Models;
 using TechStoreEll.Web.Helpers;
+using TechStoreEll.Web.Models;
 
 namespace TechStoreEll.Web.Controllers;
 
@@ -34,16 +35,48 @@ public class ProductController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(ProductCreateViewModel model)
     {
-        logger.LogWarning("ModelState.IsValid = {Valid}", ModelState.IsValid);
-        logger.LogWarning("Variants = {Variants}", model.Variants.Count.ToString());
+        // ОТЛАДОЧНАЯ ИНФОРМАЦИЯ
+        Console.WriteLine("=== DEBUG INFO ===");
+        Console.WriteLine($"ModelState.IsValid: {ModelState.IsValid}");
+        Console.WriteLine($"Variants count: {model.Variants?.Count ?? 0}");
+    
+        if (model.Variants != null)
+        {
+            for (int i = 0; i < model.Variants.Count; i++)
+            {
+                var variant = model.Variants[i];
+                Console.WriteLine($"Variant {i}: Code='{variant.VariantCode}', Price={variant.Price}, Images={variant.Images?.Count ?? 0}");
+                if (variant.Images?.Count > 0)
+                {
+                    foreach (var file in variant.Images)
+                    {
+                        Console.WriteLine($"  File: {file.FileName}, Size: {file.Length}, Type: {file.ContentType}");
+                    }
+                }
+            }
+        }
+    
+        // Логируем все ошибки ModelState
+        foreach (var key in ModelState.Keys)
+        {
+            var entry = ModelState[key];
+            if (entry.Errors.Count > 0)
+            {
+                foreach (var error in entry.Errors)
+                {
+                    Console.WriteLine($"ModelError - {key}: {error.ErrorMessage}");
+                }
+            }
+        }
 
         if (!ModelState.IsValid)
         {
-            logger.LogWarning("ModelState invalid. Returning View.");
             model.Categories = await context.Categories.OrderBy(c => c.Name).ToListAsync();
             return View(model);
         }
-        
+    
+        // ... остальной код
+    
         logger.LogInformation("Create POST: Variants count = {Count}", model.Variants?.Count ?? 0);
         if (model.Variants != null)
         {
@@ -181,6 +214,7 @@ public class ProductController(
                 }
                 catch (Exception delEx)
                 {
+                    Console.WriteLine($"{delEx}  {objectName}");
                     logger.LogWarning(delEx, "Не удалось удалить объект {ObjectName} из MinIO после ошибки", objectName);
                 }
             }

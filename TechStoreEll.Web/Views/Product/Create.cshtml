@@ -1,5 +1,6 @@
 @using TechStoreEll.Core.Models
-@model TechStoreEll.Core.Models.ProductCreateViewModel
+@using TechStoreEll.Web.Models
+@model TechStoreEll.Web.Models.ProductCreateViewModel
 
 @{
 ViewData["Title"] = "Добавление товара";
@@ -27,7 +28,7 @@ ViewData["Title"] = "Добавление товара";
 
             <div class="card shadow-sm border-0 rounded-4">
                 <div class="card-body p-4">
-                    <form asp-action="Create" method="post" enctype="multipart/form-data" id="productForm" novalidate>
+                    <form asp-action="Create" method="post" enctype="multipart/form-data" id="productForm">
                         @Html.AntiForgeryToken()
 
                         <div class="row g-4 mb-5">
@@ -133,8 +134,6 @@ ViewData["Title"] = "Добавление товара";
 </div>
 
 @section Scripts {
-<partial name="_ValidationScriptsPartial" />
-
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const container = document.getElementById('variants-container');
@@ -143,75 +142,83 @@ ViewData["Title"] = "Добавление товара";
 
         if (!container || !addBtn || !tpl) return;
 
-        // Определяем текущую тему
-        const currentTheme = document.documentElement.getAttribute('data-bs-theme') || 'light';
-
-        // Применяем тему ко всем существующим блокам
-        container.querySelectorAll('.variant-block').forEach(block => {
-            block.classList.remove('theme-light', 'theme-dark');
-            block.classList.add(currentTheme === 'dark' ? 'theme-dark' : 'theme-light');
-        });
+        let variantCounter = container.querySelectorAll('.variant-block').length;
 
         function updateIndices() {
-            container.querySelectorAll('.variant-block').forEach((variant, index) => {
+            const variants = container.querySelectorAll('.variant-block');
+            variants.forEach((variant, index) => {
+                
                 const title = variant.querySelector('.variant-title');
                 if (title) title.textContent = `Вариант ${index + 1}`;
+                
+                
                 variant.querySelectorAll('[name]').forEach(el => {
-                    el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
-                    el.id = el.id.replace(/_\d+_/, `_${index}_`);
+                    const oldName = el.getAttribute('name');
+                    if (oldName) {
+                        const newName = oldName.replace(/Variants\[\d+\]/, `Variants[${index}]`);
+                        el.setAttribute('name', newName);
+                    }
+                    
+                    const oldId = el.getAttribute('id');
+                    if (oldId) {
+                        const newId = oldId.replace(/Variants_\d+__/, `Variants_${index}__`);
+                        el.setAttribute('id', newId);
+                    }
                 });
             });
         }
 
-        function createNodeFromTemplate(index) {
+        function createVariantBlock(index) {
             const html = tpl.innerHTML.replace(/__index__/g, String(index));
             const temp = document.createElement('div');
             temp.innerHTML = html.trim();
-            const node = temp.querySelector('.variant-block');
-            if (!node) return null;
-
-            // Применяем текущую тему к новому блоку
+            const node = temp.firstElementChild;
+            
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme') || 'light';
             node.classList.remove('theme-light', 'theme-dark');
             node.classList.add(currentTheme === 'dark' ? 'theme-dark' : 'theme-light');
-
+            
             return node;
         }
 
-        function addVariantFromTemplate() {
-            const currentCount = container.querySelectorAll('.variant-block').length;
-            const node = createNodeFromTemplate(currentCount);
-            if (!node) return;
-            container.appendChild(node);
+        function addVariant() {
+            const newVariant = createVariantBlock(variantCounter);
+            container.appendChild(newVariant);
+            variantCounter++;
             updateIndices();
         }
 
         addBtn.addEventListener('click', function (e) {
             e.preventDefault();
-            addVariantFromTemplate();
+            addVariant();
         });
 
         container.addEventListener('click', function (e) {
-            const del = e.target.closest('.remove-variant');
-            if (!del) return;
+            const delBtn = e.target.closest('.remove-variant');
+            if (!delBtn) return;
+            
             e.preventDefault();
-            const blocks = container.querySelectorAll('.variant-block');
-            if (blocks.length <= 1) {
+            const variants = container.querySelectorAll('.variant-block');
+            if (variants.length <= 1) {
                 alert('Должен остаться хотя бы один вариант товара');
                 return;
             }
-            const toRemove = del.closest('.variant-block');
-            toRemove.remove();
+            
+            const variantToRemove = delBtn.closest('.variant-block');
+            variantToRemove.remove();
+            variantCounter--;
             updateIndices();
         });
-
+        
         container.addEventListener('change', function (e) {
-            const input = e.target;
-            if (input && input.type === 'file') {
-                const preview = input.closest('.image-upload')?.querySelector('.image-preview');
+            if (e.target.type === 'file' && e.target.multiple) {
+                const preview = e.target.closest('.image-upload')?.querySelector('.image-preview');
                 if (!preview) return;
+                
                 preview.innerHTML = '';
-                Array.from(input.files).forEach(file => {
+                Array.from(e.target.files).forEach(file => {
                     if (!file.type.startsWith('image/')) return;
+                    
                     const reader = new FileReader();
                     reader.onload = function (ev) {
                         const img = document.createElement('img');
@@ -225,6 +232,7 @@ ViewData["Title"] = "Добавление товара";
             }
         });
 
+        
         updateIndices();
     });
 </script>

@@ -46,14 +46,16 @@ public class AuthController(AuthService authService, JwtService jwtService) : Co
             Console.WriteLine("Неверные данные модели");
             return View(dto);
         }
-        
+    
         var result = await authService.Register(dto);
         if (result) 
+        {
+            TempData["SuccessMessage"] = "Регистрация прошла успешно! Теперь вы можете войти в систему.";
             return RedirectToAction("Index", "Home");
-        
+        }
+    
         ModelState.AddModelError("", "Такой пользователь уже существует");
         return View(dto);
-
     }
 
     [HttpPost]
@@ -136,14 +138,22 @@ public class AuthController(AuthService authService, JwtService jwtService) : Co
         }
 
         var email = ResetTokens[dto.Token].Email;
+    
+        var isSameAsCurrent = await authService.IsPasswordSameAsCurrentAsync(email, dto.Password);
+        if (isSameAsCurrent)
+        {
+            ModelState.AddModelError("Password", "Новый пароль не должен совпадать с текущим");
+            return View(dto);
+        }
+
         var result = await authService.UpdateUserPasswordAsync(email, dto.Password);
-        
+    
         if (!result)
         {
             ModelState.AddModelError("", "Ошибка при сбросе пароля");
             return View(dto);
         }
-        
+    
         ResetTokens.Remove(dto.Token);
         return RedirectToAction("ResetPasswordConfirmation");
     }
@@ -151,7 +161,7 @@ public class AuthController(AuthService authService, JwtService jwtService) : Co
     [HttpGet]
     public IActionResult ResetPasswordConfirmation() => View();
 
-    private bool IsValidToken(string token)
+    private static bool IsValidToken(string token)
     {
         return ResetTokens.ContainsKey(token) && ResetTokens[token].Expires > DateTime.UtcNow;
     }

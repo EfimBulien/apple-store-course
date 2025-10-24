@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using TechStoreEll.Core.Infrastructure.Data;
+using TechStoreEll.Core.Infrastructure.Data.Repositories;
 using TechStoreEll.Core.Interfaces;
 using TechStoreEll.Core.Services;
 
@@ -84,8 +85,10 @@ builder.Services.AddAuthentication(options =>
 
 // добавление репозитория
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-builder.Services.AddScoped<JwtService>();
-builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<HashService>();
 builder.Services.AddScoped<UserService>();

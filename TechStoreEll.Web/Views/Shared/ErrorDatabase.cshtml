@@ -1,0 +1,32 @@
+@model TechStoreEll.Web.Models.DatabaseErrorViewModel
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Ошибка подключения к базе данных";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="alert alert-danger shadow" role="alert">
+                <h4 class="alert-heading">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    Ошибка подключения к базе данных
+                </h4>
+                <p>@Model.Message</p>
+                @if (!string.IsNullOrEmpty(Model.DetailedError))
+                {
+                    <hr />
+                    <small class="text-muted">@Model.DetailedError</small>
+                }
+                <hr />
+                <p class="mb-0">
+                    Попробуйте обновить страницу позже или обратитесь к администратору.
+                </p>
+                <a href="/" class="btn btn-outline-primary mt-3">
+                    <i class="bi bi-house-door"></i> Вернуться на главную
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

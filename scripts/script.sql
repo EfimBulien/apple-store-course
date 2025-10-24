@@ -1050,6 +1050,13 @@ GRANT USAGE ON SEQUENCE
     users_id_seq
 TO app_user;
 
+GRANT INSERT, UPDATE, SELECT ON TABLE users TO app_guest;
+GRANT USAGE ON SEQUENCE users_id_seq TO app_guest;
+GRANT INSERT, SELECT ON TABLE user_settings TO app_guest;
+GRANT USAGE ON SEQUENCE users_id_seq TO app_guest;
+GRANT INSERT ON TABLE audit_log TO app_guest;
+GRANT USAGE ON SEQUENCE audit_log_id_seq TO app_guest;
+
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO app_admin;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO app_admin;
 GRANT EXECUTE ON FUNCTION set_config(text, text, boolean) TO app_user, app_admin;

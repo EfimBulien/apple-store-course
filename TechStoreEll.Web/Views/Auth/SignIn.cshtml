@@ -6,6 +6,16 @@
 
 <h2>Войти</h2>
 
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <p>@error.ErrorMessage</p>
+        }
+    </div>
+}
+
 <form asp-action="SignIn" asp-controller="Auth" method="post">
     <div class="mb-3">
         <label asp-for="Username" class="form-label">Введите логин</label>

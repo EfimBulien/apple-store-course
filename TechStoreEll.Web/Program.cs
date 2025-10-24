@@ -126,7 +126,9 @@ var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    //app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/error/database");
+    app.UseStatusCodePagesWithReExecute("/error/database", "?statusCode={0}");
     app.UseHsts();
 }
 

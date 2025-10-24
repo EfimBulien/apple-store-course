@@ -5,7 +5,7 @@ using TechStoreEll.Core.Infrastructure.Data;
 
 namespace TechStoreEll.Core.Services;
 
-public class AuthService(AppDbContext context)
+public class AuthService(AppDbContext context) : IAuthService
 {
     public async Task<bool> Register(RegisterDto registerDto)
     {
@@ -91,4 +91,19 @@ public class AuthService(AppDbContext context)
         await context.SaveChangesAsync();
         return true;
     }
+
+    public async Task<bool> IsPasswordSameAsCurrentAsync(string email, string? dtoPassword)
+    {
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user == null)
+            return false;
+            
+        return dtoPassword != null && HashService.VerifyHash(dtoPassword, user.PasswordHash);
+    }
+}
+
+public interface IAuthService
+{
+    Task<bool> Register(RegisterDto dto);
+    Task<User?> Authenticate(LoginDto dto);
 }

@@ -6,7 +6,7 @@ namespace TechStoreEll.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController(AuthService authService, JwtService jwtService) : ControllerBase
+public class AuthController(IAuthService authService, IJwtService jwtService) : ControllerBase
 {
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
@@ -28,6 +28,6 @@ public class AuthController(AuthService authService, JwtService jwtService) : Co
             return Unauthorized("Неверные данные");
         
         var token = jwtService.GenerateToken(user);
-        return Ok(new { Token = $"Bearer {token}" });
+        return Ok(new AuthResponseDto { Token = $"Bearer {token}" });
     }
 }

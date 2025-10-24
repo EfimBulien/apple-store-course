@@ -10,5 +10,10 @@
   &lt;TestAncestor&gt;
     &lt;TestId&gt;NUnit3x::0B8A6B5C-A7FE-466C-A3C8-7FB9B96C12C5::net8.0::TechStoreEll.Tests.CategoriesControllerTests&lt;/TestId&gt;
     &lt;TestId&gt;NUnit3x::0B8A6B5C-A7FE-466C-A3C8-7FB9B96C12C5::net8.0::TechStoreEll.Tests.Tests&lt;/TestId&gt;
+    &lt;TestId&gt;NUnit3x::0B8A6B5C-A7FE-466C-A3C8-7FB9B96C12C5::net8.0::TechStoreEll.Tests.AddressesControllerTests.GetAll_ReturnsOk_WithListOfAddresses&lt;/TestId&gt;
+    &lt;TestId&gt;NUnit3x::0B8A6B5C-A7FE-466C-A3C8-7FB9B96C12C5::net8.0::TechStoreEll.Tests.AddressesControllerTests.Get_ExistingId_ReturnsOk&lt;/TestId&gt;
+    &lt;TestId&gt;NUnit3x::0B8A6B5C-A7FE-466C-A3C8-7FB9B96C12C5::net8.0::TechStoreEll.Tests.AddressesControllerTests.Get_NonExistingId_ReturnsNotFound&lt;/TestId&gt;
+    &lt;TestId&gt;NUnit3x::0B8A6B5C-A7FE-466C-A3C8-7FB9B96C12C5::net8.0::TechStoreEll.Tests.AddressesControllerTests&lt;/TestId&gt;
+    &lt;TestId&gt;NUnit3x::0B8A6B5C-A7FE-466C-A3C8-7FB9B96C12C5::net8.0::TechStoreEll.Tests.AuthControllerTests&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

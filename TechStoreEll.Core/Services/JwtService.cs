@@ -7,7 +7,7 @@ using TechStoreEll.Core.Entities;
 
 namespace TechStoreEll.Core.Services;
 
-public class JwtService
+public class JwtService : IJwtService
 {
     private readonly string _key;
     private readonly string _issuer;
@@ -46,4 +46,9 @@ public class JwtService
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+}
+
+public interface IJwtService
+{
+    string GenerateToken(User user);
 }
