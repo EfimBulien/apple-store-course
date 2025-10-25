@@ -71,6 +71,14 @@ public class CategoryController(
     public async Task<IActionResult> Edit(int id)
     {
         var category = await repository.GetByIdAsync(id);
+        ViewBag.ParentCategories = (await repository.GetAllAsync())
+            .Select(c => new SelectListItem
+            {
+                Value = c.Id.ToString(),
+                Text = c.Name
+            })
+            .ToList();
+        
         if (category == null)
         {
             return NotFound();

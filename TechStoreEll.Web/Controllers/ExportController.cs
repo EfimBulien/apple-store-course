@@ -102,6 +102,13 @@ public class ExportController(
         return RedirectToAction("BackupHistory");
     }
     
+    /// <summary>
+    /// ВНИМАНИЕ!
+    /// Это тестовый метод восстановления в базу данных
+    /// Он создает новую базу данных и сравнивает их для проверки корректности переноса
+    /// Закомментированные строки - Restore в продакшене
+    /// ВНИМАНИЕ!
+    /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RestoreBackup(int id, string? confirmText)
@@ -141,11 +148,43 @@ public class ExportController(
             return BadRequest("pg_restore не найден в системе. Убедитесь, что PostgreSQL установлен.");
         }
 
+        //  УБЕРИТЕ КОММЕНТАРИИ ЕСЛИ ХОТИТЕ ВКЛЮЧИТЬ РЕАЛЬНОЕ ВОССТАНОВЛЕНИЕ
         try
         {
+            //  УБЕРИ КОММЕНТИРОВАНИЕ ДЛЯ РЕАЛЬНОГО ВОССТАНОВЛЕНИЯ
+            /*
             await TerminateDatabaseConnections(dbHost, dbPort, dbUser, dbPassword, dbName);
 
-            var command = $"-h {dbHost} -p {dbPort} -U {dbUser} -d {dbName} -c \"{filePath}\"";
+            var realCommand = $"-h {dbHost} -p {dbPort} -U {dbUser} -d {dbName} --clean --if-exists --no-owner -c \"{filePath}\"";
+
+            var realPsi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = pgRestorePath,
+                Arguments = realCommand,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                Environment = { ["PGPASSWORD"] = dbPassword }
+            };
+
+            using var realProc = System.Diagnostics.Process.Start(realPsi)!;
+            await realProc.WaitForExitAsync();
+
+            if (realProc.ExitCode != 0)
+            {
+                var err = await realProc.StandardError.ReadToEndAsync();
+                return BadRequest($"Ошибка pg_restore: {err}");
+            }
+            TempData["Success"] = $"База данных успешно восстановлена из бэкапа: {backup.Filename}";
+            */
+            
+            var testDbName = $"test_restore_{DateTime.UtcNow:yyyyMMddHHmmss}";
+            await ExecutePsqlCommand($"-h {dbHost} -p {dbPort} -U {dbUser} -d postgres -c \"CREATE DATABASE \\\"{testDbName}\\\";\"", dbPassword);
+            
+            // --clean --if-exists чтобы не было ошибок при удалении несуществующих объектов
+            // и --no-owner чтобы не было проблем с владельцами
+            var command = $"-h {dbHost} -p {dbPort} -U {dbUser} -d {testDbName} --clean --if-exists --no-owner -c \"{filePath}\"";
 
             var psi = new System.Diagnostics.ProcessStartInfo
             {
@@ -167,10 +206,26 @@ public class ExportController(
             if (proc.ExitCode != 0)
             {
                 var err = await proc.StandardError.ReadToEndAsync();
+                // ТЕСТОВАЯ БАЗА ДАННЫХ УДАЛИТСЯ ПРИ ОШИБКЕ
+                await ExecutePsqlCommand($"-h {dbHost} -p {dbPort} -U {dbUser} -d postgres -c \"DROP DATABASE IF EXISTS \\\"{testDbName}\\\";\"", dbPassword);
                 return BadRequest($"Ошибка pg_restore: {err}");
             }
 
-            TempData["Success"] = $"База данных успешно восстановлена из бэкапа: {backup.Filename}";
+            // СРАВНЕНИЕ
+            var currentTables = await GetTableCount(dbHost, dbPort, dbUser, dbPassword, dbName);
+            var testTables = await GetTableCount(dbHost, dbPort, dbUser, dbPassword, testDbName);
+            
+            var currentRecords = await GetTotalRecordsCount(dbHost, dbPort, dbUser, dbPassword, dbName);
+            var testRecords = await GetTotalRecordsCount(dbHost, dbPort, dbUser, dbPassword, testDbName);
+            
+
+            // ПО ЖЕЛАНИЮ МОЖНО УДАЛИТЬ БАЗУ
+            // await ExecutePsqlCommand($"-h {dbHost} -p {dbPort} -U {dbUser} -d postgres -c \"DROP DATABASE IF EXISTS \\\"{testDbName}\\\";\"", dbPassword);
+            
+            TempData["Success"] = $"Тестовое восстановление успешно! " +
+                                 $"Текущая база: {currentTables} таблиц, {currentRecords} записей. " +
+                                 $"Бэкап: {testTables} таблиц, {testRecords} записей. " + 
+                                 $"(Реальное восстановление отключено)";
         }
         catch (Exception ex)
         {
@@ -180,7 +235,76 @@ public class ExportController(
         return RedirectToAction("BackupHistory");
     }
 
-    private async Task TerminateDatabaseConnections(string host, string port, string user, string password, string dbName)
+    private async Task<string> GetTableList(string host, string port, string user, string password, string dbName)
+    {
+        var result = await ExecutePsqlCommand(
+            $"-h {host} -p {port} -U {user} -d {dbName} -c \"SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;\"", 
+            password);
+        
+        var tables = result.Split('\n')
+            .Where(line => !string.IsNullOrWhiteSpace(line) && !line.Contains("table_name") && !line.Contains("----") && !line.Contains("rows"))
+            .Take(18)
+            .ToArray();
+        
+        return tables.Length > 0 ? string.Join(", ", tables) : "нет таблиц";
+    }
+    
+    private async Task<int> GetTableCount(string host, string port, string user, string password, string dbName)
+    {
+        var result = await ExecutePsqlCommand(
+            $"-h {host} -p {port} -U {user} -d {dbName} -c \"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';\"", 
+            password);
+        
+        return int.TryParse(result, out var count) ? count : 0;
+    }
+
+    private async Task<int> GetTotalRecordsCount(string host, string port, string user, string password, string dbName)
+    {
+        var result = await ExecutePsqlCommand(
+            $"-h {host} -p {port} -U {user} -d {dbName} -c \"SELECT SUM(n_live_tup) FROM pg_stat_user_tables;\"", 
+            password);
+        
+        return int.TryParse(result, out var count) ? count : 0;
+    }
+
+    private async Task<string> ExecutePsqlCommand(string arguments, string password)
+    {
+        var psqlPath = FindPostgresTool("psql");
+        if (string.IsNullOrEmpty(psqlPath)) return string.Empty;
+
+        var psi = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = psqlPath,
+            Arguments = arguments,
+            RedirectStandardError = true,
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            Environment = { ["PGPASSWORD"] = password }
+        };
+
+        using var proc = System.Diagnostics.Process.Start(psi)!;
+        var output = await proc.StandardOutput.ReadToEndAsync();
+        await proc.WaitForExitAsync();
+
+        var lines = output.Split('\n');
+        foreach (var line in lines)
+        {
+            if (int.TryParse(line.Trim(), out var result))
+            {
+                return result.ToString();
+            }
+        }
+
+        return "0";
+    }
+
+    private async Task TerminateDatabaseConnections(
+        string host,
+        string port, 
+        string user, 
+        string password,
+        string dbName)
     {
         var psqlPath = FindPostgresTool("psql");
         if (string.IsNullOrEmpty(psqlPath)) return;

@@ -14,6 +14,16 @@
         <dt class="col-sm-3">Название</dt>
         <dd class="col-sm-9">@Model.Name</dd>
         
+        <dt class="col-sm-3">Статус</dt>
+        @if (Model.IsActive)
+        {
+            <dd class="col-sm-9">Активен</dd>
+        }
+        @if (!Model.IsActive)
+        {
+            <dd class="col-sm-9">Неактивен</dd>
+        }
+        
         <dt class="col-sm-3">Создан</dt>
         <dd class="col-sm-9">@Model.CreatedAt.ToString("g")</dd>
     </dl>
