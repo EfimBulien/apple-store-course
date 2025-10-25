@@ -14,6 +14,7 @@
     var minPriceOverall = ViewData["MinPriceOverall"] as decimal? ?? 0;
     var maxPriceOverall = ViewData["MaxPriceOverall"] as decimal? ?? 100000;
     var inStock = ViewData["InStock"] as bool?;
+    var itemsPerPage = ViewData["ItemsPerPage"] as int? ?? 20;
 }
 
 <section class="py-5 text-center bg-body-tertiary">
@@ -194,17 +195,11 @@
                         <option value="price-desc" selected="@(currentSort == "price-desc")">
                             По убыванию цены
                         </option>
-                        <option value="rating-asc" selected="@(currentSort == "rating-asc")">
-                            По возрастанию рейтинга
-                        </option>
-                        <option value="rating-desc" selected="@(currentSort == "rating-desc")">
-                            По убыванию рейтинга
-                        </option>
                     </select>
                 </div>
             </div>
 
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 g-4">
+            <div id="product-container" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 g-4">
                 @foreach (var product in Model)
                 {
                     <div class="col">
@@ -309,6 +304,17 @@
                     <a href="@Url.Action("Index")" class="btn btn-primary">Сбросить фильтры</a>
                 </div>
             }
+
+            <div class="d-flex justify-content-center mt-4 gap-2">
+                @if (Model.Count() >= itemsPerPage)
+                {
+                    <button id="showMoreBtn" class="btn btn-outline-primary"
+                            data-skip="@(Model.Count())"
+                            data-take="@itemsPerPage">
+                        Показать ещё
+                    </button>
+                }
+            </div>
         </div>
     </div>
 </div>
@@ -328,101 +334,81 @@
     <script>
         function formatNumber(number, numberFormat) {
             const num = parseFloat(number);
-            
             if (isNaN(num)) return number;
 
-            const formatters = {
-                'ru_RU': new Intl.NumberFormat('ru-RU', {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                }),
-                'en_US': new Intl.NumberFormat('en-US', {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                })
-            };
+            const formatter = numberFormat === 'en_US'
+                ? new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+                : new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
-            const formatter = formatters[numberFormat] || formatters['ru_RU'];
             return formatter.format(num) + ' ₽';
         }
 
         function formatAllPrices(numberFormat) {
-            console.log('Форматируем цены на главной в формате:', numberFormat);
-            
-            const priceElements = document.querySelectorAll('.price-display');
-            priceElements.forEach(element => {
-                const price = element.getAttribute('data-price');
-                if (price && price !== '0') {
-                    element.textContent = formatNumber(price, numberFormat);
-                }
+            document.querySelectorAll('.price-display').forEach(el => {
+                const price = el.getAttribute('data-price');
+                if (price && price !== '0') el.textContent = formatNumber(price, numberFormat);
             });
 
-            const minPriceElement = document.querySelector('.min-price');
-            const maxPriceElement = document.querySelector('.max-price');
-            
-            if (minPriceElement) {
-                const minPrice = minPriceElement.getAttribute('data-price');
-                minPriceElement.textContent = formatNumber(minPrice, numberFormat).replace(' ₽', '');
-            }
-            if (maxPriceElement) {
-                const maxPrice = maxPriceElement.getAttribute('data-price');
-                maxPriceElement.textContent = formatNumber(maxPrice, numberFormat).replace(' ₽', '');
-            }
+            const minEl = document.querySelector('.min-price');
+            const maxEl = document.querySelector('.max-price');
+            if (minEl) minEl.textContent = formatNumber(minEl.getAttribute('data-price'), numberFormat).replace(' ₽', '');
+            if (maxEl) maxEl.textContent = formatNumber(maxEl.getAttribute('data-price'), numberFormat).replace(' ₽', '');
         }
 
         async function loadUserSettings() {
             try {
-                const response = await fetch('/Profile/GetUserSettings');
-                
-                if (response.ok) {
-                    const settings = await response.json();
-                    localStorage.setItem('userSettings', JSON.stringify(settings));
-                    formatAllPrices(settings.numberFormat);
-                } else if (response.status === 401) {
-                    const defaultSettings = { numberFormat: 'ru_RU' };
-                    localStorage.setItem('userSettings', JSON.stringify(defaultSettings));
-                    formatAllPrices('ru_RU');
-                } else {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-            } catch (error) {
-                console.log('Ошибка загрузки настроек:', error, 'Используем настройки по умолчанию');
-                const defaultSettings = { numberFormat: 'ru_RU' };
-                localStorage.setItem('userSettings', JSON.stringify(defaultSettings));
+                const res = await fetch('/Profile/GetUserSettings');
+                const settings = res.ok 
+                    ? await res.json() 
+                    : { numberFormat: 'ru_RU' };
+                localStorage.setItem('userSettings', JSON.stringify(settings));
+                formatAllPrices(settings.numberFormat);
+            } catch {
+                const def = { numberFormat: 'ru_RU' };
+                localStorage.setItem('userSettings', JSON.stringify(def));
                 formatAllPrices('ru_RU');
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Главная страница загружена, инициализируем форматирование цен');
-            
-            const savedSettings = localStorage.getItem('userSettings');
-            
-            if (savedSettings) {
-                console.log('Настройки найдены в localStorage:', savedSettings);
-                const settings = JSON.parse(savedSettings);
-                formatAllPrices(settings.numberFormat);
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('userSettings');
+            if (saved) {
+                formatAllPrices(JSON.parse(saved).numberFormat);
             } else {
-                console.log('Настроек в localStorage нет, загружаем с сервера');
                 loadUserSettings();
             }
 
-            if (typeof BroadcastChannel !== 'undefined') {
-                const channel = new BroadcastChannel('user_settings');
-                channel.onmessage = function(event) {
-                    console.log('Получены новые настройки через BroadcastChannel:', event.data);
-                    localStorage.setItem('userSettings', JSON.stringify(event.data));
-                    formatAllPrices(event.data.numberFormat);
-                };
-            }
-        });
+            document.getElementById('showMoreBtn')?.addEventListener('click', async function () {
+                const skip = parseInt(this.getAttribute('data-skip'));
+                const take = parseInt(this.getAttribute('data-take'));
+                const url = new URL(window.location.href);
+                url.searchParams.set('skip', skip);
+                url.searchParams.set('take', take);
 
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'userSettings' && e.newValue) {
-                console.log('Обнаружено изменение настроек в localStorage');
-                const settings = JSON.parse(e.newValue);
-                formatAllPrices(settings.numberFormat);
-            }
+                const res = await fetch(url);
+                const html = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newContent = doc.getElementById('product-container')?.innerHTML;
+
+                if (newContent?.trim()) {
+                    document.getElementById('product-container').insertAdjacentHTML('beforeend', newContent);
+                    this.setAttribute('data-skip', skip + take);
+
+                    const settings = JSON.parse(localStorage.getItem('userSettings') || '{"numberFormat":"ru_RU"}');
+                    formatAllPrices(settings.numberFormat);
+                } else {
+                    this.disabled = true;
+                    this.textContent = 'Больше нет';
+                }
+            });
+
+            document.getElementById('showAllBtn')?.addEventListener('click', function () {
+                const url = new URL(window.location.href);
+                url.searchParams.set('take', '10000');
+                url.searchParams.delete('skip');
+                window.location.href = url.toString();
+            });
         });
 
         function updateSort(sortValue) {
@@ -431,16 +417,12 @@
             window.location.href = url.toString();
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const numberInputs = document.querySelectorAll('input[type="number"]');
+        document.addEventListener('DOMContentLoaded', () => {
             let timeout;
-            
-            numberInputs.forEach(input => {
-                input.addEventListener('input', function() {
+            document.querySelectorAll('input[type="number"]').forEach(input => {
+                input.addEventListener('input', () => {
                     clearTimeout(timeout);
-                    timeout = setTimeout(() => {
-                        document.getElementById('filterForm').submit();
-                    }, 1000);
+                    timeout = setTimeout(() => document.getElementById('filterForm')?.submit(), 1000);
                 });
             });
         });

@@ -72,8 +72,8 @@ public class HomeController(AppDbContext context) : Controller
     public async Task<IActionResult> Index(
     string? q = null, 
     string sort = "date-desc", 
-    int take = 100, 
-    int skip = 10,
+    int? take = null, 
+    int skip = 0,
     int? categoryId = null,
     int? minRam = null,
     int? maxRam = null,
@@ -82,144 +82,141 @@ public class HomeController(AppDbContext context) : Controller
     decimal? minPrice = null,
     decimal? maxPrice = null,
     bool? inStock = null)
+{
+    int itemsPerPage;
+    try
     {
-        int itemsPerPage;
-        try
-        {
-            var userId = GetCurrentUserId();
-            var userSettings = await context.UserSettings.FirstOrDefaultAsync(us => us.Id == userId);
-            itemsPerPage = userSettings?.ItemsPerPage ?? 20;
-        }
-        catch
-        {
-            itemsPerPage = 20;
-        }
+        var userId = GetCurrentUserId();
+        var userSettings = await context.UserSettings.FirstOrDefaultAsync(us => us.Id == userId); 
+        itemsPerPage = userSettings?.ItemsPerPage ?? 20;
         
-        const int minTake = 10;
-        const int maxTake = 100;
-        var finalTake = Math.Clamp(itemsPerPage, minTake, maxTake);
-        
-        var query = context.ProductVariants
-            .Where(pv => pv.Product.Active);
-        
-        if (!string.IsNullOrWhiteSpace(q))
-        {
-            var cleanQuery = q.Trim().ToLowerInvariant();
-            query = query.Where(pv => 
-                pv.Product.SearchVector!.Matches(EF.Functions.PlainToTsQuery("russian", cleanQuery))
-            );
-        }
-
-        if (categoryId is > 0) 
-            query = query.Where(pv => pv.Product.CategoryId == categoryId);
-        
-        if (minRam.HasValue)
-            query = query.Where(pv => pv.Ram >= minRam.Value);
-        
-        if (maxRam.HasValue)
-            query = query.Where(pv => pv.Ram <= maxRam.Value);
-
-        if (minStorage.HasValue)
-            query = query.Where(pv => pv.StorageGb >= minStorage.Value);
-        
-        if (maxStorage.HasValue)
-            query = query.Where(pv => pv.StorageGb <= maxStorage.Value);
-
-        if (minPrice.HasValue)
-            query = query.Where(pv => pv.Price >= minPrice.Value);
-        
-        if (maxPrice.HasValue)
-            query = query.Where(pv => pv.Price <= maxPrice.Value);
-        
-        if (inStock.HasValue && inStock.Value)
-            query = query.Where(pv => pv.Inventories.Any(i => i.Quantity - i.Reserve > 0));
-
-        var variants = await query
-            .Include(pv => pv.Product)
-            .ThenInclude(p => p.Category)
-            .Include(pv => pv.Product)
-            .ThenInclude(p => p.Reviews)
-            .Include(pv => pv.ProductImages.Where(pi => pi.IsPrimary))
-            .Include(pv => pv.Inventories)
-            .Take(finalTake)
-            .ToListAsync();
-
-        var viewModels = variants.Select(pv =>
-        {
-            var approvedReviews = pv.Product.Reviews.Where(r => r.IsModerated).ToList();
-            var reviewsCount = approvedReviews.Count;
-            var avgRating = reviewsCount > 0 ? (decimal?)approvedReviews.Average(r => r.Rating) : null;
-
-            var totalAvailable = pv.Inventories?.Sum(i => i.Quantity - i.Reserve) ?? 0;
-            var isInStock = totalAvailable > 0;
-
-            return new ProductViewModel
-            {
-                Id = pv.Id,
-                Sku = pv.VariantCode,
-                Name = pv.Product.Name!,
-                CategoryName = pv.Product.Category?.Name ?? "Без категории",
-                CategoryId = pv.Product.CategoryId,
-                Price = pv.Price,
-                Ram = pv.Ram,
-                StorageSize = pv.StorageGb,
-                PrimaryImageUrl = pv.ProductImages
-                    .Where(pi => pi.IsPrimary)
-                    .OrderBy(pi => pi.SortOrder)
-                    .Select(pi => pi.ImageUrl)
-                    .FirstOrDefault() ?? "",
-                PrimaryImageAltText = pv.ProductImages
-                    .Where(pi => pi.IsPrimary)
-                    .OrderBy(pi => pi.SortOrder)
-                    .Select(pi => pi.AltText)
-                    .FirstOrDefault() ?? "",
-                AvgRating = avgRating,
-                ReviewsCount = reviewsCount,
-                CreatedAt = pv.Product.CreatedAt,
-                IsInStock = isInStock,
-                StockQuantity = totalAvailable
-            };
-        }).ToList();
-
-        viewModels = sort switch
-        {
-            "price-asc" => viewModels.OrderBy(p => p.Price).ToList(),
-            "price-desc" => viewModels.OrderByDescending(p => p.Price).ToList(),
-            "rating-asc" => viewModels.OrderBy(p => p.AvgRating ?? 0).ToList(),
-            "rating-desc" => viewModels.OrderByDescending(p => p.AvgRating ?? 0).ToList(),
-            "date-asc" => viewModels.OrderBy(p => p.CreatedAt).ToList(),
-            "date-desc" => viewModels.OrderByDescending(p => p.CreatedAt).ToList(),
-            _ => viewModels.OrderByDescending(p => p.CreatedAt).ToList()
-        };
-        
-        var categories = await context.Categories
-            .OrderBy(c => c.Name)
-            .ToListAsync();
-
-        var priceRange = await context.ProductVariants
-            .Where(pv => pv.Product.Active)
-            .Select(pv => pv.Price)
-            .ToListAsync();
-
-        var minPriceOverall = priceRange.Count != 0 ? priceRange.Min() : 0;
-        var maxPriceOverall = priceRange.Count != 0 ? priceRange.Max() : 100000;
-
-        ViewData["CurrentSearch"] = q;
-        ViewData["CurrentSort"] = sort;
-        ViewData["Categories"] = categories;
-        ViewData["SelectedCategoryId"] = categoryId;
-        ViewData["MinRam"] = minRam;
-        ViewData["MaxRam"] = maxRam;
-        ViewData["MinStorage"] = minStorage;
-        ViewData["MaxStorage"] = maxStorage;
-        ViewData["MinPrice"] = minPrice;
-        ViewData["MaxPrice"] = maxPrice;
-        ViewData["MinPriceOverall"] = minPriceOverall;
-        ViewData["MaxPriceOverall"] = maxPriceOverall;
-        ViewData["InStock"] = inStock;
-
-        return View(viewModels);
     }
+    catch
+    {
+        itemsPerPage = 20;  
+    }
+
+    var finalTake = itemsPerPage;
+    
+    var query = context.ProductVariants
+        .Where(pv => pv.Product.Active);
+
+    if (!string.IsNullOrWhiteSpace(q))
+    {
+        var cleanQuery = q.Trim().ToLowerInvariant();
+        query = query.Where(pv => 
+            pv.Product.SearchVector!.Matches(EF.Functions.PlainToTsQuery("russian", cleanQuery))
+        );
+    }
+
+    if (categoryId is > 0) 
+        query = query.Where(pv => pv.Product.CategoryId == categoryId);
+    
+    if (minRam.HasValue)
+        query = query.Where(pv => pv.Ram >= minRam.Value);
+    
+    if (maxRam.HasValue)
+        query = query.Where(pv => pv.Ram <= maxRam.Value);
+
+    if (minStorage.HasValue)
+        query = query.Where(pv => pv.StorageGb >= minStorage.Value);
+    
+    if (maxStorage.HasValue)
+        query = query.Where(pv => pv.StorageGb <= maxStorage.Value);
+
+    if (minPrice.HasValue)
+        query = query.Where(pv => pv.Price >= minPrice.Value);
+    
+    if (maxPrice.HasValue)
+        query = query.Where(pv => pv.Price <= maxPrice.Value);
+    
+    if (inStock.HasValue && inStock.Value)
+        query = query.Where(pv => pv.Inventories.Any(i => i.Quantity - i.Reserve > 0));
+
+    var orderedQuery = sort switch
+    {
+        "price-asc" => query.OrderBy(pv => pv.Price),
+        "price-desc" => query.OrderByDescending(pv => pv.Price),
+        "date-asc" => query.OrderBy(pv => pv.Product.CreatedAt),
+        "date-desc" => query.OrderByDescending(pv => pv.Product.CreatedAt),
+        _ => query.OrderByDescending(pv => pv.Product.CreatedAt)
+    };
+
+    var variants = await orderedQuery
+        .Include(pv => pv.Product)
+            .ThenInclude(p => p.Category)
+        .Include(pv => pv.Product)
+            .ThenInclude(p => p.Reviews)
+        .Include(pv => pv.ProductImages.Where(pi => pi.IsPrimary))
+        .Include(pv => pv.Inventories)
+        .Skip(skip)
+        .Take(finalTake)
+        .ToListAsync();
+
+    var viewModels = variants.Select(pv =>
+    {
+        var approvedReviews = pv.Product.Reviews.Where(r => r.IsModerated).ToList();
+        var reviewsCount = approvedReviews.Count;
+        var avgRating = reviewsCount > 0 ? (decimal?)approvedReviews.Average(r => r.Rating) : null;
+
+        var totalAvailable = pv.Inventories?.Sum(i => i.Quantity - i.Reserve) ?? 0;
+        var isInStock = totalAvailable > 0;
+
+        return new ProductViewModel
+        {
+            Id = pv.Id,
+            Sku = pv.VariantCode,
+            Name = pv.Product.Name!,
+            CategoryName = pv.Product.Category?.Name ?? "Без категории",
+            CategoryId = pv.Product.CategoryId,
+            Price = pv.Price,
+            Ram = pv.Ram,
+            StorageSize = pv.StorageGb,
+            PrimaryImageUrl = pv.ProductImages
+                .Where(pi => pi.IsPrimary)
+                .OrderBy(pi => pi.SortOrder)
+                .Select(pi => pi.ImageUrl)
+                .FirstOrDefault() ?? "",
+            PrimaryImageAltText = pv.ProductImages
+                .Where(pi => pi.IsPrimary)
+                .OrderBy(pi => pi.SortOrder)
+                .Select(pi => pi.AltText)
+                .FirstOrDefault() ?? "",
+            AvgRating = avgRating,
+            ReviewsCount = reviewsCount,
+            CreatedAt = pv.Product.CreatedAt,
+            IsInStock = isInStock,
+            StockQuantity = totalAvailable
+        };
+    }).ToList();
+
+    var categories = await context.Categories.OrderBy(c => c.Name).ToListAsync();
+
+    var priceRange = await context.ProductVariants
+        .Where(pv => pv.Product.Active)
+        .Select(pv => pv.Price)
+        .ToListAsync();
+
+    var minPriceOverall = priceRange.Count != 0 ? priceRange.Min() : 0;
+    var maxPriceOverall = priceRange.Count != 0 ? priceRange.Max() : 100000;
+
+    ViewData["CurrentSearch"] = q;
+    ViewData["CurrentSort"] = sort;
+    ViewData["Categories"] = categories;
+    ViewData["SelectedCategoryId"] = categoryId;
+    ViewData["MinRam"] = minRam;
+    ViewData["MaxRam"] = maxRam;
+    ViewData["MinStorage"] = minStorage;
+    ViewData["MaxStorage"] = maxStorage;
+    ViewData["MinPrice"] = minPrice;
+    ViewData["MaxPrice"] = maxPrice;
+    ViewData["MinPriceOverall"] = minPriceOverall;
+    ViewData["MaxPriceOverall"] = maxPriceOverall;
+    ViewData["InStock"] = inStock;
+    ViewData["ItemsPerPage"] = itemsPerPage;
+
+    return View(viewModels);
+}
     
     public IActionResult Terms() => View();
     public IActionResult About() => View();

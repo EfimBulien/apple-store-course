@@ -50,6 +50,15 @@
                                class="btn btn-outline-primary btn-sm">
                                 <i class="bi bi-download me-1"></i> Скачать
                             </a>
+                            <form method="post" action="@Url.Action("RestoreBackup", new { id = backup.Id })" style="display: inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="text" name="confirmText" placeholder="Введите ВОССТАНОВИТЬ" required 
+                                       style="width: 150px; display: inline; margin-right: 5px;" />
+                                <button type="submit" class="btn btn-warning btn-sm" 
+                                        onclick="return confirm('ВНИМАНИЕ! Все текущие данные будут заменены. Вы уверены, что хотите восстановить базу данных из этого бэкапа?')">
+                                    Восстановить
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>

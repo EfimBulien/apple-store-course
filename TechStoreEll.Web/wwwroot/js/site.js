@@ -40,12 +40,8 @@
     }, 3000);
 }
 
-function showHotkeysHint() {
-    if (localStorage.getItem('hotkeysHintClosed') === null) {
-        localStorage.setItem('hotkeysHintClosed', 'false');
-    }
-
-    if (localStorage.getItem('hotkeysHintClosed') === 'true') {
+function showHotkeysHint(forceShow = false) {
+    if (!forceShow && localStorage.getItem('hotkeysHintClosed') === 'true') {
         return;
     }
 
@@ -65,20 +61,41 @@ function showHotkeysHint() {
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     `;
 
+    const isAuthenticated = document.body.getAttribute('data-authenticated') === 'true';
+    const isAdmin = document.body.getAttribute('data-is-admin') === 'true';
+
+    let hotkeysHTML = `
+        <div><kbd>Ctrl+0</kbd> - Смена темы</div>
+        <div><kbd>Ctrl+1</kbd> - Главная</div>
+        <div><kbd>Ctrl+2</kbd> - Профиль</div>
+        <div><kbd>Ctrl+P</kbd> - Политика конфиденциальности</div>
+        <div><kbd>Ctrl+O</kbd> - О нас</div>
+        <div><kbd>Ctrl+T</kbd> - Условия использования</div>
+        <div><kbd>Ctrl+K</kbd> - Контакты</div>
+    `;
+
+    if (isAuthenticated && !isAdmin) {
+        hotkeysHTML += `
+            <div><kbd>Ctrl+3</kbd> - Корзина</div>
+            <div><kbd>Ctrl+4</kbd> - Заказы</div>
+            <div><kbd>Ctrl+5</kbd> - Адреса</div>
+        `;
+    } else if (isAdmin) {
+        hotkeysHTML += `
+            <div><kbd>Ctrl+3</kbd> - Админ панель</div>
+            <div><kbd>Ctrl+4</kbd> - Создание товара</div>
+            <div><kbd>Ctrl+5</kbd> - Пополнение склада</div>
+            <div><kbd>Ctrl+6</kbd> - Аналитика</div>
+        `;
+    }
+
     hint.innerHTML = `
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         <h6 class="alert-heading mb-2">
             <i class="bi bi-keyboard me-2"></i>Горячие клавиши
         </h6>
         <div class="small">
-            <div><kbd>Ctrl+1</kbd> - Главная</div>
-            <div><kbd>Ctrl+2</kbd> - Каталог</div>
-            <div><kbd>Ctrl+3</kbd> - Корзина</div>
-            <div><kbd>Ctrl+4</kbd> - Заказы</div>
-            <div><kbd>Ctrl+5</kbd> - Профиль</div>
-            <div><kbd>Ctrl+6</kbd> - Адреса</div>
-            <div><kbd>Ctrl+7</kbd> - Админка</div>
-            <div><kbd>Ctrl+0</kbd> - Смена темы</div>
+            ${hotkeysHTML}
         </div>
     `;
 
@@ -88,27 +105,52 @@ function showHotkeysHint() {
 
     document.body.appendChild(hint);
 
-    setTimeout(() => {
-        if (hint.parentNode) {
-            const bsAlert = new bootstrap.Alert(hint);
-            bsAlert.close();
-        }
-    }, 8000);
+    if (!forceShow) {
+        setTimeout(() => {
+            if (hint.parentNode) {
+                const bsAlert = new bootstrap.Alert(hint);
+                bsAlert.close();
+            }
+        }, 8000);
+    }
+}
+
+function showHotkeysHintAuto() {
+    showHotkeysHint(false);
+}
+
+function showHotkeysHintForced() {
+    showHotkeysHint(true);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
     const isAuthenticated = document.body.getAttribute('data-authenticated') === 'true';
+    const isAdmin = document.body.getAttribute('data-is-admin') === 'true';
 
     const hotkeys = {
-        'ctrl+1': '/',
-        'ctrl+2': '/Home/Index',
-        'ctrl+3': '/Cart/Index',
-        'ctrl+4': '/Order/Index',
-        'ctrl+5': '/Profile/Index',
-        'ctrl+6': '/Address/Index',
-        'ctrl+7': '/Admin/Index',
-        'ctrl+0': toggleTheme
+        'ctrl+0': toggleTheme,
+        'ctrl+1': '/Home/Index',
+        'ctrl+2': '/Profile/Index',
+        'ctrl+p': '/Home/Privacy',
+        'ctrl+t': '/Home/Terms',
+        'ctrl+o': '/Home/About',
+        'ctrl+k': '/Home/Contact'
     };
+
+    if (isAuthenticated && !isAdmin) {
+        Object.assign(hotkeys, {
+            'ctrl+3': '/Cart/Index',
+            'ctrl+4': '/Order/Index',
+            'ctrl+5': '/Address/Index'
+        });
+    } else if (isAdmin) {
+        Object.assign(hotkeys, {
+            'ctrl+3': '/Admin/AdminPanel',
+            'ctrl+4': '/Product/Create',
+            'ctrl+5': '/Restock',
+            'ctrl+6': '/Admin/Analytics'
+        });
+    }
 
     function toggleTheme() {
         const htmlElement = document.documentElement;
@@ -164,10 +206,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    setTimeout(showHotkeysHint, 1000);
-
+    setTimeout(showHotkeysHintAuto, 1000);
     addHotkeysButtonToNav();
-
     document.body.setAttribute('data-authenticated', isAuthenticated.toString());
 });
 
@@ -177,7 +217,7 @@ function addHotkeysButtonToNav() {
         const hotkeysItem = document.createElement('li');
         hotkeysItem.className = 'nav-item hotkeys-nav-button';
         hotkeysItem.innerHTML = `
-            <button class="btn btn-link nav-link" onclick="showHotkeysHint()" title="Горячие клавиши (Ctrl+?)">
+            <button class="btn btn-link nav-link" onclick="showHotkeysHintForced()" title="Горячие клавиши (Ctrl+?)">
                 <i class="bi bi-keyboard"></i>
             </button>
         `;
@@ -189,17 +229,13 @@ function clearUserSettingsOnLogout() {
     const logoutForms = document.querySelectorAll('form[action*="Logout"], form[action*="logout"]');
 
     logoutForms.forEach(form => {
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', function() {
             localStorage.removeItem('hotkeysHintClosed');
             localStorage.removeItem('theme');
             localStorage.removeItem('theme_synced');
             localStorage.removeItem('userSettings');
-
-            console.log('Настройки пользователя очищены из localStorage');
         });
     });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    clearUserSettingsOnLogout();
-});
+document.addEventListener('DOMContentLoaded', clearUserSettingsOnLogout);
