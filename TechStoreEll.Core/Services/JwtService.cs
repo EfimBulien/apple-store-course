@@ -7,22 +7,13 @@ using TechStoreEll.Core.Entities;
 
 namespace TechStoreEll.Core.Services;
 
-public class JwtService : IJwtService
+public class JwtService(IConfiguration config) : IJwtService
 {
-    private readonly string _key;
-    private readonly string _issuer;
-    private readonly string _audience;
-    private readonly int _expireMinutes;
-
-    
-    // ПОТОМ ПОМЕНЯТЬ В КОНФИГ ФАЙЛЕ!
-    public JwtService(IConfiguration config)
-    {
-        _key = "your_super_secret_key_here_at_least_32_characters_long";
-        _issuer = "TechStoreEllApi";
-        _audience = "TechStoreEllUsers";
-        _expireMinutes = 60;
-    }
+    private readonly string _key = config["JwtSettings:SecretKey"] ?? 
+                                   throw new ArgumentException("JWT Key is not configured");
+    private readonly string _issuer = config["JwtSettings:Issuer"] ?? "TechStoreEllApi";
+    private readonly string _audience = config["JwtSettings:Audience"] ?? "TechStoreEllUsers";
+    private readonly int _expireMinutes = config.GetValue<int?>("JwtSettings:ExpiryInMinutes") ?? 60;
 
     public string GenerateToken(User user)
     {
@@ -48,7 +39,4 @@ public class JwtService : IJwtService
     }
 }
 
-public interface IJwtService
-{
-    string GenerateToken(User user);
-}
+public interface IJwtService { string GenerateToken(User user); }
