@@ -1,4 +1,6 @@
-﻿namespace TechStoreEll.Core.Entities;
+﻿using System.Text.Json.Serialization;
+
+namespace TechStoreEll.Core.Entities;
 
 public partial class Order : IEntity
 {
@@ -15,10 +17,13 @@ public partial class Order : IEntity
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
-
+    
+    [JsonIgnore]
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
+    [JsonIgnore]
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
+    [JsonIgnore]
     public virtual User User { get; set; } = null!;
 }

@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -9,11 +10,14 @@ using TechStoreEll.Core.Interfaces;
 using TechStoreEll.Core.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
 builder.Services.AddLogging(logging =>
 {
-    logging.AddConsole(); // Логи в консоль
-    logging.AddDebug();   // Логи для отладки
+    logging.AddConsole();
+    logging.AddDebug();
 });
 
 builder.Services.AddControllers();
@@ -83,7 +87,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// добавление репозитория
+
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
@@ -96,12 +100,17 @@ builder.Services.AddScoped<AuditLogService>();
 builder.Services.AddScoped<AnalyticsService>();
 builder.Services.AddScoped<UserService>();
 
+
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docker")
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "TechStoreEll API V1");
+        c.RoutePrefix = string.Empty;
+    });
 }
 
 app.UseAuthentication();

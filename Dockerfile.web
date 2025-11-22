@@ -1,0 +1,21 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+COPY . .
+RUN dotnet restore TechStoreEll.sln
+RUN dotnet publish TechStoreEll.Web/TechStoreEll.Web.csproj -c Release -o /app/publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+
+EXPOSE 5002
+ENV ASPNETCORE_URLS=http://0.0.0.0:5002
+
+ENV Db__Host=host.docker.internal
+ENV Database__Host=host.docker.internal
+ENV ConnectionStrings__Redis=host.docker.internal:6379
+ENV MinIO__Endpoint=host.docker.internal:9000
+ENV MinIO__PublicUrl=http://host.docker.internal:9000
+
+ENTRYPOINT ["dotnet", "TechStoreEll.Web.dll"]

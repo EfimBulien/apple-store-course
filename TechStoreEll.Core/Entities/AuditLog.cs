@@ -1,4 +1,6 @@
-﻿namespace TechStoreEll.Core.Entities;
+﻿using System.Text.Json.Serialization;
+
+namespace TechStoreEll.Core.Entities;
 
 public partial class AuditLog : IEntity
 {
@@ -17,6 +19,7 @@ public partial class AuditLog : IEntity
     public string? OldRow { get; set; }
 
     public string? NewRow { get; set; }
-
+    
+    [JsonIgnore]
     public virtual User? ChangedByNavigation { get; set; }
 }

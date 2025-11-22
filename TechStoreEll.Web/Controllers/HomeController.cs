@@ -93,7 +93,7 @@ public class HomeController(AppDbContext context) : Controller
     }
     catch
     {
-        itemsPerPage = 20;  
+        itemsPerPage = 100;  
     }
 
     var finalTake = itemsPerPage;

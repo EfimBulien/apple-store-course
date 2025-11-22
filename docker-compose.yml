@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: techstore-web
+    ports:
+      - "5002:5002"
+    environment:
+      ASPNETCORE_URLS: "http://0.0.0.0:5002"
+      ASPNETCORE_ENVIRONMENT: Docker
+      Db__Host: host.docker.internal
+      Database__Host: host.docker.internal
+      ConnectionStrings__Redis: "redis:6379"
+      MinIO__Endpoint: "host.docker.internal:9000"
+      MinIO__PublicUrl: "http://host.docker.internal:9000"
+    depends_on:
+      - redis
+  
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: techstore-api
+    ports:
+      - "5001:5001"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ASPNETCORE_URLS: "http://0.0.0.0:5001"
+      ConnectionStrings__ExperimentalConnection: "Host=host.docker.internal;Database=TechStoreEll;Username=postgres;Password=1008"
+      ConnectionStrings__Redis: "techstore-redis:6379"
+      MinIO__Endpoint: "host.docker.internal:9000"
+      MinIO__PublicUrl: "http://host.docker.internal:9000"
+    depends_on:
+      - redis
+  
+  redis:
+    image: redis:7
+    container_name: techstore-redis
+#    ports:
+#      - "6380:6379"
+    command: ["redis-server", "--appendonly", "yes"]

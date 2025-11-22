@@ -19,7 +19,6 @@ builder.Services.AddScoped<AppDbContext>(sp =>
 {
     var httpContext = sp.GetRequiredService<IHttpContextAccessor>().HttpContext;
     var config = sp.GetRequiredService<IConfiguration>();
-
     string? dbRole;
     string? password;
 
@@ -57,6 +56,7 @@ builder.Services.AddScoped<AppDbContext>(sp =>
 
     var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
     optionsBuilder.UseNpgsql(connectionString);
+
     return new AppDbContext(optionsBuilder.Options);
 });
 
@@ -74,7 +74,6 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var key = Encoding.ASCII.GetBytes(jwtSettings["SecretKey"]!);
 
-//builder.Services.AddDbContext<AppDbContext>();
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -127,8 +126,8 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     //app.UseExceptionHandler("/Home/Error");
-    app.UseExceptionHandler("/error/database");
-    app.UseStatusCodePagesWithReExecute("/error/database", "?statusCode={0}");
+    app.UseExceptionHandler("/error/cart");
+    app.UseStatusCodePagesWithReExecute("/error/cart", "?statusCode={0}");
     app.UseHsts();
 }
 
@@ -137,11 +136,14 @@ app.MapMetrics();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
 app.UseRouting();
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-app.UseSession();
+
 app.Run();

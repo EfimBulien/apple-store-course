@@ -1,4 +1,5 @@
-﻿using NpgsqlTypes;
+﻿using System.Text.Json.Serialization;
+using NpgsqlTypes;
 
 namespace TechStoreEll.Core.Entities;
 
@@ -22,11 +23,15 @@ public partial class Product
 
     public int? ReviewsCount { get; set; }
 
+    [JsonIgnore]
     public NpgsqlTsVector? SearchVector { get; set; }
 
+    [JsonIgnore]
     public virtual Category? Category { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<ProductVariant> ProductVariants { get; set; } = [];
-
+    
+    [JsonIgnore]
     public virtual ICollection<Review> Reviews { get; set; } = [];
 }

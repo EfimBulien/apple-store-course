@@ -63,8 +63,7 @@ public class ProductsControllerTests
     public async Task GetAllProducts_ReturnsOk_WhenProductsExist()
     {
         var products = new List<ProductFullDto> { new() { Id = 1 } };
-        _mockService.Setup(s => s.GetAllProductVariantsAsync())
-                    .ReturnsAsync(products);
+        _mockService.Setup(s => s.GetAllActiveProductVariantsAsync()).ReturnsAsync(products);
 
         var result = await _controller.GetAllProducts();
 
@@ -76,8 +75,7 @@ public class ProductsControllerTests
     [Test]
     public async Task GetAllProducts_ReturnsNotFound_WhenEmpty()
     {
-        _mockService.Setup(s => s.GetAllProductVariantsAsync())
-                    .ReturnsAsync(new List<ProductFullDto>());
+        _mockService.Setup(s => s.GetAllActiveProductVariantsAsync()).ReturnsAsync([]);
 
         var result = await _controller.GetAllProducts();
 

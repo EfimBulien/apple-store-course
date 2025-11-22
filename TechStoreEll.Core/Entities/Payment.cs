@@ -1,6 +1,8 @@
-﻿namespace TechStoreEll.Core.Entities;
+﻿using System.Text.Json.Serialization;
 
-public partial class Payment : IEntity
+namespace TechStoreEll.Core.Entities;
+
+public class Payment : IEntity
 {
     public int Id { get; set; }
 
@@ -15,6 +17,7 @@ public partial class Payment : IEntity
     public string Status { get; set; } = null!;
 
     public string? TransactionRef { get; set; }
-
+    
+    [JsonIgnore]
     public virtual Order Order { get; set; } = null!;
 }

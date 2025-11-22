@@ -1,4 +1,6 @@
-﻿namespace TechStoreEll.Core.Entities;
+﻿using System.Text.Json.Serialization;
+
+namespace TechStoreEll.Core.Entities;
 
 public partial class Review : IEntity
 {
@@ -18,9 +20,12 @@ public partial class Review : IEntity
 
     public int? ModeratedBy { get; set; }
 
+    [JsonIgnore]
     public virtual User? ModeratedByNavigation { get; set; }
 
+    [JsonIgnore]
     public virtual Product Product { get; set; } = null!;
 
+    [JsonIgnore]
     public virtual User? User { get; set; }
 }

@@ -1,4 +1,6 @@
-﻿namespace TechStoreEll.Core.Entities;
+﻿using System.Text.Json.Serialization;
+
+namespace TechStoreEll.Core.Entities;
 
 public partial class Address : IEntity
 {
@@ -23,10 +25,13 @@ public partial class Address : IEntity
     public string? Postcode { get; set; }
 
     public DateTime CreatedAt { get; set; }
-
+    
+    [JsonIgnore]
     public virtual ICollection<Customer> CustomerBillingAddresses { get; set; } = new List<Customer>();
 
+    [JsonIgnore]
     public virtual ICollection<Customer> CustomerShippingAddresses { get; set; } = new List<Customer>();
 
+    [JsonIgnore]
     public virtual User? User { get; set; }
 }

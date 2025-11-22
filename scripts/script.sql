@@ -219,8 +219,8 @@ CREATE INDEX IF NOT EXISTS idx_reviews_product ON reviews(product_id);
 CREATE OR REPLACE FUNCTION fn_audit_trigger() RETURNS trigger AS $$
 DECLARE
     v_changed_by INT;
+    v_table_name TEXT := TG_TABLE_NAME;
 BEGIN
-    -- безопасное получение ID пользователя из контекста
     BEGIN
         v_changed_by := NULLIF(current_setting('app.current_user_id', true), '')::int;
     EXCEPTION
@@ -230,24 +230,72 @@ BEGIN
             v_changed_by := NULL;
     END;
 
-    -- проверка существования пользователя
-    IF v_changed_by IS NOT NULL AND NOT EXISTS(SELECT 1 FROM users WHERE id = v_changed_by) THEN
-        v_changed_by := NULL;
+    IF v_changed_by IS NULL THEN
+        CASE v_table_name
+            WHEN 'addresses' THEN
+                v_changed_by := (NEW).user_id; -- для INSERT/UPDATE
+                IF TG_OP = 'DELETE' THEN
+                    v_changed_by := (OLD).user_id;
+                END IF;
+
+            WHEN 'orders', 'order_items' THEN
+                v_changed_by := (NEW).user_id;
+                IF TG_OP = 'DELETE' THEN
+                    v_changed_by := (OLD).user_id;
+                END IF;
+
+            WHEN 'reviews' THEN
+                v_changed_by := (NEW).user_id;
+                IF TG_OP = 'DELETE' THEN
+                    v_changed_by := (OLD).user_id;
+                END IF;
+
+            WHEN 'products', 'product_variants', 'product_images', 'inventory',
+                 'inventory_movements', 'warehouses', 'payments' THEN
+                v_changed_by := 1;
+
+            WHEN 'users', 'user_settings' THEN
+                IF TG_OP IN ('INSERT', 'UPDATE') THEN
+                    v_changed_by := (NEW).id;
+                ELSE -- DELETE
+                    v_changed_by := (OLD).id;
+                END IF;
+
+            WHEN 'customers' THEN
+                IF TG_OP IN ('INSERT', 'UPDATE') THEN
+                    v_changed_by := (NEW).user_id;
+                ELSE
+                    v_changed_by := (OLD).user_id;
+                END IF;
+
+            ELSE
+                v_changed_by := 1;
+        END CASE;
     END IF;
 
-    IF (TG_OP = 'DELETE') THEN
+    IF v_changed_by IS NULL THEN
+        v_changed_by := 1;
+    END IF;
+
+    IF NOT EXISTS(SELECT 1 FROM users WHERE id = v_changed_by) THEN
+        v_changed_by := 1; -- fallback к админу, если указанный ID не существует
+    END IF;
+
+    --Запись в аудит
+    IF TG_OP = 'DELETE' THEN
         INSERT INTO audit_log(table_name, operation, record_id, changed_by, changed_at, old_row)
-        VALUES (TG_TABLE_NAME, 'D', NULL, v_changed_by, now(), row_to_json(OLD));
+        VALUES (v_table_name, 'D', NULL, v_changed_by, now(), row_to_json(OLD));
         RETURN OLD;
-    ELSIF (TG_OP = 'UPDATE') THEN
+    ELSIF TG_OP = 'UPDATE' THEN
         INSERT INTO audit_log(table_name, operation, record_id, changed_by, changed_at, old_row, new_row)
-        VALUES (TG_TABLE_NAME, 'U', NULL, v_changed_by, now(), row_to_json(OLD), row_to_json(NEW));
+        VALUES (v_table_name, 'U', NULL, v_changed_by, now(), row_to_json(OLD), row_to_json(NEW));
         RETURN NEW;
-    ELSIF (TG_OP = 'INSERT') THEN
+    ELSIF TG_OP = 'INSERT' THEN
         INSERT INTO audit_log(table_name, operation, record_id, changed_by, changed_at, new_row)
-        VALUES (TG_TABLE_NAME, 'I', NULL, v_changed_by, now(), row_to_json(NEW));
+        VALUES (v_table_name, 'I', NULL, v_changed_by, now(), row_to_json(NEW));
         RETURN NEW;
     END IF;
+
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
@@ -257,8 +305,9 @@ DO $$
 DECLARE
     t TEXT;
     tables TEXT[] := ARRAY[
-      'users','customers','addresses','products','product_variants','product_images',
-      'inventory','orders','order_items','payments','reviews','inventory_movements', 'warehouses'
+        'users', 'user_settings', 'customers','addresses','products','product_variants','product_images',
+        'inventory','orders','order_items','payments','reviews','inventory_movements', 'warehouses', 'roles',
+        'backups', 'categories'
     ];
 BEGIN
   FOREACH t IN ARRAY tables LOOP

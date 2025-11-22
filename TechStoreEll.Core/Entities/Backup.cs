@@ -1,4 +1,6 @@
-﻿namespace TechStoreEll.Core.Entities;
+﻿using System.Text.Json.Serialization;
+
+namespace TechStoreEll.Core.Entities;
 
 public partial class Backup : IEntity
 {
@@ -13,6 +15,7 @@ public partial class Backup : IEntity
     public string? Command { get; set; }
 
     public string? Note { get; set; }
-
+    
+    [JsonIgnore]
     public virtual User? CreatedByNavigation { get; set; }
 }

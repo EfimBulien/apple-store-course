@@ -1,4 +1,6 @@
-﻿namespace TechStoreEll.Core.Entities;
+﻿using System.Text.Json.Serialization;
+
+namespace TechStoreEll.Core.Entities;
 
 public partial class Warehouse : IEntity
 {
@@ -9,8 +11,10 @@ public partial class Warehouse : IEntity
     public bool IsActive { get; set; } = true;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
+    
+    [JsonIgnore]
     public virtual ICollection<Inventory> Inventories { get; set; } = [];
-
+    
+    [JsonIgnore]
     public virtual ICollection<InventoryMovement> InventoryMovements { get; set; } = [];
 }

@@ -2,7 +2,7 @@
 
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Ошибка подключения к базе данных";
+    ViewData["Title"] = "Ошибка подключения к корзине";
 }
 
 <div class="container mt-5">
@@ -11,7 +11,7 @@
             <div class="alert alert-danger shadow" role="alert">
                 <h4 class="alert-heading">
                     <i class="bi bi-exclamation-triangle-fill"></i>
-                    Ошибка подключения к базе данных
+                    Ошибка подключения к корзине
                 </h4>
                 <p>@Model.Message</p>
                 @if (!string.IsNullOrEmpty(Model.DetailedError))

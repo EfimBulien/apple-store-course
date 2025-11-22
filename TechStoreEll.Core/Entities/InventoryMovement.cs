@@ -1,4 +1,6 @@
-﻿namespace TechStoreEll.Core.Entities;
+﻿using System.Text.Json.Serialization;
+
+namespace TechStoreEll.Core.Entities;
 
 public partial class InventoryMovement : IEntity
 {
@@ -16,9 +18,12 @@ public partial class InventoryMovement : IEntity
 
     public DateTime CreatedAt { get; set; }
 
+    [JsonIgnore]
     public virtual User? CreatedByNavigation { get; set; }
 
+    [JsonIgnore]
     public virtual ProductVariant ProductVariant { get; set; } = null!;
 
+    [JsonIgnore]
     public virtual Warehouse Warehouse { get; set; } = null!;
 }

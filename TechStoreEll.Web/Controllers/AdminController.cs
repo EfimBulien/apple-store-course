@@ -419,7 +419,10 @@ public class AdminController(AuditLogService auditService, AnalyticsService anal
     }
     
     [AuthorizeRole("Admin")]
-    public IActionResult ImportProducts() => View();
+    public IActionResult ImportProducts()
+    {
+        return View();
+    }
     
     [AuthorizeRole("Admin")]
     public async Task<IActionResult> ExportProductsCsv()

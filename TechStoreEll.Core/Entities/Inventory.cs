@@ -1,4 +1,6 @@
-﻿namespace TechStoreEll.Core.Entities;
+﻿using System.Text.Json.Serialization;
+
+namespace TechStoreEll.Core.Entities;
 
 public partial class Inventory : IEntity
 {
@@ -12,7 +14,9 @@ public partial class Inventory : IEntity
 
     public int Reserve { get; set; }
 
+    [JsonIgnore]
     public virtual ProductVariant ProductVariant { get; set; } = null!;
 
+    [JsonIgnore]
     public virtual Warehouse? Warehouse { get; set; }
 }

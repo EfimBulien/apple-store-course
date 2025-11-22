@@ -1,4 +1,6 @@
-﻿namespace TechStoreEll.Core.Entities;
+﻿using System.Text.Json.Serialization;
+
+namespace TechStoreEll.Core.Entities;
 
 public partial class UserSetting : IEntity
 {
@@ -18,6 +20,7 @@ public partial class UserSetting : IEntity
     public string? Hotkeys { get; set; }
 
     public DateTime UpdatedAt { get; set; }
-
+    
+    [JsonIgnore]
     public virtual User User { get; set; } = null!;
 }

@@ -1,4 +1,6 @@
-﻿namespace TechStoreEll.Core.Entities;
+﻿using System.Text.Json.Serialization;
+
+namespace TechStoreEll.Core.Entities;
 
 public partial class ProductImage : IEntity
 {
@@ -16,5 +18,6 @@ public partial class ProductImage : IEntity
 
     public DateTime UploadedAt { get; set; }
 
+    [JsonIgnore]
     public virtual ProductVariant ProductVariant { get; set; } = null!;
 }

@@ -34,9 +34,7 @@ public class ProductController(
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(ProductCreateViewModel model)
-    {
-        // ОТЛАДОЧНАЯ ИНФОРМАЦИЯ
-        Console.WriteLine("=== DEBUG INFO ===");
+    {   
         Console.WriteLine($"ModelState.IsValid: {ModelState.IsValid}");
         Console.WriteLine($"Variants count: {model.Variants?.Count ?? 0}");
     
@@ -56,7 +54,6 @@ public class ProductController(
             }
         }
     
-        // Логируем все ошибки ModelState
         foreach (var key in ModelState.Keys)
         {
             var entry = ModelState[key];
@@ -74,8 +71,6 @@ public class ProductController(
             model.Categories = await context.Categories.OrderBy(c => c.Name).ToListAsync();
             return View(model);
         }
-    
-        // ... остальной код
     
         logger.LogInformation("Create POST: Variants count = {Count}", model.Variants?.Count ?? 0);
         if (model.Variants != null)

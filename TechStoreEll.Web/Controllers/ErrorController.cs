@@ -5,15 +5,15 @@ namespace TechStoreEll.Web.Controllers;
 
 public class ErrorController : Controller
 {
-    [Route("/error/database")]
-    public IActionResult Database([FromQuery] string message = null)
+    [Route("/error/cart")]
+    public IActionResult Database([FromQuery] string? message = null)
     {
         var model = new DatabaseErrorViewModel
         {
-            Message = message ?? "Не удалось установить соединение с базой данных.",
+            Message = message ?? "Не удалось установить соединение с сервисом корзины.",
             DetailedError = ""
         };
-        return View("ErrorDatabase", model);
+        return View("ErrorCart", model);
     }
 
     [Route("/error")]

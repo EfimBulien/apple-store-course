@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TechStoreEll.Core.DTOs;
+using TechStoreEll.Core.Entities;
 using TechStoreEll.Core.Infrastructure.Data;
 using TechStoreEll.Core.Interfaces;
 
@@ -7,11 +8,50 @@ namespace TechStoreEll.Core.Services;
 
 public class ProductService(AppDbContext context) : IProductService
 {
-    public async Task<List<ProductFullDto>> GetAllProductVariantsAsync()
+    public async Task<Product> CreateProductAsync(Product product)
+    {
+        ArgumentNullException.ThrowIfNull(product);
+
+        context.Products.Add(product);
+        await context.SaveChangesAsync();
+        
+        return product;
+    }
+
+    public async Task UpdateProductAsync(int id, Product product)
+    {
+        ArgumentNullException.ThrowIfNull(product);
+        
+        if (id != product.Id)
+            throw new ArgumentException("ID в параметре не совпадает с ID сущности.", nameof(id));
+        
+        var existing = await context.Products.FindAsync(id);
+        
+        if (existing == null)
+            throw new KeyNotFoundException($"Товар с ID {id} не найден.");
+        
+        context.Entry(existing).CurrentValues.SetValues(product);
+        
+        await context.SaveChangesAsync();
+    }
+
+    public async Task DeleteProductAsync(int id)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        
+        var product = await context.Products.FindAsync(id);
+        if (product == null)
+            throw new KeyNotFoundException($"Товар с ID {id} не найден.");
+
+        context.Products.Remove(product);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<List<ProductFullDto>> GetAllActiveProductVariantsAsync()
     {
         var variants = await context.ProductVariants
             .Include(v => v.Product)
-            .Where(v => v.Product.Active) // пока только активные 
+            .Where(v => v.Product.Active)
             .Select(v => new ProductFullDto()
             {
                 Id = v.Id,
